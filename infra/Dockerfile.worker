@@ -1,0 +1,17 @@
+# syntax=docker/dockerfile:1
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY apps/api/package.json apps/api/package-lock.json* ./
+RUN npm ci || npm install
+COPY apps/api/ ./
+RUN npm run build
+FROM node:20-alpine AS runtime
+ENV NODE_ENV=production WORKER_ROLE=queue
+WORKDIR /app
+RUN addgroup -S app && adduser -S app -G app
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+USER app
+# The worker binds the BullMQ consumers (OcrProvider/ExtractionQueue/MalwareScanQueue ports) against Redis.
+# Entrypoint is the dedicated worker bootstrap (queue consumers only — no HTTP port).
+CMD ["node", "dist/worker.js"]

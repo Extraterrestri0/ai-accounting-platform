@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root { color-scheme: light; }
+body { font-family: Inter, system-ui, sans-serif; }
+/* representative screens use bare tables/inputs; give them sane preview styling */
+main table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+main th, main td { text-align: left; padding: 7px 8px; border-bottom: 1px solid #e2e8f0; }
+main thead th { color: #64748b; font-weight: 500; }
+main h1 { font-size: 1.15rem; font-weight: 600; margin-bottom: .25rem; }
+main h2 { font-size: .95rem; font-weight: 600; margin: 1rem 0 .25rem; }
+main button { border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; padding: 6px 12px; font-size: 13px; margin-right: 6px; cursor: pointer; }
+main button:hover { background: #f8fafc; }
+main a { color: #1d4ed8; }
+main input, main select { border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; font-size: 13px; }
+main section { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; }
+main meter { width: 90px; }

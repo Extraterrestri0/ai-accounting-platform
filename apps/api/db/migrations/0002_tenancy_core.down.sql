@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS company_assignments;
+DROP TABLE IF EXISTS companies;
+DROP TABLE IF EXISTS organizations;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS tenants;

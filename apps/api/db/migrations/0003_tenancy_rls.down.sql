@@ -1,0 +1,17 @@
+DROP POLICY IF EXISTS company_assignments_isolation ON company_assignments;
+DROP POLICY IF EXISTS companies_isolation ON companies;
+DROP POLICY IF EXISTS organizations_isolation ON organizations;
+DROP POLICY IF EXISTS users_isolation ON users;
+DROP POLICY IF EXISTS tenants_isolation ON tenants;
+ALTER TABLE company_assignments NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE company_assignments DISABLE ROW LEVEL SECURITY;
+ALTER TABLE companies           NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE companies           DISABLE ROW LEVEL SECURITY;
+ALTER TABLE organizations       NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE organizations       DISABLE ROW LEVEL SECURITY;
+ALTER TABLE users               NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE users               DISABLE ROW LEVEL SECURITY;
+ALTER TABLE tenants             NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE tenants             DISABLE ROW LEVEL SECURITY;
+DROP FUNCTION IF EXISTS app.current_company_id();
+DROP FUNCTION IF EXISTS app.current_tenant_id();

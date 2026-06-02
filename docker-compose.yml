@@ -1,0 +1,120 @@
+# Local production-like stack. Secrets come from .env (never committed). `docker compose up`.
+name: ai-accounting
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${PGDATABASE:-accounting}
+      POSTGRES_USER: ${POSTGRES_SUPERUSER:-app_owner}
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?set in .env}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_SUPERUSER:-app_owner} -d ${PGDATABASE:-accounting}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports: ["5432:5432"]
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    ports: ["6379:6379"]
+
+  # S3-compatible object storage for documents (Object Lock / WORM in prod via AWS S3).
+  minio:
+    image: minio/minio:latest
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY:?set in .env}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY:?set in .env}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports: ["9000:9000", "9001:9001"]
+
+  migrate:
+    build: { context: ., dockerfile: infra/Dockerfile.api }
+    command: ["node", "scripts/migrate.js"]
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: ${PGDATABASE:-accounting}
+      MIGRATION_USER: ${POSTGRES_SUPERUSER:-app_owner}
+      MIGRATION_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD}
+    depends_on:
+      db: { condition: service_healthy }
+    restart: "no"
+
+  api:
+    build: { context: ., dockerfile: infra/Dockerfile.api }
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: ${PGUSER:?app_user — RLS subject, never the owner}
+      PGPASSWORD: ${PGPASSWORD:?set in .env}
+      PGDATABASE: ${PGDATABASE:-accounting}
+      JWT_SECRET: ${JWT_SECRET:?set in .env}
+      REDIS_URL: redis://redis:6379
+      STORAGE_ENDPOINT: http://minio:9000
+      STORAGE_BUCKET: ${STORAGE_BUCKET:-documents}
+      STORAGE_REGION: ${STORAGE_REGION:-eu-central-1}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
+      RATE_LIMIT_TTL: ${RATE_LIMIT_TTL:-60000}
+      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-300}
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      minio: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    ports: ["3000:3000"]
+
+  worker:
+    build: { context: ., dockerfile: infra/Dockerfile.worker }
+    environment:
+      NODE_ENV: production
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: ${PGUSER}
+      PGPASSWORD: ${PGPASSWORD}
+      PGDATABASE: ${PGDATABASE:-accounting}
+      REDIS_URL: redis://redis:6379
+      STORAGE_ENDPOINT: http://minio:9000
+      STORAGE_BUCKET: ${STORAGE_BUCKET:-documents}
+      STORAGE_REGION: ${STORAGE_REGION:-eu-central-1}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
+    depends_on:
+      redis: { condition: service_healthy }
+      db: { condition: service_healthy }
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.web
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+        NEXT_PUBLIC_USE_MOCK: "false"
+    depends_on: [api]
+    ports: ["8080:8080"]
+
+volumes:
+  db_data:
+  redis_data:
+  minio_data:

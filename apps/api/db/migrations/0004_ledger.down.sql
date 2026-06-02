@@ -1,0 +1,11 @@
+DROP TRIGGER IF EXISTS journal_lines_no_truncate ON journal_lines;
+DROP TRIGGER IF EXISTS journal_entries_no_truncate ON journal_entries;
+DROP TRIGGER IF EXISTS journal_lines_immutable ON journal_lines;
+DROP TRIGGER IF EXISTS journal_entries_immutable ON journal_entries;
+DROP TRIGGER IF EXISTS journal_entries_balanced ON journal_entries;
+DROP TABLE IF EXISTS journal_lines;
+DROP TABLE IF EXISTS journal_entries;
+DROP TABLE IF EXISTS ledger_entry_counters;
+DROP TABLE IF EXISTS accounts;
+DROP FUNCTION IF EXISTS app.assert_entry_balanced();
+DROP FUNCTION IF EXISTS app.deny_mutation();

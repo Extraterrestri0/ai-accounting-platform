@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+.pnpm-store/
+# builds
+dist/
+dist-boot/
+dist-e2e/
+.next/
+out/
+*.tsbuildinfo
+# env & secrets
+.env
+.env.*
+!.env.example
+*.local
+# logs / os
+*.log
+.DS_Store
+# storage (dev)
+doc-storage/
+# archived build artifacts (per-task zips — kept locally, not committed)
+_archive/
+*.zip
+# local editor/agent settings (machine-specific)
+.claude/

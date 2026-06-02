@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "rootDir": ".", "outDir": "dist-e2e",
+    "module": "commonjs", "moduleResolution": "node10", "ignoreDeprecations": "6.0",
+    "target": "ES2020", "experimentalDecorators": true, "emitDecoratorMetadata": true,
+    "esModuleInterop": true, "skipLibCheck": true, "strict": false, "noEmit": false, "resolveJsonModule": true
+  },
+  "include": ["src/**/*.ts", "test/e2e/e2e-workflow.ts"]
+}

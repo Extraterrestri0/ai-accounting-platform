@@ -1,0 +1,5 @@
+module.exports = {
+  preset: 'ts-jest', testEnvironment: 'node',
+  testMatch: ['**/test/auth/**/*.spec.ts','**/test/masterdata/**/*.spec.ts','**/test/documents/**/*.spec.ts','**/test/extraction/**/*.spec.ts','**/test/rules/**/*.spec.ts','**/test/review/**/*.spec.ts','**/test/posting/**/*.spec.ts','**/test/vat/**/*.spec.ts','**/test/invoicing/**/*.spec.ts','**/test/reporting/**/*.spec.ts','**/test/health/**/*.spec.ts'],
+  transform: { '^.+\\.ts$': ['ts-jest', { tsconfig: { experimentalDecorators: true, emitDecoratorMetadata: true, esModuleInterop: true, strict: false, types: ['jest','node'] } }] },
+};

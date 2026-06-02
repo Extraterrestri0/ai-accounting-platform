@@ -1,0 +1,2 @@
+-- Intentionally a no-op: dropping the runtime role is an operational action,
+-- not a schema rollback. Manage role lifecycle via provisioning, not migrations.

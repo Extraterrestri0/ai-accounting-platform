@@ -1,0 +1,15 @@
+DROP POLICY IF EXISTS invoice_email_deliveries_isolation ON invoice_email_deliveries;
+DROP POLICY IF EXISTS invoice_pdf_artifacts_isolation ON invoice_pdf_artifacts;
+DROP POLICY IF EXISTS invoice_lines_isolation ON invoice_lines;
+DROP POLICY IF EXISTS invoices_isolation ON invoices;
+DROP POLICY IF EXISTS invoice_numbering_series_isolation ON invoice_numbering_series;
+DROP TRIGGER IF EXISTS invoice_lines_immutable_when_issued ON invoice_lines;
+DROP TRIGGER IF EXISTS invoices_immutable_when_issued ON invoices;
+DROP TRIGGER IF EXISTS invoice_pdf_immutable ON invoice_pdf_artifacts;
+DROP FUNCTION IF EXISTS app.deny_line_when_issued();
+DROP FUNCTION IF EXISTS app.deny_when_issued();
+DROP TABLE IF EXISTS invoice_email_deliveries;
+DROP TABLE IF EXISTS invoice_pdf_artifacts;
+DROP TABLE IF EXISTS invoice_lines;
+DROP TABLE IF EXISTS invoices;
+DROP TABLE IF EXISTS invoice_numbering_series;
