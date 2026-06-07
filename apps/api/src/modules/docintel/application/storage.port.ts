@@ -17,5 +17,7 @@ export interface StorageService {
   finalizeObject(storageKey: string): Promise<void>;
   /** Short-lived signed GET URL for the sandboxed viewer. */
   getDownloadUrl(storageKey: string, ttlSeconds: number): Promise<string>;
+  /** Permanently remove the object bytes (document purge / permanent delete). */
+  deleteObject(storageKey: string): Promise<void>;
 }
 export const STORAGE_SERVICE = Symbol('DocIntel.StorageService');

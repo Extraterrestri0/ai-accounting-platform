@@ -6,9 +6,11 @@ export type FieldSource = 'ocr' | 'xml' | 'derived';
 export type ValidationStatus = 'valid' | 'invalid' | 'warning' | 'unchecked';
 
 export const FIELD_KEYS = [
-  'supplier_name', 'supplier_vat', 'supplier_eik', 'customer_name',
+  'supplier_name', 'supplier_vat', 'supplier_eik', 'supplier_city',
+  'customer_name', 'customer_eik', 'customer_vat',
   'invoice_number', 'invoice_date', 'due_date', 'currency',
-  'net_amount', 'vat_amount', 'total_amount', 'iban', 'payment_reference',
+  'net_amount', 'vat_amount', 'total_amount', 'vat_rate',
+  'iban', 'bank_name', 'bank_bic', 'payment_method', 'payment_reference',
 ] as const;
 export type FieldKey = (typeof FIELD_KEYS)[number];
 

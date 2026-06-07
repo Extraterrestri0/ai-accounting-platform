@@ -1,11 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { DatabaseContextService, TenantContextService } from '../../../platform';
 import { AUDIT_SERVICE, type IAuditService } from '../../audit';
+import { PERIOD_SERVICE, type IAccountingPeriodService } from '../../periods';
 import { JournalRepository } from '../infrastructure/journal.repository';
 import { AlreadyReversedError, EntryNotFoundError, NoActiveCompanyError } from '../domain/errors';
 import { LedgerEvents } from '../events';
 import type { JournalEntry, NewLine } from '../domain/models';
 import type { ILedgerService, PostEntryInput } from './ledger.service.interface';
+
+const todayISO = (): string => new Date().toISOString().slice(0, 10);
 
 @Injectable()
 export class LedgerService implements ILedgerService {
@@ -14,6 +17,7 @@ export class LedgerService implements ILedgerService {
     private readonly db: DatabaseContextService,
     private readonly journals: JournalRepository,
     @Inject(AUDIT_SERVICE) private readonly audit: IAuditService,
+    @Inject(PERIOD_SERVICE) private readonly periods: IAccountingPeriodService,
   ) {}
 
   /**
@@ -23,6 +27,8 @@ export class LedgerService implements ILedgerService {
    */
   async postEntry(input: PostEntryInput): Promise<JournalEntry> {
     const { tenantId, companyId, userId } = this.requireCompany();
+    // Compliance gate (Task 4.3): refuse posting into a locked accounting period.
+    await this.periods.assertOpen(input.postingDate, 'Posting');
     const currency = input.currency ?? 'EUR';
     return this.db.run(async (db) => {
       const entryNo = await this.journals.nextEntryNo(db, tenantId, companyId);
@@ -45,6 +51,14 @@ export class LedgerService implements ILedgerService {
   /** Reversal workflow: mirror the original's lines (swap direction) into a new entry. */
   async reverseEntry(entryId: string, reason: string): Promise<JournalEntry> {
     const { tenantId, companyId, userId } = this.requireCompany();
+    // Compliance gate (Task 4.3), evaluated BEFORE the write transaction: cannot
+    // reverse an entry that lives in a locked period, and cannot post the reversal
+    // into a locked (current) period.
+    const pre = await this.getEntry(entryId);
+    if (!pre) throw new EntryNotFoundError(entryId);
+    await this.periods.assertOpen(pre.postingDate, 'Reversal');
+    await this.periods.assertOpen(todayISO(), 'Reversal');
+
     return this.db.run(async (db) => {
       const original = await this.journals.getEntry(db, entryId);
       if (!original) throw new EntryNotFoundError(entryId);

@@ -1,0 +1,27 @@
+# Copy to terraform.tfvars and fill in. Do NOT commit terraform.tfvars.
+
+aws_region  = "eu-central-1"
+project     = "mgi-delta"
+environment = "prod"
+
+# --- Database path ---
+# IMPORTANT: stock RDS cannot grant BYPASSRLS (see README). For an immediate,
+# fully-compliant deploy use the self-managed EC2 Postgres path:
+use_rds = false
+# use_rds = true   # only after the BYPASSRLS refactor (Option B) + ADR.
+
+db_instance_class = "db.t4g.medium"
+db_multi_az       = true
+
+# --- Redis ---
+redis_node_type = "cache.t4g.small"
+
+# --- Public ingress / TLS (required for production) ---
+domain_name         = "example.com"                                  # SPA at app.example.com, API at api.example.com
+acm_certificate_arn = "arn:aws:acm:eu-central-1:123456789012:certificate/xxxx" # must cover both hosts
+
+# --- App config (non-secret) ---
+google_client_id = "89883181639-xxxx.apps.googleusercontent.com"
+
+# --- Images (set per release; default "latest") ---
+image_tag = "latest"

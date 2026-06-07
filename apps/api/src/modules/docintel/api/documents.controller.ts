@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Param, Post, Query } from '@nestjs/common';
 import { DOCUMENT_SERVICE, type IDocumentService } from '../application/document.service.interface';
 import { RequirePermission, PERMISSIONS } from '../../identity';
 import type { InitiateUploadDto, FinalizeUploadDto, ScanResultDto } from './dto/documents.dto';
@@ -36,4 +36,13 @@ export class DocumentsController {
 
   @Get(':id/download-url') @RequirePermission(PERMISSIONS.COMPANY_READ)
   downloadUrl(@Param('id') id: string) { return this.docs.getDownloadUrl(id).then((url) => ({ url })); }
+
+  @Post(':id/trash') @RequirePermission(PERMISSIONS.DOCUMENT_UPLOAD)
+  trash(@Param('id') id: string) { return this.docs.trashDocument(id); }
+
+  @Post(':id/restore') @RequirePermission(PERMISSIONS.DOCUMENT_UPLOAD)
+  restore(@Param('id') id: string) { return this.docs.restoreDocument(id); }
+
+  @Delete(':id') @RequirePermission(PERMISSIONS.DOCUMENT_UPLOAD)
+  purge(@Param('id') id: string) { return this.docs.purgeDocument(id).then(() => ({ ok: true })); }
 }

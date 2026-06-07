@@ -3,6 +3,9 @@
 
 export const ReportingEvents = {
   ReportGenerated: 'reporting.report_generated',
+  RevenueByMonthGenerated: 'report.revenue_by_month_generated',
+  ExpensesByMonthGenerated: 'report.expenses_by_month_generated',
+  CashFlowGenerated: 'report.cash_flow_generated',
 } as const;
 
 export type ReportingEventType = (typeof ReportingEvents)[keyof typeof ReportingEvents];

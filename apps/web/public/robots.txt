@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /landing/admin.html
+
+Sitemap: https://mgi-delta.bg/sitemap.xml

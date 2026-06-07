@@ -1,0 +1,136 @@
+{
+  // VS Code tasks for the MGI-Delta local stack.
+  // Run via: Terminal > Run Task… (or Ctrl+Shift+P > "Tasks: Run Task").
+  // The portable Postgres/Redis paths below are machine-specific (C:\Users\Cody\pgdev).
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "▶ Start Full Stack",
+      "detail": "Datastores + build + API + Worker + Web (everything)",
+      "dependsOrder": "sequence",
+      "dependsOn": ["_prep: datastores + build", "_run: API + Worker + Web"],
+      "problemMatcher": [],
+      "group": { "kind": "build", "isDefault": true }
+    },
+
+    {
+      "label": "_prep: datastores + build",
+      "hide": true,
+      "dependsOrder": "sequence",
+      "dependsOn": ["infra: start Postgres", "infra: start Redis", "build: API"],
+      "problemMatcher": []
+    },
+    {
+      "label": "_run: API + Worker + Web",
+      "hide": true,
+      "dependsOrder": "parallel",
+      "dependsOn": ["run: API", "run: Worker", "run: Web"],
+      "problemMatcher": []
+    },
+
+    {
+      "label": "infra: start Postgres",
+      "type": "shell",
+      "command": "if (-not (Get-NetTCPConnection -LocalPort 5432 -State Listen -ErrorAction SilentlyContinue)) { & 'C:\\Users\\Cody\\pgdev\\pgsql\\bin\\pg_ctl.exe' -D 'C:\\Users\\Cody\\pgdev\\data' -l 'C:\\Users\\Cody\\pgdev\\pg.log' -o '-p 5432' -w start } else { 'Postgres already listening on 5432' }",
+      "options": { "shell": { "executable": "powershell.exe", "args": ["-NoProfile", "-Command"] } },
+      "problemMatcher": [],
+      "presentation": { "reveal": "silent", "panel": "shared" }
+    },
+    {
+      "label": "infra: start Redis",
+      "type": "shell",
+      "command": "if (-not (Get-NetTCPConnection -LocalPort 6379 -State Listen -ErrorAction SilentlyContinue)) { Start-Process 'C:\\Users\\Cody\\pgdev\\redis\\redis-server.exe' -ArgumentList '--port 6379 --appendonly no' -WindowStyle Hidden; 'Redis started' } else { 'Redis already listening on 6379' }",
+      "options": { "shell": { "executable": "powershell.exe", "args": ["-NoProfile", "-Command"] } },
+      "problemMatcher": [],
+      "presentation": { "reveal": "silent", "panel": "shared" }
+    },
+    {
+      "label": "infra: stop Postgres",
+      "type": "shell",
+      "command": "& 'C:\\Users\\Cody\\pgdev\\pgsql\\bin\\pg_ctl.exe' -D 'C:\\Users\\Cody\\pgdev\\data' stop",
+      "options": { "shell": { "executable": "powershell.exe", "args": ["-NoProfile", "-Command"] } },
+      "problemMatcher": []
+    },
+
+    {
+      "label": "build: API",
+      "type": "npm",
+      "script": "build",
+      "path": "apps/api",
+      "problemMatcher": ["$tsc"],
+      "presentation": { "reveal": "silent", "panel": "shared" }
+    },
+    {
+      "label": "build: API (debug/sourcemaps)",
+      "detail": "Build API with sourcemaps for breakpoint debugging",
+      "type": "npm",
+      "script": "build:debug",
+      "path": "apps/api",
+      "problemMatcher": ["$tsc"],
+      "presentation": { "reveal": "silent", "panel": "shared" }
+    },
+    {
+      "label": "db: migrate",
+      "detail": "Apply pending SQL migrations as the postgres superuser",
+      "type": "shell",
+      "command": "npm run migrate:local",
+      "options": {
+        "cwd": "${workspaceFolder}/apps/api",
+        "env": { "MIGRATION_USER": "postgres", "MIGRATION_PASSWORD": "postgres" }
+      },
+      "problemMatcher": []
+    },
+
+    {
+      "label": "run: API",
+      "detail": "NestJS HTTP API on :3000",
+      "type": "shell",
+      "command": "npm run start:local",
+      "options": { "cwd": "${workspaceFolder}/apps/api" },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": { "regexp": "." },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Starting Nest application",
+          "endsPattern": "API listening on"
+        }
+      },
+      "presentation": { "panel": "dedicated", "group": "stack" }
+    },
+    {
+      "label": "run: Worker",
+      "detail": "BullMQ worker (scan + extraction consumers)",
+      "type": "shell",
+      "command": "npm run worker:local",
+      "options": { "cwd": "${workspaceFolder}/apps/api" },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": { "regexp": "." },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Starting Nest application",
+          "endsPattern": "Worker up"
+        }
+      },
+      "presentation": { "panel": "dedicated", "group": "stack" }
+    },
+    {
+      "label": "run: Web",
+      "detail": "Next.js dev server on :3001",
+      "type": "npm",
+      "script": "dev",
+      "path": "apps/web",
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": { "regexp": "." },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "(Starting|Compiling)",
+          "endsPattern": "(Ready in|compiled)"
+        }
+      },
+      "presentation": { "panel": "dedicated", "group": "stack" }
+    }
+  ]
+}

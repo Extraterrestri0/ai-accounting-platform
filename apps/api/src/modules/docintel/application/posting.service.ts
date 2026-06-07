@@ -2,6 +2,7 @@ import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { DatabaseContextService, TenantContextService } from '../../../platform';
 import { AUDIT_SERVICE, type IAuditService } from '../../audit';
 import { LEDGER_SERVICE, type ILedgerService, type PostEntryInput } from '../../ledger';
+import { PERIOD_SERVICE, type IAccountingPeriodService } from '../../periods';
 import { REVIEW_SERVICE, type IReviewService } from './review.service.interface';
 import { PostingRepository } from '../infrastructure/posting.repository';
 import { validatePosting, PostingValidationError } from '../domain/posting/validation';
@@ -20,6 +21,7 @@ export class PostingService implements IPostingService {
     @Inject(REVIEW_SERVICE) private readonly reviews: IReviewService,
     @Inject(LEDGER_SERVICE) private readonly ledger: ILedgerService,
     @Inject(AUDIT_SERVICE) private readonly audit: IAuditService,
+    @Inject(PERIOD_SERVICE) private readonly periods: IAccountingPeriodService,
   ) {}
 
   private scope() {
@@ -37,6 +39,8 @@ export class PostingService implements IPostingService {
   async postFromReview(reviewPackageId: string): Promise<PostingOutcome> {
     const { tenantId, companyId } = this.scope();
     const userId = this.requireHuman();
+    // Compliance gate (Task 4.3): no purchase approvals/postings into a locked period.
+    await this.periods.assertOpen(new Date().toISOString().slice(0, 10), 'Posting');
 
     // 1) Load the approved review + resolve lines + create the posting_request (own txn; no nesting with the ledger).
     const prep = await this.db.run(async (db) => {

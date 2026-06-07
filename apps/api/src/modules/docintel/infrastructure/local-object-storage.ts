@@ -38,6 +38,11 @@ export class LocalObjectStorage implements StorageService {
   }
   async readObject(storageKey: string): Promise<Buffer> { return fs.readFile(this.full(storageKey)); }
   async finalizeObject(storageKey: string): Promise<void> { this.locked.add(storageKey); } // WORM lock
+  /** Permanent delete (purge): clear the WORM lock and remove the file bytes. */
+  async deleteObject(storageKey: string): Promise<void> {
+    this.locked.delete(storageKey);
+    try { await fs.unlink(this.full(storageKey)); } catch { /* already gone */ }
+  }
   async getDownloadUrl(storageKey: string, ttlSeconds: number): Promise<string> {
     const exp = Date.now() + ttlSeconds * 1000;
     const sig = crypto.createHash('sha256').update(storageKey + exp).digest('hex').slice(0, 16);

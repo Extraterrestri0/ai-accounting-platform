@@ -16,5 +16,8 @@ export interface IDocumentService extends ApplicationService {
   listDocuments(q: ListDocumentsQuery): Promise<{ items: DocumentWithMeta[]; total: number; page: number; pageSize: number }>;
   getDocument(documentId: string): Promise<DocumentWithMeta>;
   getDownloadUrl(documentId: string): Promise<string>;
+  trashDocument(documentId: string): Promise<Document>;
+  restoreDocument(documentId: string): Promise<Document>;
+  purgeDocument(documentId: string): Promise<void>;
 }
 export const DOCUMENT_SERVICE = Symbol('DocIntel.DocumentService');

@@ -1,0 +1,26 @@
+# syntax=docker/dockerfile:1
+# Web as a Node server (`next start`). Unlike infra/Dockerfile.web (static export),
+# this supports the app's dynamic routes (e.g. /review/[id]). NEXT_PUBLIC_* is
+# inlined at BUILD time, so the public API base must be passed as a build arg.
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY apps/web/package.json apps/web/package-lock.json* ./
+RUN npm ci || npm install
+COPY apps/web/ ./
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_USE_MOCK=false
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL NEXT_PUBLIC_USE_MOCK=$NEXT_PUBLIC_USE_MOCK
+RUN npm run build
+
+FROM node:20-alpine AS runtime
+ENV NODE_ENV=production
+WORKDIR /app
+RUN addgroup -S app && adduser -S app -G app
+COPY --from=build /app/package.json ./
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/.next ./.next
+COPY --from=build /app/next.config.mjs ./
+USER app
+EXPOSE 3001
+# `next start -p 3001` (see apps/web package.json "start").
+CMD ["npm", "run", "start"]

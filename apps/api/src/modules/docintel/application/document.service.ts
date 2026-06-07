@@ -121,4 +121,49 @@ export class DocumentService implements IDocumentService {
     if (doc.status === 'quarantined') throw new InvalidDocumentStateError('Document is quarantined and cannot be downloaded.');
     return this.storage.getDownloadUrl(doc.storageKey, DOWNLOAD_TTL);
   }
+
+  /** Move a document to the trash (recoverable). */
+  async trashDocument(documentId: string): Promise<Document> {
+    const { companyId, userId } = this.scope();
+    return this.db.run(async (db) => {
+      const doc = await this.repo.getById(db, documentId);
+      if (!doc) throw new DocumentNotFoundError(documentId);
+      if (doc.status === 'deleted') throw new InvalidDocumentStateError('Document has been permanently deleted.');
+      const updated = await this.repo.trash(db, documentId);
+      await this.audit.append(db, { companyId, actorType: 'user', actorId: userId, action: 'document.trashed', entityType: 'document', entityId: documentId, before: { status: doc.status }, after: { status: 'trashed' } });
+      return updated;
+    });
+  }
+
+  /** Restore a document from the trash. */
+  async restoreDocument(documentId: string): Promise<Document> {
+    const { companyId, userId } = this.scope();
+    return this.db.run(async (db) => {
+      const doc = await this.repo.getById(db, documentId);
+      if (!doc) throw new DocumentNotFoundError(documentId);
+      if (doc.status !== 'trashed') throw new InvalidDocumentStateError('Only trashed documents can be restored.');
+      const updated = await this.repo.setStatus(db, documentId, 'ready');
+      await this.audit.append(db, { companyId, actorType: 'user', actorId: userId, action: 'document.restored', entityType: 'document', entityId: documentId, before: { status: 'trashed' }, after: { status: 'ready' } });
+      return updated;
+    });
+  }
+
+  /**
+   * Permanently delete: remove the stored file bytes and tombstone the record (status='deleted').
+   * The immutable document_versions + hash-chained audit trail are RETAINED for compliance.
+   */
+  async purgeDocument(documentId: string): Promise<void> {
+    const { companyId, userId } = this.scope();
+    const key = await this.db.run(async (db) => {
+      const doc = await this.repo.getById(db, documentId);
+      if (!doc) throw new DocumentNotFoundError(documentId);
+      if (doc.status !== 'trashed' && doc.status !== 'deleted') throw new InvalidDocumentStateError('Move the document to the trash before permanently deleting it.');
+      return doc.storageKey;
+    });
+    if (key) { try { await this.storage.deleteObject(key); } catch { /* bytes already gone */ } }
+    await this.db.run(async (db) => {
+      await this.repo.setStatus(db, documentId, 'deleted');
+      await this.audit.append(db, { companyId, actorType: 'user', actorId: userId, action: 'document.purged', entityType: 'document', entityId: documentId, after: { status: 'deleted', bytesPurged: true } });
+    });
+  }
 }

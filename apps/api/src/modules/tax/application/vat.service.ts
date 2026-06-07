@@ -1,12 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { DatabaseContextService, TenantContextService } from '../../../platform';
 import { AUDIT_SERVICE, type IAuditService } from '../../audit';
+import { PERIOD_SERVICE, type IAccountingPeriodService } from '../../periods';
 import { VatRepository } from '../infrastructure/vat.repository';
 import { buildReturnDataset, classifyEntry, summarize, treatmentFromRate, validate } from '../domain/vat/calculator';
 import type { RegisterRow, VatPeriod } from '../domain/vat/models';
 import type { IVatService, VatReturnResult } from './vat.service.interface';
 
 class VatError extends Error {}
+
+/** First day of a VAT month as an ISO date — the period key the lock gate checks. */
+const monthDate = (year: number, month: number): string => `${year}-${String(month).padStart(2, '0')}-01`;
 
 @Injectable()
 export class VatService implements IVatService {
@@ -15,6 +19,7 @@ export class VatService implements IVatService {
     private readonly db: DatabaseContextService,
     private readonly repo: VatRepository,
     @Inject(AUDIT_SERVICE) private readonly audit: IAuditService,
+    @Inject(PERIOD_SERVICE) private readonly periods: IAccountingPeriodService,
   ) {}
 
   private scope() {
@@ -25,6 +30,8 @@ export class VatService implements IVatService {
 
   async buildRegisters(year: number, month: number): Promise<{ period: VatPeriod; purchase: RegisterRow[]; sales: RegisterRow[] }> {
     const { tenantId, companyId, userId } = this.scope();
+    // Compliance gate (Task 4.3): no VAT rebuilds in a locked period.
+    await this.periods.assertOpen(monthDate(year, month), 'VAT rebuild');
     return this.db.run(async (db) => {
       const period = await this.repo.ensurePeriod(db, tenantId, companyId, year, month);
       const entries = await this.repo.postedEntries(db, period.startsOn, period.endsOn);
@@ -60,6 +67,8 @@ export class VatService implements IVatService {
 
   async generateReturn(year: number, month: number): Promise<VatReturnResult> {
     const { tenantId, companyId, userId } = this.scope();
+    // Compliance gate (Task 4.3): cannot regenerate the return for a locked period.
+    await this.periods.assertOpen(monthDate(year, month), 'VAT return');
     return this.db.run(async (db) => {
       const period = await this.repo.ensurePeriod(db, tenantId, companyId, year, month);
       const rows = await this.repo.allRegister(db, period.id);

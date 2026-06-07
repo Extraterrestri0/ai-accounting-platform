@@ -8,6 +8,8 @@ export interface IRulesEngineService extends ApplicationService {
   /** Generate (or regenerate) the accounting + VAT suggestion for a document's current extraction. */
   generateSuggestions(documentId: string): Promise<AccountingSuggestion>;
   getSuggestion(documentId: string): Promise<AccountingSuggestion | null>;
+  /** Reviewer changes the expense category → source becomes 'manual'; posting account is updated. */
+  setSuggestionCategory(suggestionId: string, categoryId: string): Promise<AccountingSuggestion>;
   createRule(input: CreateRuleInput): Promise<{ ruleId: string }>;
 }
 export const RULES_ENGINE_SERVICE = Symbol('DocIntel.RulesEngineService');

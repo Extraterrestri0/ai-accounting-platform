@@ -35,6 +35,9 @@ export class ReviewsController {
   @Post(':id/edit') @RequirePermission(PERMISSIONS.REVIEW_APPROVE)
   edit(@Param('id') id: string, @Body() dto: EditReviewDto) { return this.reviews.edit(id, dto); }
 
+  @Post(':id/fields') @RequirePermission(PERMISSIONS.REVIEW_APPROVE)
+  editFields(@Param('id') id: string, @Body() dto: { fields: Record<string, string> }) { return this.reviews.editFields(id, dto?.fields ?? {}); }
+
   @Post(':id/assign') @RequirePermission(PERMISSIONS.REVIEW_APPROVE)
   assign(@Param('id') id: string, @Body() dto: AssignDto) { return this.reviews.assignReviewer(id, dto.reviewerId); }
 

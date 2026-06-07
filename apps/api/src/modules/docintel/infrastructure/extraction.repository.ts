@@ -9,11 +9,11 @@ export class ExtractionRepository {
       `SELECT count(*)::text AS n FROM extraction_runs WHERE document_id=$1 AND status IN ('pending','running')`, [documentId]);
     return Number(r.rows[0].n) > 0;
   }
-  async createRun(db: ScopedClient, tenantId: string, companyId: string, documentId: string, method: RunMethod, engine: string): Promise<string> {
+  async createRun(db: ScopedClient, tenantId: string, companyId: string, documentId: string, method: RunMethod, engine: string, provider?: string, modelVersion?: string): Promise<string> {
     const r = await db.query<{ id: string }>(
-      `INSERT INTO extraction_runs (tenant_id, company_id, document_id, method, engine, status, started_at)
-       VALUES ($1,$2,$3,$4,$5,'running',now()) RETURNING id`,
-      [tenantId, companyId, documentId, method, engine]);
+      `INSERT INTO extraction_runs (tenant_id, company_id, document_id, method, engine, provider, model_version, status, started_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,'running',now()) RETURNING id`,
+      [tenantId, companyId, documentId, method, engine, provider ?? null, modelVersion ?? null]);
     return r.rows[0].id;
   }
   async finishRun(db: ScopedClient, runId: string, status: RunStatus, overall: number | null, error?: string): Promise<void> {

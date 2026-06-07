@@ -1,17 +1,175 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-:root { color-scheme: light; }
-body { font-family: Inter, system-ui, sans-serif; }
-/* representative screens use bare tables/inputs; give them sane preview styling */
-main table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
-main th, main td { text-align: left; padding: 7px 8px; border-bottom: 1px solid #e2e8f0; }
-main thead th { color: #64748b; font-weight: 500; }
-main h1 { font-size: 1.15rem; font-weight: 600; margin-bottom: .25rem; }
-main h2 { font-size: .95rem; font-weight: 600; margin: 1rem 0 .25rem; }
-main button { border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; padding: 6px 12px; font-size: 13px; margin-right: 6px; cursor: pointer; }
-main button:hover { background: #f8fafc; }
-main a { color: #1d4ed8; }
-main input, main select { border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; font-size: 13px; }
-main section { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; }
-main meter { width: 90px; }
+
+/* ============================================================================
+   Счетоводство — AI Accounting Design System (v1.0) applied to shadcn tokens.
+   Blue primary #2F7BE0 · Inter · neutral ramp · green/amber/red semantics ·
+   8px card radius · elevation shadows · Bulgarian-first (locl) · EUR-native.
+   ============================================================================ */
+@layer base {
+  :root {
+    color-scheme: light;
+
+    /* surfaces / text (neutral ramp) */
+    --background: 213 33% 97%;          /* neutral-50  #F6F8FB */
+    --foreground: 214 22% 9%;           /* neutral-900 #12161C */
+    --card: 0 0% 100%;
+    --card-foreground: 214 22% 9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 214 22% 9%;
+
+    /* blue primary */
+    --primary: 214 74% 53%;             /* blue-500 #2F7BE0 */
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 213 89% 96%;        /* blue-50  #EEF5FE */
+
+    /* green success (AA on white) */
+    --success: 153 81% 29%;             /* green-600 #0E8650 */
+    --success-foreground: 0 0% 100%;
+    --success-soft: 149 66% 95%;        /* green-50  #ECFBF3 */
+
+    /* amber warning (AA text) */
+    --warning: 38 92% 31%;              /* amber-600 #9A6406 */
+    --warning-foreground: 0 0% 100%;
+    --warning-soft: 40 90% 95%;         /* amber-50  #FEF6E7 */
+
+    /* red error */
+    --destructive: 0 66% 48%;           /* red-500 #CB2A2A */
+    --destructive-foreground: 0 0% 100%;
+    --destructive-soft: 0 84% 96%;      /* red-50  #FDECEC */
+
+    --secondary: 213 33% 95%;           /* neutral-100 #EDF1F6 */
+    --secondary-foreground: 214 22% 9%;
+    --muted: 213 33% 95%;
+    --muted-foreground: 214 12% 47%;    /* neutral-500 #6B7787 */
+    --accent: 213 89% 96%;              /* blue-50 (selected tint) */
+    --accent-foreground: 215 74% 36%;   /* blue-700 #184F9E */
+
+    --border: 214 28% 90%;              /* neutral-200 #DDE3EC */
+    --input: 214 28% 90%;
+    --ring: 214 74% 53%;
+    --radius: 0.625rem;                 /* 10px cards · buttons 8px (-2px) — softer, modern */
+
+    /* Premium layer — energized in-brand gradients + tinted depth (whole app) */
+    --grad-primary: linear-gradient(135deg, hsl(214 86% 57%), hsl(214 74% 45%));
+    --grad-success: linear-gradient(135deg, hsl(153 70% 41%), hsl(153 81% 26%));
+    --grad-brand:   linear-gradient(105deg, hsl(215 74% 34%), hsl(214 82% 52%) 46%, hsl(153 76% 40%));
+    --grad-hairline: linear-gradient(135deg, hsl(214 80% 55% / .5), hsl(153 70% 42% / .35));
+    --shadow-primary: 0 10px 26px -10px hsl(214 74% 44% / .55);
+    --shadow-success: 0 10px 26px -10px hsl(153 81% 26% / .5);
+    --shadow-lift:    0 1px 2px hsl(214 40% 20% / .05), 0 18px 42px -18px hsl(214 40% 25% / .28);
+    --shadow-pop2:    0 28px 70px -28px hsl(214 45% 22% / .42);
+
+    /* dark brand panel (login/register) — kept dark intentionally */
+    --sidebar: 214 30% 12%;
+    --sidebar-foreground: 214 18% 72%;
+    --sidebar-accent: 214 74% 53%;
+    --sidebar-border: 214 20% 22%;
+  }
+
+  * { @apply border-border; }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-feature-settings: 'locl' 1;   /* Bulgarian localized letterforms (with lang="bg") */
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection { @apply bg-primary/15; }
+  :focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+}
+
+@layer utilities {
+  /* tabular lining figures for money / IDs */
+  .tabular-nums, [data-money], table td, table th { font-variant-numeric: tabular-nums; }
+  .font-mono { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace; }
+  .t-overline { @apply text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground; }
+  .skeleton { @apply relative overflow-hidden bg-muted rounded-md; }
+  .skeleton::after {
+    content: ''; position: absolute; inset: 0; transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, hsl(0 0% 100% / 0.6), transparent);
+    animation: shimmer 1.4s infinite;
+  }
+  @keyframes shimmer { 100% { transform: translateX(100%); } }
+  .scrollbar-thin::-webkit-scrollbar { width: 8px; height: 8px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { @apply bg-border rounded-full; }
+
+  /* ===== Marketing-site premium utilities (additive — do not affect app tokens) ===== */
+
+  /* Faint dotted grid for section backgrounds. */
+  .bg-grid {
+    background-image: radial-gradient(hsl(var(--foreground) / 0.05) 1px, transparent 1px);
+    background-size: 22px 22px;
+    -webkit-mask-image: radial-gradient(60rem 40rem at 50% 0%, #000 30%, transparent 78%);
+    mask-image: radial-gradient(60rem 40rem at 50% 0%, #000 30%, transparent 78%);
+  }
+
+  /* Soft brand "aurora" wash for heroes / CTA bands. */
+  .bg-aurora {
+    background:
+      radial-gradient(48rem 32rem at 12% -8%, hsl(var(--primary) / 0.16), transparent 60%),
+      radial-gradient(40rem 28rem at 92% 4%, hsl(var(--success) / 0.12), transparent 60%);
+  }
+
+  /* Gradient brand text for hero emphasis words. */
+  .text-gradient {
+    background-image: linear-gradient(100deg, hsl(var(--primary)), hsl(215 80% 42%) 55%, hsl(var(--success)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Layered, low-contrast premium shadow for floating cards/mockups. */
+  .shadow-soft { box-shadow: 0 1px 2px rgba(18,22,28,.06), 0 8px 24px -8px rgba(18,22,28,.12), 0 24px 56px -24px rgba(18,22,28,.18); }
+  .shadow-glow { box-shadow: 0 0 0 1px hsl(var(--primary) / 0.18), 0 20px 48px -20px hsl(var(--primary) / 0.45); }
+
+  /* Hairline gradient border (premium card edge). */
+  .ring-hairline { box-shadow: inset 0 0 0 1px hsl(var(--border)); }
+
+  /* Scroll-reveal (used by <Reveal/>). Respects reduced-motion. */
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s cubic-bezier(.22,.61,.36,1), transform .7s cubic-bezier(.22,.61,.36,1); }
+  .reveal.is-visible { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal, .reveal.is-visible { opacity: 1; transform: none; transition: none; }
+  }
+
+  /* ===== Premium in-app utilities (whole React app) ============================ */
+  .bg-grad-primary { background-image: var(--grad-primary); }
+  .bg-grad-success { background-image: var(--grad-success); }
+  .bg-grad-brand   { background-image: var(--grad-brand); }
+  .shadow-primary  { box-shadow: var(--shadow-primary); }
+  .shadow-success  { box-shadow: var(--shadow-success); }
+  .shadow-lift     { box-shadow: var(--shadow-lift); }
+  .shadow-pop2     { box-shadow: var(--shadow-pop2); }
+
+  /* glassmorphism surface (light) */
+  .glass { background: hsl(0 0% 100% / .72); -webkit-backdrop-filter: saturate(1.7) blur(16px); backdrop-filter: saturate(1.7) blur(16px); }
+
+  /* richer brand mesh for dark auth panels / CTA bands */
+  .bg-mesh-brand {
+    background:
+      radial-gradient(46% 48% at 16% -6%, hsl(214 80% 52% / .42), transparent 60%),
+      radial-gradient(42% 52% at 92% 108%, hsl(153 76% 38% / .26), transparent 60%),
+      radial-gradient(38% 40% at 60% 44%, hsl(224 70% 50% / .18), transparent 70%);
+  }
+
+  /* gradient hairline frame (premium card edge that earlier ring-hairline lacked) */
+  .ring-grad { position: relative; }
+  .ring-grad::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+    background: var(--grad-hairline);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+  }
+
+  /* animated brand gradient text (heading emphasis) */
+  .text-grad-anim {
+    background-image: var(--grad-brand); background-size: 220% auto;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: gradPan 9s linear infinite;
+  }
+  @keyframes gradPan { to { background-position: 220% center; } }
+  @media (prefers-reduced-motion: reduce) { .text-grad-anim { animation: none; } }
+}

@@ -1,5 +1,5 @@
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand, HeadBucketCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import type { StorageService, UploadTarget } from '../application/storage.port';
 
@@ -56,6 +56,10 @@ export class S3ObjectStorage implements StorageService, OnModuleInit {
 
   async getDownloadUrl(storageKey: string, ttlSeconds: number): Promise<string> {
     return getSignedUrl(this.client, new GetObjectCommand({ Bucket: this.bucket, Key: storageKey }), { expiresIn: ttlSeconds });
+  }
+  /** Permanent delete (purge). Note: Object-Lock COMPLIANCE retention may block this until expiry. */
+  async deleteObject(storageKey: string): Promise<void> {
+    await this.client.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: storageKey }));
   }
 
   private async toBuffer(body: unknown): Promise<Buffer> {

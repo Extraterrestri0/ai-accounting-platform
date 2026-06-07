@@ -30,3 +30,22 @@ export interface CompanySettings {
   vatRegistrationDate?: string; defaultCurrency: string;
   fiscalYearStartMonth: number; accountingBasis: 'accrual' | 'cash';
 }
+
+/** Expense category (Task 1.2) — drives purchase classification + default account. */
+export type ExpenseVatTreatment = 'standard' | 'reduced' | 'zero' | 'exempt' | 'reverse_charge' | 'intra_community' | 'export' | 'import' | 'none';
+export interface ExpenseCategory {
+  id: string; companyId: string; code: string; nameBg: string; nameEn: string;
+  defaultAccountId?: string; defaultAccountCode?: string; defaultVatTreatment: ExpenseVatTreatment;
+  saftCode?: string; isActive: boolean; createdAt: string;
+}
+
+/** Product / service catalog item (Task 2.1). */
+export type CatalogItemKind = 'product' | 'service';
+export interface CatalogItem {
+  id: string; companyId: string; code: string; description: string;
+  kind: CatalogItemKind; unit: string; vatRate: string;
+  vatCodeId?: string; saftCode?: string; defaultAccountId?: string;
+  isActive: boolean;
+  defaultAccountCode?: string; vatCodeLabel?: string; // joined for display
+  createdAt: string;
+}

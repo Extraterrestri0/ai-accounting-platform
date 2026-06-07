@@ -81,4 +81,42 @@ export class UserAuthRepository {
     }
     return { tenantRole: m.rows[0]?.role as TenantRole, companyRole: companyRole as CompanyRole };
   }
+
+  /**
+   * Self-service registration via the SECURITY DEFINER function (no tenant context).
+   * Creates tenant + user + tenant_admin membership + an initial company. Throws on duplicate email.
+   */
+  async register(email: string, passwordHash: string, companyName: string): Promise<{ userId: string; tenantId: string }> {
+    return this.db.runWithoutTenant(async (db) => {
+      const r = await db.query<{ user_id: string; tenant_id: string }>(
+        `SELECT user_id, tenant_id FROM app.register_account($1, $2, $3)`, [email, passwordHash, companyName]);
+      return { userId: r.rows[0].user_id, tenantId: r.rows[0].tenant_id };
+    });
+  }
+
+  /** OAuth login/provision: returns the existing user or creates one (no password). */
+  async oauthUpsert(email: string, companyName: string): Promise<{ userId: string; tenantId: string }> {
+    return this.db.runWithoutTenant(async (db) => {
+      const r = await db.query<{ user_id: string; tenant_id: string }>(
+        `SELECT user_id, tenant_id FROM app.oauth_account($1, $2)`, [email, companyName]);
+      return { userId: r.rows[0].user_id, tenantId: r.rows[0].tenant_id };
+    });
+  }
+
+  /** Profile read (own user, RLS-scoped). */
+  getProfile(userId: string): Promise<{ email: string; avatarUrl: string | null }> {
+    return this.db.run(async (db) => {
+      const r = await db.query<{ email: string; avatar_url: string | null }>(
+        `SELECT email, avatar_url FROM users WHERE id = $1`, [userId]);
+      const x = r.rows[0];
+      return { email: x?.email ?? '', avatarUrl: x?.avatar_url ?? null };
+    });
+  }
+
+  /** Set/clear the profile picture (RLS-scoped; column-level UPDATE grant). */
+  setAvatar(userId: string, avatarUrl: string | null): Promise<void> {
+    return this.db.run(async (db) => {
+      await db.query(`UPDATE users SET avatar_url = $2 WHERE id = $1`, [userId, avatarUrl]);
+    });
+  }
 }

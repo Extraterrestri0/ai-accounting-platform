@@ -13,6 +13,7 @@ export interface IReviewService extends ApplicationService {
   reject(packageId: string, reason: string): Promise<ReviewPackage>;
   requestCorrection(packageId: string, note: string): Promise<ReviewPackage>;
   edit(packageId: string, input: EditInput): Promise<ReviewPackage>;
+  editFields(packageId: string, fields: Record<string, string>): Promise<ReviewPackage>;
   assignReviewer(packageId: string, reviewerId: string): Promise<ReviewPackage>;
   addComment(packageId: string, body: string): Promise<void>;
   dashboard(): Promise<ReviewerDashboard>;

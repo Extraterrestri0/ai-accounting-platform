@@ -39,6 +39,11 @@ export class DocumentRepository {
       [id, status, extra?.checksum ?? null, extra?.sizeBytes ?? null]);
     return mapDoc(r.rows[0]);
   }
+  async trash(db: ScopedClient, id: string): Promise<Document> {
+    const r = await db.query<DocRow>(
+      `UPDATE documents SET status='trashed', trashed_at=now(), updated_at=now() WHERE id=$1 RETURNING *`, [id]);
+    return mapDoc(r.rows[0]);
+  }
   async addVersion(db: ScopedClient, tenantId: string, companyId: string, v: {
     documentId: string; versionNo: number; storageKey: string; checksum: string; sizeBytes: number;
   }): Promise<void> {
@@ -75,6 +80,7 @@ export class DocumentRepository {
   async list(db: ScopedClient, q: { status?: DocumentStatus; type?: DetectedType; search?: string; limit: number; offset: number }): Promise<{ items: DocumentWithMeta[]; total: number }> {
     const where: string[] = ['true']; const params: unknown[] = [];
     if (q.status) { params.push(q.status); where.push(`d.status=$${params.length}`); }
+    else { where.push(`d.status NOT IN ('trashed','deleted')`); } // hide trash + purged from the default view
     if (q.type) { params.push(q.type); where.push(`m.detected_type=$${params.length}`); }
     if (q.search) { params.push(`%${q.search.toLowerCase()}%`); where.push(`lower(d.original_filename) LIKE $${params.length}`); }
     const w = where.join(' AND ');

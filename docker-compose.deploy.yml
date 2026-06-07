@@ -1,0 +1,170 @@
+# =====================================================================
+# Single-VPS deployment stack (EU host). One public host, automatic HTTPS via Caddy.
+#   docker compose -f docker-compose.deploy.yml --env-file .env.deploy up -d --build
+#
+# Differs from the local docker-compose.yml: datastores are NOT published to the
+# host (internal network only), web runs as a Node server (next start), a Caddy
+# reverse proxy terminates TLS and serves web at / + api at /api/*, and the
+# documents bucket is created in MinIO with object-lock. Secrets come from
+# .env.deploy (never commit it). See docs/runbooks/deploy-vps.md.
+# =====================================================================
+name: mgi-delta
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${PGDATABASE:-accounting}
+      POSTGRES_USER: ${POSTGRES_SUPERUSER:-app_owner}     # owner/migration role (superuser → can grant BYPASSRLS)
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?set in .env.deploy}
+    volumes: [db_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_SUPERUSER:-app_owner} -d ${PGDATABASE:-accounting}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "yes"]
+    volumes: [redis_data:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY:?set in .env.deploy}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY:?set in .env.deploy}
+    volumes: [minio_data:/data]
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Create the documents bucket (with object-lock/WORM) before the API starts.
+  createbuckets:
+    image: minio/mc:latest
+    depends_on:
+      minio: { condition: service_healthy }
+    environment:
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
+      STORAGE_BUCKET: ${STORAGE_BUCKET:-documents}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >
+        mc alias set local http://minio:9000 "$${STORAGE_ACCESS_KEY}" "$${STORAGE_SECRET_KEY}" &&
+        (mc ls "local/$${STORAGE_BUCKET}" >/dev/null 2>&1 || mc mb --with-lock "local/$${STORAGE_BUCKET}") &&
+        echo "bucket $${STORAGE_BUCKET} ready"
+    restart: "no"
+
+  # Run migrations as the owner/superuser, then set app_user's password (0001 makes it passwordless).
+  migrate:
+    build: { context: ., dockerfile: infra/Dockerfile.api }
+    command: ["sh", "-c", "node scripts/migrate.js && node scripts/set-app-user-password.js"]
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: ${PGDATABASE:-accounting}
+      MIGRATION_USER: ${POSTGRES_SUPERUSER:-app_owner}
+      MIGRATION_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD}
+      APP_USER_PASSWORD: ${PGPASSWORD:?set in .env.deploy}
+    depends_on:
+      db: { condition: service_healthy }
+    restart: "no"
+
+  api:
+    build: { context: ., dockerfile: infra/Dockerfile.api }
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: ${PGUSER:-app_user}                          # RLS subject, never the owner
+      PGPASSWORD: ${PGPASSWORD:?set in .env.deploy}
+      PGDATABASE: ${PGDATABASE:-accounting}
+      JWT_SECRET: ${JWT_SECRET:?set in .env.deploy}
+      AUTH_JWT_SECRET: ${JWT_SECRET}
+      REDIS_URL: redis://redis:6379
+      STORAGE_ENDPOINT: http://minio:9000                  # presence → S3 adapter (MinIO)
+      STORAGE_BUCKET: ${STORAGE_BUCKET:-documents}
+      STORAGE_REGION: ${STORAGE_REGION:-eu-central-1}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
+      STORAGE_RETAIN_DAYS: ${STORAGE_RETAIN_DAYS:-3650}
+      # Same-origin: SPA at https://APP_HOST, API at https://APP_HOST/api
+      CORS_ORIGINS: https://${APP_HOST:?set in .env.deploy}
+      WEB_APP_URL: https://${APP_HOST}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: https://${APP_HOST}/api/auth/google/callback
+      MAIL_FROM: ${MAIL_FROM:-no-reply@example.com}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RATE_LIMIT_TTL: ${RATE_LIMIT_TTL:-60000}
+      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-300}
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      minio: { condition: service_healthy }
+      createbuckets: { condition: service_completed_successfully }
+      migrate: { condition: service_completed_successfully }
+    restart: unless-stopped
+
+  worker:
+    build: { context: ., dockerfile: infra/Dockerfile.worker }
+    environment:
+      NODE_ENV: production
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: ${PGUSER:-app_user}
+      PGPASSWORD: ${PGPASSWORD}
+      PGDATABASE: ${PGDATABASE:-accounting}
+      REDIS_URL: redis://redis:6379
+      STORAGE_ENDPOINT: http://minio:9000
+      STORAGE_BUCKET: ${STORAGE_BUCKET:-documents}
+      STORAGE_REGION: ${STORAGE_REGION:-eu-central-1}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.web.node
+      args:
+        NEXT_PUBLIC_API_URL: https://${APP_HOST}/api       # same-origin API base (baked at build)
+    depends_on: [api]
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    depends_on: [web, api]
+    ports: ["80:80", "443:443"]
+    environment:
+      APP_HOST: ${APP_HOST}
+    volumes:
+      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  redis_data:
+  minio_data:
+  caddy_data:
+  caddy_config:

@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { AuditModule } from '../audit';
 import { TaxModule } from '../tax';
+import { PaymentsModule } from '../payments';
+import { MasterDataModule } from '../masterdata';
 import { ReportingController } from './api/reporting.controller';
 import { ReportsController } from './api/reports.controller';
 import { REPORTING_SERVICE } from './application/reporting.service.interface';
@@ -15,7 +17,7 @@ import { ReportsRepository } from './infrastructure/reports.repository';
  * report_snapshots — never the ledger. VAT report delegates to the tax context.
  */
 @Module({
-  imports: [AuditModule, TaxModule],
+  imports: [AuditModule, TaxModule, PaymentsModule, MasterDataModule],
   controllers: [ReportingController, ReportsController],
   providers: [
     { provide: REPORTING_SERVICE, useClass: ReportingService },

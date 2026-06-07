@@ -1,0 +1,29 @@
+{
+  // ESLint runs per-workspace (each app has its own config)
+  "eslint.workingDirectories": [
+    { "directory": "apps/api", "changeProcessCWD": true },
+    { "directory": "apps/web", "changeProcessCWD": true }
+  ],
+  "eslint.validate": ["javascript", "typescript", "typescriptreact"],
+
+  // Use the workspace TypeScript, not VS Code's bundled version
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+
+  // Keep build output / caches out of search + the file explorer noise
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.next": true,
+    "**/out": true,
+    "_archive/**": true
+  },
+  "files.watcherExclude": {
+    "**/dist/**": true,
+    "**/.next/**": true,
+    "**/node_modules/**": true
+  },
+
+  // Terminals open in PowerShell to match the project's run commands
+  "terminal.integrated.defaultProfile.windows": "PowerShell"
+}

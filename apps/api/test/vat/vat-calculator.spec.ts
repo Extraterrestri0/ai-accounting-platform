@@ -21,6 +21,33 @@ describe('sales VAT', () => {
     expect(classifyEntry(salesEntry)).toMatchObject({ kind: 'sales', base: 300, vat: 60, deductible: 0 });
   });
 });
+
+// --- Task 2.2: credit notes (reverse) / debit notes (increase) / proforma (no posting) ---
+const creditNoteEntry: PostedEntry = { journalEntryId: 'cn', entryNo: 3, postingDate: '2026-04-25', lines: [
+  { code: '702', direction: 'debit', amount: '300.00' }, { code: '4532', direction: 'debit', amount: '60.00' }, { code: '411', direction: 'credit', amount: '360.00' }] };
+const debitNoteEntry: PostedEntry = { journalEntryId: 'dn', entryNo: 4, postingDate: '2026-04-26', lines: [
+  { code: '411', direction: 'debit', amount: '120.00' }, { code: '702', direction: 'credit', amount: '100.00' }, { code: '4532', direction: 'credit', amount: '20.00' }] };
+
+describe('credit / debit notes (signed registers)', () => {
+  it('credit note classifies as NEGATIVE sales (base -300 / vat -60)', () => {
+    expect(classifyEntry(creditNoteEntry)).toMatchObject({ kind: 'sales', base: -300, vat: -60, deductible: 0 });
+  });
+  it('credit note still maps to the 20% standard treatment (by magnitude)', () => {
+    const c = classifyEntry(creditNoteEntry);
+    expect(treatmentFromRate(c.base, c.vat)).toEqual({ rate: 20, treatment: 'standard' });
+  });
+  it('debit note classifies as POSITIVE sales (base +100 / vat +20)', () => {
+    expect(classifyEntry(debitNoteEntry)).toMatchObject({ kind: 'sales', base: 100, vat: 20, deductible: 0 });
+  });
+  it('an invoice fully credited nets to zero output VAT', () => {
+    const s = summarize([withTreatment(salesEntry), withTreatment(creditNoteEntry)]);
+    expect(s.outputVat).toBe(0);
+  });
+  it('invoice + debit note increases output VAT (60 + 20 = 80)', () => {
+    const s = summarize([withTreatment(salesEntry), withTreatment(debitNoteEntry)]);
+    expect(s.outputVat).toBe(80);
+  });
+});
 describe('deductible VAT & VAT payable', () => {
   it('output 60 − deductible 40 = payable 20', () => {
     const s = summarize([withTreatment(purchaseEntry), withTreatment(salesEntry)]);
