@@ -9,6 +9,11 @@ import { SAFT_VALIDATION_SERVICE, type ISaftValidationService } from './saft-val
 import { SAFT_EXPORT_QUEUE, type SaftExportQueue } from './saft-export-queue.port';
 import { SAFT_XSD_VALIDATOR, type SaftXsdValidator } from './saft-xsd-validator.port';
 import { buildSaftXml } from '../domain/saft-xml.builder';
+import {
+  saftExportRequested, saftExportCompleted, saftExportFailed,
+  saftXmlRenderDuration, saftValidationDuration, saftStorageWriteDuration,
+  logSaft, safeErrorName,
+} from '../../../platform/observability';
 import { SaftEvents } from '../events';
 import type { SaftDataset, SaftExportRecord } from '../domain/models';
 import type { ISaftExportService, SaftDownloadInfo } from './saft-export.service.interface';
@@ -75,6 +80,8 @@ export class SaftExportService implements ISaftExportService {
     });
     // Enqueue AFTER the row+audit commit (jobId = exportId → BullMQ de-dupes re-enqueues).
     await this.queue.enqueue({ exportId: id, tenantId, companyId });
+    saftExportRequested.inc();
+    logSaft('log', { event: 'saft.requested', exportId: id, tenantId, companyId, year, month, status: 'queued' });
     return (await this.getExport(id))!;
   }
 
@@ -82,7 +89,11 @@ export class SaftExportService implements ISaftExportService {
   async processExport(exportId: string): Promise<void> {
     const { tenantId, companyId } = this.scope();
     const claimed = await this.db.run((db) => this.repo.claimForProcessing(db, exportId));
-    if (!claimed) { this.log.warn(`SAF-T export ${exportId} not claimable (already processing/completed) — skipping`); return; }
+    if (!claimed) {
+      logSaft('warn', { event: 'saft.skipped', exportId, tenantId, companyId, status: 'not_claimable' });
+      this.log.warn(`SAF-T export ${exportId} not claimable (already processing/completed) — skipping`);
+      return;
+    }
 
     const rec = await this.db.run((db) => this.repo.getExport(db, exportId));
     if (!rec) throw new NotFoundException(`SAF-T export ${exportId} not found.`);
@@ -91,16 +102,22 @@ export class SaftExportService implements ISaftExportService {
       // 1) build dataset + deterministic dataset validation (v1)
       const dataset = await this.builder.buildDataset(rec.year, rec.month);
       const summary = this.validation.validateDataset(dataset);
-      // 2) render XML (Phase 3) and XSD-validate it (Phase 4 — inert ⇒ ok:null)
+      // 2) render XML (Phase 3) and XSD-validate it (Phase 4 — inert ⇒ ok:null), timed
+      const renderTimer = saftXmlRenderDuration.startTimer();
       const xml = buildSaftXml(dataset);
+      const renderMs = Math.round(renderTimer() * 1000);
+      const validationTimer = saftValidationDuration.startTimer();
       const xsd = await this.xsd.validate(xml);
+      const validationMs = Math.round(validationTimer() * 1000);
       // 3) write the artifact to storage. WORM only when not schema-INVALID (don't lock junk for years).
       const bytes = Buffer.from(xml, 'utf8');
       const sha256 = createHash('sha256').update(bytes).digest('hex');
       const artifactId = randomUUID();
       const mm = String(rec.month).padStart(2, '0');
       const storageKey = `saft/${companyId}/${rec.year}-${mm}/${exportId}/${artifactId}.xml`;
+      const storageTimer = saftStorageWriteDuration.startTimer();
       const put = await this.storage.putObject(storageKey, bytes, 'application/xml', { worm: xsd.ok !== false });
+      const storageWriteMs = Math.round(storageTimer() * 1000);
       // 4) persist completion + artifact + audit, atomically
       await this.db.run(async (db) => {
         await this.repo.markCompleted(db, exportId, { datasetJson: dataset, validationSummary: summary, xsdValid: xsd.ok, schemaVersion: xsd.schemaVersion });
@@ -110,6 +127,8 @@ export class SaftExportService implements ISaftExportService {
         });
         await this.audit.append(db, { companyId, actorType: 'system', action: SaftEvents.ExportGenerated, entityType: 'saft_export', entityId: exportId, after: { year: rec.year, month: rec.month, counts: dataset.counts, validation: summary.counts, xsd: { ok: xsd.ok, errors: xsd.errors.length, schemaVersion: xsd.schemaVersion }, artifact: { storageKey, sizeBytes: put.sizeBytes, sha256 } } });
       });
+      saftExportCompleted.inc({ xsd_valid: String(xsd.ok) });
+      logSaft('log', { event: 'saft.completed', exportId, tenantId, companyId, year: rec.year, month: rec.month, status: 'completed', xsdValid: xsd.ok, xsdErrorCount: xsd.errors.length, glEntries: dataset.counts.glEntries, sizeBytes: put.sizeBytes, renderMs, validationMs, storageWriteMs });
       this.log.log(`SAF-T export ${exportId} completed (${rec.year}-${mm}, xsd_valid=${xsd.ok})`);
     } catch (e) {
       const msg = (e as Error).message;
@@ -117,6 +136,8 @@ export class SaftExportService implements ISaftExportService {
         await this.repo.markFailed(db, exportId, msg);
         await this.audit.append(db, { companyId, actorType: 'system', action: SaftEvents.ExportFailed, entityType: 'saft_export', entityId: exportId, after: { year: rec.year, month: rec.month, error: msg } });
       });
+      saftExportFailed.inc();
+      logSaft('error', { event: 'saft.failed', exportId, tenantId, companyId, year: rec.year, month: rec.month, status: 'failed', errorName: safeErrorName(e) });
       throw e; // surface to BullMQ for retry/backoff; claim allows failed → processing on retry
     }
   }
