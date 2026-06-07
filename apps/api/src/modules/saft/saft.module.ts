@@ -12,6 +12,8 @@ import { SaftExportService } from './application/saft-export.service';
 import { SAFT_EXPORT_QUEUE } from './application/saft-export-queue.port';
 import { RedisSaftExportQueue } from './infrastructure/redis-saft-export-queue';
 import { InMemorySaftExportQueue } from './infrastructure/inmemory-saft-export-queue';
+import { SAFT_XSD_VALIDATOR } from './application/saft-xsd-validator.port';
+import { LibxmlXsdValidator } from './infrastructure/libxml-xsd.validator';
 import { SaftRepository } from './infrastructure/saft.repository';
 import { FeatureFlags } from '../../config/feature-flags';
 
@@ -29,9 +31,10 @@ import { FeatureFlags } from '../../config/feature-flags';
     { provide: SAFT_VALIDATION_SERVICE, useClass: SaftValidationService },
     { provide: SAFT_EXPORT_SERVICE, useClass: SaftExportService },
     { provide: SAFT_EXPORT_QUEUE, useClass: process.env.REDIS_URL ? RedisSaftExportQueue : InMemorySaftExportQueue },
+    { provide: SAFT_XSD_VALIDATOR, useFactory: () => new LibxmlXsdValidator() }, // env-configured; inert until SAFT_XSD_PATH is set
     FeatureFlags,
     SaftRepository,
   ],
-  exports: [SAFT_EXPORT_SERVICE, SAFT_VALIDATION_SERVICE, SAFT_DATASET_BUILDER, SAFT_EXPORT_QUEUE],
+  exports: [SAFT_EXPORT_SERVICE, SAFT_VALIDATION_SERVICE, SAFT_DATASET_BUILDER, SAFT_EXPORT_QUEUE, SAFT_XSD_VALIDATOR],
 })
 export class SaftModule {}
