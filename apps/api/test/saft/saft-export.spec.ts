@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { SaftExportService } from '../../src/modules/saft/application/saft-export.service';
 import type { SaftDataset } from '../../src/modules/saft/domain/models';
 
@@ -121,6 +122,28 @@ describe('SaftExportService — processExport (Phase 5: XML + XSD + storage)', (
     await svc.processExport('exp-5');
     expect(storage.putObject).not.toHaveBeenCalled();
     expect(repo.insertArtifact).not.toHaveBeenCalled();
+  });
+
+  it('artifact sha256 is the exact digest of the stored bytes (integrity)', async () => {
+    const { svc, repo, storage } = make();
+    await svc.processExport('exp-6');
+    const storedBytes = storage.putObject.mock.calls[0][1] as Buffer;
+    const persisted = repo.insertArtifact.mock.calls[0][3];
+    expect(persisted.sha256).toBe(createHash('sha256').update(storedBytes).digest('hex'));
+    expect(persisted.sizeBytes).toBe(storedBytes.length);
+  });
+
+  it('retry after a failure re-claims (failed → processing) and completes', async () => {
+    // builder throws on the first attempt, succeeds on the second (BullMQ retry).
+    let attempt = 0;
+    const builder = { buildDataset: jest.fn(async () => { attempt += 1; if (attempt === 1) throw new Error('transient'); return dataset(); }) };
+    // claim succeeds each time (DB allows queued|failed → processing).
+    const { svc, repo } = make({ builder });
+    await expect(svc.processExport('exp-7')).rejects.toThrow('transient'); // 1st: failed + rethrow
+    expect(repo.markFailed).toHaveBeenCalledTimes(1);
+    await svc.processExport('exp-7'); // 2nd (retry): succeeds
+    expect(repo.markCompleted).toHaveBeenCalledTimes(1);
+    expect(repo.insertArtifact).toHaveBeenCalledTimes(1);
   });
 });
 

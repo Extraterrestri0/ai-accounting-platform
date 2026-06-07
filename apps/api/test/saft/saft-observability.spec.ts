@@ -73,4 +73,17 @@ describe('prom-client metrics registry', () => {
     expect(text).toContain('saft_stuck_queued_exports 1');
     expect(text).toContain('saft_workers_connected 1');
   });
+
+  it('exposes NO PII / per-tenant labels in the SAF-T metrics (only the bounded xsd_valid label)', async () => {
+    saftExportCompleted.inc({ xsd_valid: 'true' });
+    saftExportCompleted.inc({ xsd_valid: 'false' });
+    const text = await registry.metrics();
+    const saftLines = text.split('\n').filter((l) => l.startsWith('saft_') && !l.startsWith('#'));
+    // No UUID (tenant/company/export id) ever appears in a metric line.
+    expect(saftLines.some((l) => /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(l))).toBe(false);
+    // The only labels across SAF-T metrics are the bounded xsd_valid + the standard histogram `le`.
+    const labelKeys = new Set<string>();
+    for (const l of saftLines) { const m = l.match(/\{([^}]*)\}/); if (m) m[1].split(',').filter(Boolean).forEach((p) => labelKeys.add(p.split('=')[0].trim())); }
+    expect([...labelKeys].every((k) => k === 'xsd_valid' || k === 'le')).toBe(true);
+  });
 });
