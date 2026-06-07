@@ -6,6 +6,10 @@ import type {
   SaftProduct, SaftSalesInvoice, SaftTaxCode, ValidationSummary,
 } from '../domain/models';
 
+// A 'processing' export older than this is considered stale (worker crashed mid-job) and may be
+// reclaimed on redelivery. Shares the operational threshold used by the queue monitor (default 15m).
+const STALE_PROCESSING_MS = Number(process.env.SAFT_STUCK_THRESHOLD_MS ?? 15 * 60 * 1000);
+
 @Injectable()
 export class SaftRepository {
   // ---- header / company ----
@@ -153,10 +157,15 @@ export class SaftRepository {
    * Atomic claim: queued|failed → processing. Returns true only if THIS call moved it,
    * so duplicate job deliveries (or a job that ran after completion) are no-ops — idempotent.
    */
-  async claimForProcessing(db: ScopedClient, id: string): Promise<boolean> {
+  async claimForProcessing(db: ScopedClient, id: string, staleMs: number = STALE_PROCESSING_MS): Promise<boolean> {
+    // Reclaim queued|failed, OR a 'processing' row whose started_at is older than staleMs — i.e. a
+    // worker crashed AFTER claiming but BEFORE completing/failing. This lets BullMQ stalled-job
+    // redelivery recover the export (a fresh/non-stale 'processing' row is left alone — single-flight).
     const r = await db.query(
       `UPDATE saft_exports SET status='processing', started_at=now(), attempt_count=attempt_count+1
-        WHERE id=$1 AND status IN ('queued','failed')`, [id]);
+        WHERE id=$1 AND (status IN ('queued','failed')
+              OR (status='processing' AND started_at IS NOT NULL AND started_at < now() - (($2)::text || ' milliseconds')::interval))`,
+      [id, staleMs]);
     return (r.rowCount ?? 0) > 0;
   }
 
