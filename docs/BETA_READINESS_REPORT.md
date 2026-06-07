@@ -80,3 +80,13 @@ Actions/Redis — SAF-T XML is flag-OFF for beta and RLS is already proven by ot
 items above (egress restriction, OCR vendor, auth/permission test matrices, tracing, log redaction platform-wide).
 
 **Controlled Beta is now ALLOWED.**
+
+## Controlled Beta launch documentation
+The beta launch is planned in `docs/beta/` + `docs/runbooks/` (no business/AI/SAF-T changes — process docs only):
+1. **Controlled Beta Launch Plan** — [`beta/CONTROLLED_BETA_LAUNCH_PLAN.md`](beta/CONTROLLED_BETA_LAUNCH_PLAN.md) (scope + entry criteria).
+2. **Beta Operations Runbook** — [`runbooks/beta-operations.md`](runbooks/beta-operations.md).
+3. **Beta Risk Register** — [`beta/BETA_RISK_REGISTER.md`](beta/BETA_RISK_REGISTER.md).
+4. **Beta Exit Criteria** — [`beta/BETA_EXIT_CRITERIA.md`](beta/BETA_EXIT_CRITERIA.md).
+5. **First 30 Days Monitoring Plan** — [`runbooks/beta-first-30-days-monitoring.md`](runbooks/beta-first-30-days-monitoring.md).
+
+**Two open entry gates before the first invite (no code):** install the backup cron (`pg-backup.sh`) and assign a named beta support owner.
