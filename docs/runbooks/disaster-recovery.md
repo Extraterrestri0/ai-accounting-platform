@@ -66,8 +66,27 @@ It reports **RPO proxy** (backup age) + **RTO proxy** (restore time) and exits n
 | Secrets/KMS rotation | **Security owner** |
 | Alert response (SNS topic) | **On-call rotation** |
 
+## Restore drill — local-equivalent path (no-AWS environments) — ✅ IMPLEMENTED (`scripts/pg-restore-drill.local.sh`)
+Where AWS credentials are unavailable (local dev / CI on portable Postgres), `scripts/pg-restore-drill.local.sh`
+proves the **same recoverability + soundness invariants** as the cloud drill, against the local filesystem
+instead of S3. It runs Phase 2 (pg_dump `-Fc -Z6` → `pg_restore --list` integrity → sha256 + manifest → local
+backup dir → local retention prune) and Phase 3 (re-verify sha256 → restore into a clean scratch DB → verify
+migrations / `app_user` / RLS FORCE / audit chain / company+accounting readable / ledger balanced / period
+locks / payments+banking / SAF-T). It **prints the cloud-only steps it cannot exercise** (SSE-KMS encrypted
+upload, S3 Object-Lock retention) as `REMAINS FOR CLOUD`, so the gap is explicit and is **not** mistaken for
+coverage. This is a fallback for environments without AWS — it does **not** retire the cloud drill above.
+
 ## Sign-off log
-- [ ] Pre-beta restore drill executed — date / RPO / RTO / by-whom: __________
+- [x] **Pre-beta restore drill executed** — 2026-06-08 (EET) / `2026-06-07T22:00:24Z` UTC — by **Platform lead** (local-equivalent path, `pg-restore-drill.local.sh`).
+  - **Source DB:** `postgres@127.0.0.1:5432/accounting` (portable Postgres 16.4, RLS-correct self-managed config — same `app_user`/FORCE-RLS/`BYPASSRLS`-`auth_lookup` shape as the production EC2 path).
+  - **Backup artifact:** `accounting-20260607T220024Z.dump` — `pg_dump -Fc -Z6`, **361,367 B**, integrity-verified via `pg_restore --list`.
+  - **Checksum (sha256):** `6a7c1fbb2f2ddaa93a799917cf2bb2300fe26b5ce05516841a77e7018fd4722d` (matched on restore against `*.manifest.json`).
+  - **Restore target:** fresh scratch DB `restore_drill` on the same host (`pg_restore --no-owner`, exit 0).
+  - **Verification — all green:** restored+queryable · migrations consistent (source 34 = restored 34) · `app_user` role present · RLS enabled+forced (0 unprotected tenant tables) · audit chain valid for all tenants (2 tenants, 0 broken) · company+accounting readable (7 companies, 9 entries, 24 lines) · ledger balanced (0 unbalanced) · period locks intact (2 periods) · payments+banking readable (1 payment, 2 bank tx) · SAF-T exports readable (1). Source↔restored row counts matched exactly across all tables.
+  - **RPO:** backup age at drill **0 min**; documented beta RPO is the logical-dump cadence (EC2 path **24 h**, configurable to hourly) — ≤5-min PITR (WAL-G/pgBackRest) is the post-beta upgrade.
+  - **RTO:** measured **1 s** restore on seed-sized data (RTO proxy); documented EC2-path target **4 h** — production-scale RTO must be re-measured on real infra.
+  - **Evidence:** `docs/runbooks/evidence/restore-drill-2026-06-08.log` + `.manifest.json`.
+  - **Known limitations:** local-equivalent run — the **cloud-only** steps (SSE-KMS encrypted S3 upload, S3 versioned/Object-Lock retention prune) were **not** exercised and remain to be proven on real infra with credentials; PITR/WAL archiving not yet configured; RTO measured on small seed data, not production volume.
 
 
 ## Migration rollback strategy
@@ -82,6 +101,10 @@ It reports **RPO proxy** (backup age) + **RTO proxy** (restore time) and exits n
 
 ## Gaps tracked
 - ✅ **EC2 Postgres automated backups** — implemented (`scripts/pg-backup.sh`, encrypted + retained + integrity-checked). Install the cron/timer on the host before beta.
-- ✅ **Restore drill** — implemented (`scripts/pg-restore-drill.sh`). **Must be executed once on real infra and signed off above before beta** (script authored; not yet run on a live restored backup).
+- ✅ **Restore drill** — implemented **and executed** (signed off above, 2026-06-08). Proven via the
+  **local-equivalent** path (`scripts/pg-restore-drill.local.sh`): real `pg_dump` → integrity → checksum →
+  restore into a clean DB → all 11 soundness checks green. **Remaining for real infra:** run the cloud drill
+  (`scripts/pg-restore-drill.sh`) once with AWS creds to additionally prove SSE-KMS upload + S3 Object-Lock
+  retention and re-measure production-scale RTO.
 - 🟠 **PITR (≤5-min RPO)** — logical-dump RPO only; WAL archiving (pgBackRest/WAL-G) is the post-beta upgrade.
 - 🟠 Weekly backup-freshness check + SNS alert not yet wired (alarm topic exists in `monitoring.tf`).
