@@ -153,15 +153,33 @@ export class SaftRepository {
     return (r.rowCount ?? 0) > 0;
   }
 
-  async markCompleted(db: ScopedClient, id: string, e: { datasetJson: unknown; validationSummary: ValidationSummary | null }): Promise<void> {
+  async markCompleted(db: ScopedClient, id: string, e: { datasetJson: unknown; validationSummary: ValidationSummary | null; xsdValid?: boolean | null; schemaVersion?: string | null }): Promise<void> {
     await db.query(
-      `UPDATE saft_exports SET status='completed', completed_at=now(), dataset_json=$2, validation_summary=$3, error=NULL, last_error=NULL
+      `UPDATE saft_exports SET status='completed', completed_at=now(), dataset_json=$2, validation_summary=$3, xsd_valid=$4, schema_version=$5, error=NULL, last_error=NULL
         WHERE id=$1`,
-      [id, e.datasetJson == null ? null : JSON.stringify(e.datasetJson), e.validationSummary == null ? null : JSON.stringify(e.validationSummary)]);
+      [id, e.datasetJson == null ? null : JSON.stringify(e.datasetJson), e.validationSummary == null ? null : JSON.stringify(e.validationSummary), e.xsdValid ?? null, e.schemaVersion ?? null]);
   }
 
   async markFailed(db: ScopedClient, id: string, error: string): Promise<void> {
     await db.query(`UPDATE saft_exports SET status='failed', last_error=$2, error=$2, completed_at=now() WHERE id=$1`, [id, error]);
+  }
+
+  // ---- artifacts (Phase 5) ----
+  async insertArtifact(db: ScopedClient, tenantId: string, companyId: string, a: { id: string; exportId: string; kind: 'xml' | 'dataset_json'; storageKey: string; contentType: string; sizeBytes: number; sha256: string; xsdValid: boolean | null; xsdErrors: unknown; wormRetainUntil?: string }): Promise<string> {
+    const r = await db.query<{ id: string }>(
+      `INSERT INTO saft_export_artifacts (id, tenant_id, company_id, export_id, kind, storage_key, content_type, size_bytes, sha256, xsd_valid, xsd_errors, worm_retain_until)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
+      [a.id, tenantId, companyId, a.exportId, a.kind, a.storageKey, a.contentType, a.sizeBytes, a.sha256, a.xsdValid ?? null, a.xsdErrors == null ? null : JSON.stringify(a.xsdErrors), a.wormRetainUntil ?? null]);
+    return r.rows[0].id;
+  }
+
+  /** Most recent artifact of a kind for an export (company-scoped by RLS) — for download. */
+  async latestArtifact(db: ScopedClient, exportId: string, kind: 'xml' | 'dataset_json'): Promise<{ id: string; storageKey: string; contentType: string; sizeBytes: number } | null> {
+    const r = await db.query<{ id: string; storage_key: string; content_type: string; size_bytes: string }>(
+      `SELECT id, storage_key, content_type, size_bytes FROM saft_export_artifacts
+        WHERE export_id=$1 AND kind=$2 ORDER BY created_at DESC LIMIT 1`, [exportId, kind]);
+    const x = r.rows[0];
+    return x ? { id: x.id, storageKey: x.storage_key, contentType: x.content_type, sizeBytes: Number(x.size_bytes) } : null;
   }
 }
 

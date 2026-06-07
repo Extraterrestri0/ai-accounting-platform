@@ -31,6 +31,17 @@ export class S3ObjectStorage implements StorageService, OnModuleInit {
     return { url, method: 'PUT', headers: { 'content-type': contentType }, storageKey };
   }
 
+  /** Server-side write of bytes, optionally Object-Lock (WORM) on write. */
+  async putObject(storageKey: string, body: Buffer, contentType: string, opts?: { worm?: boolean; retainDays?: number }): Promise<{ sizeBytes: number; retainUntil?: string }> {
+    const worm = opts?.worm ?? false;
+    const retainUntil = worm ? new Date(Date.now() + (opts?.retainDays ?? this.retainDays) * 24 * 60 * 60 * 1000) : undefined;
+    await this.client.send(new PutObjectCommand({
+      Bucket: this.bucket, Key: storageKey, Body: body, ContentType: contentType,
+      ...(worm ? { ObjectLockMode: 'COMPLIANCE', ObjectLockRetainUntilDate: retainUntil } : {}),
+    }));
+    return { sizeBytes: body.length, retainUntil: retainUntil?.toISOString() };
+  }
+
   async headObject(storageKey: string): Promise<{ exists: boolean; sizeBytes: number }> {
     try { const r = await this.client.send(new HeadObjectCommand({ Bucket: this.bucket, Key: storageKey })); return { exists: true, sizeBytes: r.ContentLength ?? 0 }; }
     catch { return { exists: false, sizeBytes: 0 }; }

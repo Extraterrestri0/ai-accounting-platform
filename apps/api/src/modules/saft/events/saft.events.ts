@@ -3,6 +3,7 @@ export const SaftEvents = {
   ExportRequested: 'saft.export_requested',
   ExportGenerated: 'saft.export_generated',
   ExportFailed: 'saft.export_failed',
+  ExportDownloaded: 'saft.export_downloaded',
   DatasetValidated: 'saft.dataset_validated',
 } as const;
 

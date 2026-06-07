@@ -14,6 +14,7 @@ function make(over: any = {}) {
     listExports: jest.fn(async () => []),
     getExport: jest.fn(async () => null),
     getExportDataset: jest.fn(async () => null),
+    getDownloadUrl: jest.fn(async () => null),
     ...over.exports,
   };
   const validation: any = { validatePeriod: jest.fn(async () => ({ ok: true, errors: [], warnings: [], info: [], counts: { errors: 0, warnings: 0, info: 0 } })), ...over.validation };
@@ -67,6 +68,17 @@ describe('SaftController — reads', () => {
     expect(await ctrl.get(UUID)).toBe(rec);
     expect(await ctrl.dataset(UUID)).toBe(ds);
   });
+
+  it('GET exports/:id/download returns the signed URL info when an artifact exists', async () => {
+    const dl = { url: 'https://signed/url', filename: 'saft-x.xml', expiresInSeconds: 300 };
+    const { ctrl } = make({ exports: { getDownloadUrl: jest.fn(async () => dl) } });
+    expect(await ctrl.download(UUID)).toBe(dl);
+  });
+
+  it('GET exports/:id/download throws 404 when there is no artifact', async () => {
+    const { ctrl } = make({ exports: { getDownloadUrl: jest.fn(async () => null) } });
+    await expect(ctrl.download(UUID)).rejects.toBeInstanceOf(NotFoundException);
+  });
   it('validate parses + delegates and rejects an invalid month', () => {
     const { ctrl, validation } = make();
     ctrl.validate('2026', '5');
@@ -96,5 +108,6 @@ describe('SaftController — permission boundaries unchanged (SAFT_READ vs SAFT_
     expect(perm('get')).toBe(PERMISSIONS.SAFT_READ);
     expect(perm('dataset')).toBe(PERMISSIONS.SAFT_READ);
     expect(perm('validate')).toBe(PERMISSIONS.SAFT_READ);
+    expect(perm('download')).toBe(PERMISSIONS.SAFT_READ);
   });
 });

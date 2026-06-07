@@ -56,6 +56,14 @@ export class SaftController {
     return ds;
   }
 
+  /** Issue a short-lived signed URL for the export's generated XML (audited). */
+  @Get('exports/:id/download') @RequirePermission(PERMISSIONS.SAFT_READ)
+  async download(@Param('id', ParseUUIDPipe) id: string) {
+    const dl = await this.exports.getDownloadUrl(id);
+    if (!dl) throw new NotFoundException('No SAF-T XML artifact for this export.');
+    return dl;
+  }
+
   @Get('validate/:year/:month') @RequirePermission(PERMISSIONS.SAFT_READ)
   validate(@Param('year') year: string, @Param('month') month: string) {
     const ym = this.ym(year, month);

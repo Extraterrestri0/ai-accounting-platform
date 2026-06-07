@@ -1,7 +1,6 @@
 import { join } from 'node:path';
 import { LibxmlXsdValidator } from '../../src/modules/saft/infrastructure/libxml-xsd.validator';
 import { normalizeXsdErrors } from '../../src/modules/saft/domain/saft-xsd';
-import { SaftExportService } from '../../src/modules/saft/application/saft-export.service';
 
 const XSD = join(__dirname, 'fixtures', 'tiny.xsd');
 const VALID_XML = '<?xml version="1.0" encoding="UTF-8"?>\n<note><to>Иван</to></note>';
@@ -59,12 +58,6 @@ describe('LibxmlXsdValidator — against a tiny test XSD (libxml2-wasm)', () => 
   });
 });
 
-describe('no runtime behavior change when SAFT_XML_ENABLED is off', () => {
-  it('the export service does NOT depend on the XSD validator (sync/v1 + async paths unchanged)', () => {
-    // SaftExportService still takes exactly its Phase-2 dependencies
-    // (ctx, db, repo, builder, validation, audit, queue) = 7 — Phase 4 wires the
-    // validator as a standalone component (consumed in Phase 5), so it touches
-    // neither the flag-off (v1 synchronous) nor the flag-on runtime path.
-    expect(SaftExportService.length).toBe(7);
-  });
-});
+// Note: the validator is consumed by the export service from Phase 5 onward. The guarantee
+// that the v1 (flag-off) path performs NO XSD validation is asserted behaviorally in
+// saft-export.spec.ts ("does NOT touch storage or the XSD validator on the v1 path").

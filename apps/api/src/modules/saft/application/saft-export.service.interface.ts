@@ -1,6 +1,9 @@
 import type { ApplicationService } from '../../../shared-kernel';
 import type { SaftDataset, SaftExportRecord } from '../domain/models';
 
+/** Short-lived signed download for a generated SAF-T artifact. */
+export interface SaftDownloadInfo { url: string; filename: string; expiresInSeconds: number; }
+
 export interface ISaftExportService extends ApplicationService {
   /** v1 SYNCHRONOUS: build → validate → persist (status generated|failed) → audit. Returns the record. */
   generateExport(year: number, month: number): Promise<SaftExportRecord>;
@@ -18,6 +21,8 @@ export interface ISaftExportService extends ApplicationService {
   processExport(exportId: string): Promise<void>;
   getExport(id: string): Promise<SaftExportRecord | null>;
   listExports(page?: number, pageSize?: number): Promise<SaftExportRecord[]>;
+  /** Issue a short-lived signed URL for the export's XML artifact (audited). Null if none exists. */
+  getDownloadUrl(exportId: string): Promise<SaftDownloadInfo | null>;
   /** The stored normalized dataset JSON for an export (for preview / download). */
   getExportDataset(id: string): Promise<SaftDataset | null>;
 }

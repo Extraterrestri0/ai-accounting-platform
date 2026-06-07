@@ -1,13 +1,19 @@
 import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { createHash, randomUUID } from 'node:crypto';
 import { DatabaseContextService, TenantContextService } from '../../../platform';
 import { AUDIT_SERVICE, type IAuditService } from '../../audit';
+import { STORAGE_SERVICE, type StorageService } from '../../docintel';
 import { SaftRepository } from '../infrastructure/saft.repository';
 import { SAFT_DATASET_BUILDER, type ISaftDatasetBuilder } from './saft-dataset.builder.interface';
 import { SAFT_VALIDATION_SERVICE, type ISaftValidationService } from './saft-validation.service.interface';
 import { SAFT_EXPORT_QUEUE, type SaftExportQueue } from './saft-export-queue.port';
+import { SAFT_XSD_VALIDATOR, type SaftXsdValidator } from './saft-xsd-validator.port';
+import { buildSaftXml } from '../domain/saft-xml.builder';
 import { SaftEvents } from '../events';
 import type { SaftDataset, SaftExportRecord } from '../domain/models';
-import type { ISaftExportService } from './saft-export.service.interface';
+import type { ISaftExportService, SaftDownloadInfo } from './saft-export.service.interface';
+
+const DOWNLOAD_TTL_SECONDS = 300;
 
 @Injectable()
 export class SaftExportService implements ISaftExportService {
@@ -20,6 +26,8 @@ export class SaftExportService implements ISaftExportService {
     @Inject(SAFT_VALIDATION_SERVICE) private readonly validation: ISaftValidationService,
     @Inject(AUDIT_SERVICE) private readonly audit: IAuditService,
     @Inject(SAFT_EXPORT_QUEUE) private readonly queue: SaftExportQueue,
+    @Inject(STORAGE_SERVICE) private readonly storage: StorageService,
+    @Inject(SAFT_XSD_VALIDATOR) private readonly xsd: SaftXsdValidator,
   ) {}
 
   private scope() {
@@ -72,7 +80,7 @@ export class SaftExportService implements ISaftExportService {
 
   /** Worker body — runs under the job's restored tenant/company context (system actor, no human). */
   async processExport(exportId: string): Promise<void> {
-    const { companyId } = this.scope();
+    const { tenantId, companyId } = this.scope();
     const claimed = await this.db.run((db) => this.repo.claimForProcessing(db, exportId));
     if (!claimed) { this.log.warn(`SAF-T export ${exportId} not claimable (already processing/completed) — skipping`); return; }
 
@@ -80,13 +88,29 @@ export class SaftExportService implements ISaftExportService {
     if (!rec) throw new NotFoundException(`SAF-T export ${exportId} not found.`);
 
     try {
+      // 1) build dataset + deterministic dataset validation (v1)
       const dataset = await this.builder.buildDataset(rec.year, rec.month);
       const summary = this.validation.validateDataset(dataset);
+      // 2) render XML (Phase 3) and XSD-validate it (Phase 4 — inert ⇒ ok:null)
+      const xml = buildSaftXml(dataset);
+      const xsd = await this.xsd.validate(xml);
+      // 3) write the artifact to storage. WORM only when not schema-INVALID (don't lock junk for years).
+      const bytes = Buffer.from(xml, 'utf8');
+      const sha256 = createHash('sha256').update(bytes).digest('hex');
+      const artifactId = randomUUID();
+      const mm = String(rec.month).padStart(2, '0');
+      const storageKey = `saft/${companyId}/${rec.year}-${mm}/${exportId}/${artifactId}.xml`;
+      const put = await this.storage.putObject(storageKey, bytes, 'application/xml', { worm: xsd.ok !== false });
+      // 4) persist completion + artifact + audit, atomically
       await this.db.run(async (db) => {
-        await this.repo.markCompleted(db, exportId, { datasetJson: dataset, validationSummary: summary });
-        await this.audit.append(db, { companyId, actorType: 'system', action: SaftEvents.ExportGenerated, entityType: 'saft_export', entityId: exportId, after: { year: rec.year, month: rec.month, counts: dataset.counts, validation: summary.counts } });
+        await this.repo.markCompleted(db, exportId, { datasetJson: dataset, validationSummary: summary, xsdValid: xsd.ok, schemaVersion: xsd.schemaVersion });
+        await this.repo.insertArtifact(db, tenantId, companyId, {
+          id: artifactId, exportId, kind: 'xml', storageKey, contentType: 'application/xml',
+          sizeBytes: put.sizeBytes, sha256, xsdValid: xsd.ok, xsdErrors: xsd.errors, wormRetainUntil: put.retainUntil,
+        });
+        await this.audit.append(db, { companyId, actorType: 'system', action: SaftEvents.ExportGenerated, entityType: 'saft_export', entityId: exportId, after: { year: rec.year, month: rec.month, counts: dataset.counts, validation: summary.counts, xsd: { ok: xsd.ok, errors: xsd.errors.length, schemaVersion: xsd.schemaVersion }, artifact: { storageKey, sizeBytes: put.sizeBytes, sha256 } } });
       });
-      this.log.log(`SAF-T export ${exportId} completed (${rec.year}-${rec.month})`);
+      this.log.log(`SAF-T export ${exportId} completed (${rec.year}-${mm}, xsd_valid=${xsd.ok})`);
     } catch (e) {
       const msg = (e as Error).message;
       await this.db.run(async (db) => {
@@ -95,6 +119,16 @@ export class SaftExportService implements ISaftExportService {
       });
       throw e; // surface to BullMQ for retry/backoff; claim allows failed → processing on retry
     }
+  }
+
+  async getDownloadUrl(exportId: string): Promise<SaftDownloadInfo | null> {
+    const { companyId } = this.scope();
+    const art = await this.db.run((db) => this.repo.latestArtifact(db, exportId, 'xml'));
+    if (!art) return null;
+    const url = await this.storage.getDownloadUrl(art.storageKey, DOWNLOAD_TTL_SECONDS);
+    // Issuing a download credential for a tax artifact is a sensitive, auditable access action.
+    await this.db.run((db) => this.audit.append(db, { companyId, ...this.actor(), action: SaftEvents.ExportDownloaded, entityType: 'saft_export', entityId: exportId, after: { artifactId: art.id, storageKey: art.storageKey } }));
+    return { url, filename: `saft-${exportId}.xml`, expiresInSeconds: DOWNLOAD_TTL_SECONDS };
   }
 
   getExport(id: string): Promise<SaftExportRecord | null> {
