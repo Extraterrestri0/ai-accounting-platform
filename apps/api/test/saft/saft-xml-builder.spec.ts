@@ -90,6 +90,18 @@ describe('SaftXmlBuilder (Phase 3)', () => {
     expect(chunks.length).toBeGreaterThan(1); // actually streamed in pieces
   });
 
+  it('emits coded UOM + payment mechanism only when present (Phase 8 scaffolding)', () => {
+    const base = sampleDataset();
+    expect(buildSaftXml(base)).not.toContain('<UnitOfMeasureCode>'); // absent by default (no NRA codes)
+    expect(buildSaftXml(base)).not.toContain('<PaymentMechanism>');
+    const ds = sampleDataset();
+    ds.masterFiles.products[0].uomCode = 'C62';
+    ds.sourceDocuments.payments[0].paymentMechanism = 'TRANSFER';
+    const xml = buildSaftXml(ds);
+    expect(xml).toContain('<UnitOfMeasureCode>C62</UnitOfMeasureCode>');
+    expect(xml).toContain('<PaymentMechanism>TRANSFER</PaymentMechanism>');
+  });
+
   it('handles an empty period without malformed XML', () => {
     const empty = sampleDataset({
       masterFiles: { customers: [], suppliers: [], products: [], accounts: [], taxCodes: [] },

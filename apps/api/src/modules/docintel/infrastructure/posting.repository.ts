@@ -51,24 +51,38 @@ export class PostingRepository {
    * suggestion tables. Company-scoped by RLS. Returns one row per matched review package.
    */
   async purchaseDetailsByReview(db: ScopedClient, reviewPackageIds: string[]): Promise<PostedPurchaseDetail[]> {
-    const r = await db.query<{ review_package_id: string; supplier_id: string | null; supplier_name: string | null; category: string | null; suggestion: string | null; review_status: string | null }>(
+    const r = await db.query<{ review_package_id: string; supplier_id: string | null; supplier_name: string | null; category: string | null; suggestion: string | null; review_status: string | null; doc_number: string | null; doc_net: string | null; doc_vat: string | null; doc_gross: string | null }>(
       `SELECT rp.id AS review_package_id,
               cp.id AS supplier_id, cp.name AS supplier_name,
               ec.name_bg AS category,
               COALESCE(sa.code, s.classification_reason) AS suggestion,
-              rp.status AS review_status
+              rp.status AS review_status,
+              ex.doc_number, ex.doc_net, ex.doc_vat, ex.doc_gross
          FROM review_packages rp
          LEFT JOIN documents d ON d.id = rp.document_id
          LEFT JOIN LATERAL (SELECT * FROM accounting_suggestions x WHERE x.document_id = rp.document_id ORDER BY x.created_at DESC LIMIT 1) s ON true
          LEFT JOIN counterparties cp ON cp.id = COALESCE(d.counterparty_id, s.counterparty_id)
          LEFT JOIN expense_categories ec ON ec.id = s.expense_category_id
          LEFT JOIN accounts sa ON sa.id = s.suggested_account_id
+         LEFT JOIN LATERAL (
+           SELECT
+             max(ef.value_normalized) FILTER (WHERE ef.field_key = 'invoice_number') AS doc_number,
+             max(COALESCE(ef.value_normalized, ef.value_text)) FILTER (WHERE ef.field_key = 'net_amount') AS doc_net,
+             max(COALESCE(ef.value_normalized, ef.value_text)) FILTER (WHERE ef.field_key = 'vat_amount') AS doc_vat,
+             max(COALESCE(ef.value_normalized, ef.value_text)) FILTER (WHERE ef.field_key = 'total_amount') AS doc_gross
+           FROM document_extractions de
+           JOIN extraction_fields ef ON ef.extraction_id = de.id
+           WHERE de.document_id = rp.document_id
+             AND de.id = (SELECT id FROM document_extractions WHERE document_id = rp.document_id ORDER BY created_at DESC LIMIT 1)
+         ) ex ON true
         WHERE rp.id = ANY($1)`, [reviewPackageIds]);
     return r.rows.map((x) => ({
       reviewPackageId: x.review_package_id,
       supplierId: x.supplier_id ?? undefined, supplierName: x.supplier_name ?? undefined,
       classificationCategory: x.category ?? undefined, accountingSuggestion: x.suggestion ?? undefined,
       approvalStatus: x.review_status ?? undefined,
+      documentNumber: x.doc_number ?? undefined,
+      documentNet: x.doc_net ?? undefined, documentVat: x.doc_vat ?? undefined, documentGross: x.doc_gross ?? undefined,
     }));
   }
 }

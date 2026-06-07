@@ -28,16 +28,20 @@ export class SaftRepository {
   suppliers(db: ScopedClient, companyId: string): Promise<SaftParty[]> { return this.parties(db, companyId, ['supplier', 'both']); }
 
   async products(db: ScopedClient, companyId: string): Promise<SaftProduct[]> {
-    const r = await db.query<{ code: string; description: string; unit: string; vat_rate: string; kind: string; saft_code: string | null }>(
-      `SELECT code, description, unit, vat_rate, kind, saft_code FROM catalog_items WHERE company_id = $1 AND is_active ORDER BY code`, [companyId]);
-    return r.rows.map((x) => ({ code: x.code, description: x.description, unit: x.unit, vatRate: x.vat_rate, kind: x.kind, saftCode: x.saft_code ?? undefined }));
+    const r = await db.query<{ code: string; description: string; unit: string; uom_code: string | null; vat_rate: string; kind: string; saft_code: string | null }>(
+      `SELECT code, description, unit, uom_code, vat_rate, kind, saft_code FROM catalog_items WHERE company_id = $1 AND is_active ORDER BY code`, [companyId]);
+    return r.rows.map((x) => ({ code: x.code, description: x.description, unit: x.unit, uomCode: x.uom_code ?? undefined, vatRate: x.vat_rate, kind: x.kind, saftCode: x.saft_code ?? undefined }));
   }
 
   async accounts(db: ScopedClient, companyId: string): Promise<SaftAccount[]> {
-    const r = await db.query<{ code: string; name: string; type: string; parent_code: string | null }>(
-      `SELECT a.code, a.name, a.type, p.code AS parent_code
-         FROM accounts a LEFT JOIN accounts p ON p.id = a.parent_account_id WHERE a.company_id = $1 ORDER BY a.code`, [companyId]);
-    return r.rows.map((x) => ({ accountCode: x.code, accountName: x.name, accountType: x.type, parentAccountCode: x.parent_code ?? undefined, saftCode: undefined }));
+    // saftCode = the configured НАП standard-account code (data-driven; empty until mapped in 0036).
+    const r = await db.query<{ code: string; name: string; type: string; parent_code: string | null; standard_code: string | null }>(
+      `SELECT a.code, a.name, a.type, p.code AS parent_code, m.standard_account_code AS standard_code
+         FROM accounts a
+         LEFT JOIN accounts p ON p.id = a.parent_account_id
+         LEFT JOIN saft_standard_accounts m ON m.company_id = a.company_id AND m.account_code = a.code
+        WHERE a.company_id = $1 ORDER BY a.code`, [companyId]);
+    return r.rows.map((x) => ({ accountCode: x.code, accountName: x.name, accountType: x.type, parentAccountCode: x.parent_code ?? undefined, saftCode: x.standard_code ?? undefined }));
   }
 
   async taxCodes(db: ScopedClient, companyId: string): Promise<SaftTaxCode[]> {
@@ -85,15 +89,15 @@ export class SaftRepository {
   }
 
   async payments(db: ScopedClient, companyId: string, from: string, to: string): Promise<SaftPaymentDocument[]> {
-    const r = await db.query<{ payment_date: string; amount: string; payment_type: 'inbound' | 'outbound'; counterparty: string | null; document_type: string; document_id: string; reference: string | null; reconciliation_status: string | null }>(
+    const r = await db.query<{ payment_date: string; amount: string; payment_type: 'inbound' | 'outbound'; counterparty: string | null; document_type: string; document_id: string; reference: string | null; reconciliation_status: string | null; payment_method: string | null }>(
       `SELECT p.payment_date::text AS payment_date, p.amount, p.payment_type, cp.name AS counterparty,
-              p.document_type, p.document_id, p.reference, bt.reconciliation_status
+              p.document_type, p.document_id, p.reference, p.payment_method, bt.reconciliation_status
          FROM payments p
          LEFT JOIN counterparties cp ON cp.id = p.counterparty_id
          LEFT JOIN bank_transactions bt ON bt.matched_payment_id = p.id
         WHERE p.company_id = $1 AND p.status = 'active' AND p.payment_date BETWEEN $2 AND $3
         ORDER BY p.payment_date`, [companyId, from, to]);
-    return r.rows.map((x) => ({ paymentDate: x.payment_date, amount: x.amount, direction: x.payment_type, counterparty: x.counterparty ?? undefined, linkedDocumentType: x.document_type, linkedDocumentId: x.document_id, bankReference: x.reference ?? undefined, reconciliationStatus: x.reconciliation_status ?? undefined }));
+    return r.rows.map((x) => ({ paymentDate: x.payment_date, amount: x.amount, direction: x.payment_type, counterparty: x.counterparty ?? undefined, linkedDocumentType: x.document_type, linkedDocumentId: x.document_id, bankReference: x.reference ?? undefined, reconciliationStatus: x.reconciliation_status ?? undefined, paymentMechanism: x.payment_method ?? undefined }));
   }
 
   // ---- export persistence ----

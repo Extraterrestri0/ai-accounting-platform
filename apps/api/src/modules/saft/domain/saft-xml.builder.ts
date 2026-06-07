@@ -130,6 +130,7 @@ export function writeSaftXml(ds: SaftDataset, write: Sink): void {
     w.leaf('ProductCode', p.code);
     w.leaf('Description', p.description);
     w.leaf('UnitOfMeasure', p.unit);
+    w.leaf('UnitOfMeasureCode', p.uomCode); // coded UOM (omitted until mapped)
     w.leaf('TaxPercentage', p.vatRate);
     w.leaf('ProductType', p.kind);
     w.leaf('StandardProductID', p.saftCode);
@@ -217,6 +218,7 @@ export function writeSaftXml(ds: SaftDataset, write: Sink): void {
     w.leaf('PaymentDate', pay.paymentDate);
     w.leaf('Amount', pay.amount);
     w.leaf('Direction', pay.direction);
+    w.leaf('PaymentMechanism', pay.paymentMechanism); // coded mechanism (omitted until captured)
     w.leaf('CounterpartyName', pay.counterparty);
     w.leaf('LinkedDocumentType', pay.linkedDocumentType);
     w.leaf('LinkedDocumentID', pay.linkedDocumentId);

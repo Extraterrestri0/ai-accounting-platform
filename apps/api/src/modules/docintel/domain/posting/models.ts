@@ -26,4 +26,9 @@ export interface PostedPurchaseDetail {
   classificationCategory?: string;
   accountingSuggestion?: string;
   approvalStatus?: string;
+  /** The supplier's own document number + source amounts, from the latest approved extraction. */
+  documentNumber?: string;
+  documentNet?: string;
+  documentVat?: string;
+  documentGross?: string;
 }

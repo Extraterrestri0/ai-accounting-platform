@@ -1,4 +1,4 @@
-import { monthBounds, entryBalanced, purchaseAmounts, buildHeader, SOFTWARE_NAME, groupLinesByEntry } from '../../src/modules/saft/domain/assemble';
+import { monthBounds, entryBalanced, derivePurchaseAmounts, parseMoneyOrNull, moneyToCents, centsToString, buildHeader, SOFTWARE_NAME, groupLinesByEntry } from '../../src/modules/saft/domain/assemble';
 import { validateDataset } from '../../src/modules/saft/domain/validation';
 import type { SaftDataset, SaftGlLine } from '../../src/modules/saft/domain/models';
 
@@ -14,9 +14,26 @@ describe('SAF-T assemble helpers', () => {
     expect(entryBalanced([line('411', '120.00', '0.00'), line('702', '0.00', '100.00'), line('4532', '0.00', '20.00')])).toBe(true);
     expect(entryBalanced([line('411', '120.00', '0.00'), line('702', '0.00', '100.00')])).toBe(false);
   });
-  it('derives purchase net/VAT/gross from posted lines (mapped account codes)', () => {
+  it('exact-decimal money: parses/formats without float error (Phase 8 #3)', () => {
+    expect(moneyToCents('0.10')).toBe(10);
+    expect(moneyToCents('0.20')).toBe(20);
+    expect(moneyToCents('0.10') + moneyToCents('0.20')).toBe(30); // 0.1+0.2 stays exact
+    expect(moneyToCents('1234567.89')).toBe(123456789);
+    expect(moneyToCents('-5.00')).toBe(-500);
+    expect(centsToString(30)).toBe('0.30');
+    expect(centsToString(123456789)).toBe('1234567.89');
+    expect(parseMoneyOrNull('1 234,56')).toBeNull(); // non-canonical → null (caller falls back)
+    expect(parseMoneyOrNull(undefined)).toBeNull();
+  });
+  it('derives purchase gross from posted credits (mapping-free), net/VAT from the document (Phase 8 #4)', () => {
     const lines = [line('602', '200.00', '0.00'), line('4531', '40.00', '0.00'), line('401', '0.00', '240.00')];
-    expect(purchaseAmounts(lines, '401', '4531')).toEqual({ net: '200.00', vat: '40.00', gross: '240.00' });
+    // reconciling document split is used
+    expect(derivePurchaseAmounts(lines, { net: '200.00', vat: '40.00', gross: '240.00' })).toEqual({ net: '200.00', vat: '40.00', gross: '240.00' });
+    // cash-settled purchase (credit to 501, not payable) — gross still derived from credits, no mapping needed
+    const cash = [line('602', '200.00', '0.00'), line('4531', '40.00', '0.00'), line('501', '0.00', '240.00')];
+    expect(derivePurchaseAmounts(cash, { vat: '40.00' })).toEqual({ net: '200.00', vat: '40.00', gross: '240.00' });
+    // no document amounts at all → gross from ledger, vat 0, net = gross (a gap to flag)
+    expect(derivePurchaseAmounts(cash)).toEqual({ net: '240.00', vat: '0.00', gross: '240.00' });
   });
   it('builds a header with period + software metadata', () => {
     const h = buildHeader({ companyName: 'ACME', eik: '123', vatNumber: 'BG123', currency: 'EUR', year: 2026, month: 5, generatedAt: '2026-06-01T00:00:00Z' });

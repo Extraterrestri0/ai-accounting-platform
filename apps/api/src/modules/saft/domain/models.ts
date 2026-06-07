@@ -16,7 +16,7 @@ export interface SaftParty {
   id: string; name: string; eik?: string; vatNumber?: string;
   address?: string; city?: string; country: string; saftCode?: string;
 }
-export interface SaftProduct { code: string; description: string; unit: string; vatRate: string; kind: string; saftCode?: string; }
+export interface SaftProduct { code: string; description: string; unit: string; uomCode?: string; vatRate: string; kind: string; saftCode?: string; }
 export interface SaftAccount { accountCode: string; accountName: string; accountType: string; parentAccountCode?: string; saftCode?: string; }
 export interface SaftTaxCode { vatCode: string; vatRate: string; vatTreatment: string; direction: string; saftTaxCode?: string; }
 export interface SaftMasterFiles {
@@ -43,6 +43,7 @@ export interface SaftPurchaseDocument {
 export interface SaftPaymentDocument {
   paymentDate: string; amount: string; direction: 'inbound' | 'outbound'; counterparty?: string;
   linkedDocumentType?: string; linkedDocumentId?: string; bankReference?: string; reconciliationStatus?: string;
+  paymentMechanism?: string;
 }
 export interface SaftSourceDocuments {
   salesInvoices: SaftSalesInvoice[]; purchaseDocuments: SaftPurchaseDocument[]; payments: SaftPaymentDocument[];
