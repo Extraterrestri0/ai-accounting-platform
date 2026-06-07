@@ -15,6 +15,7 @@ import { RecentActivityWidget } from '@/components/app/audit/recent-activity-wid
 import { CurrentPeriodWidget } from '@/components/app/current-period-widget';
 import { RevenueWidget, ExpensesWidget, NetCashWidget } from '@/components/app/management-reports';
 import { BankingWidget } from '@/components/app/banking-widget';
+import { SaftReadinessWidget } from '@/components/app/saft-readiness-widget';
 import { EmptyState, ErrorState, TableSkeleton } from '@/components/app/states';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -93,6 +94,7 @@ export default function DashboardPage() {
         <ReceivablesWidget companyId={companyId} />
         <PayablesWidget companyId={companyId} />
         <BankingWidget companyId={companyId} />
+        <SaftReadinessWidget companyId={companyId} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

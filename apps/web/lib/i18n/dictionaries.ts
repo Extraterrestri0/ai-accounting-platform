@@ -19,7 +19,7 @@ export const messages = {
       overview: 'Общ преглед', documents: 'Документи', accounting: 'Счетоводство', system: 'Система',
       dashboard: 'Табло', docs: 'Документи', upload: 'Качване', review: 'Преглед',
       posting: 'Осчетоводяване', vat: 'ДДС', invoices: 'Фактури', catalog: 'Каталог',
-      receivables: 'Вземания', payables: 'Задължения', banking: 'Банка', reports: 'Отчети', audit: 'Одит', settings: 'Настройки',
+      receivables: 'Вземания', payables: 'Задължения', banking: 'Банка', reports: 'Отчети', saft: 'SAF-T', audit: 'Одит', settings: 'Настройки',
     },
     topbar: { company: 'Фирма', searchPh: 'Търсене…', rate: 'EUR · 1 € = 1.95583 лв.' },
     auth: {
@@ -277,7 +277,7 @@ export const messages = {
       overview: 'Overview', documents: 'Documents', accounting: 'Accounting', system: 'System',
       dashboard: 'Dashboard', docs: 'Documents', upload: 'Upload', review: 'Review',
       posting: 'Posting', vat: 'VAT', invoices: 'Invoices', catalog: 'Catalog',
-      receivables: 'Receivables', payables: 'Payables', banking: 'Banking', reports: 'Reports', audit: 'Audit', settings: 'Settings',
+      receivables: 'Receivables', payables: 'Payables', banking: 'Banking', reports: 'Reports', saft: 'SAF-T', audit: 'Audit', settings: 'Settings',
     },
     topbar: { company: 'Company', searchPh: 'Search…', rate: 'EUR · 1 € = 1.95583 BGN' },
     auth: {

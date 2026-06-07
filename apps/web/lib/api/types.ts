@@ -169,6 +169,36 @@ export interface AuditFilterParams {
   pageSize?: number;
 }
 
+// --- SAF-T Engine v1 ---
+export type SaftValidationLevel = 'error' | 'warning' | 'info';
+export interface SaftValidationIssue { level: SaftValidationLevel; code: string; message: string; count?: number; }
+export interface SaftValidationSummary {
+  ok: boolean;
+  errors: SaftValidationIssue[];
+  warnings: SaftValidationIssue[];
+  info: SaftValidationIssue[];
+  counts: { errors: number; warnings: number; info: number };
+}
+export type SaftExportStatus = 'generated' | 'failed';
+export interface SaftExportRecord {
+  id: string; year: number; month: number; status: SaftExportStatus;
+  generatedBy?: string; generatedAt: string; validationSummary?: SaftValidationSummary; error?: string;
+}
+export interface SaftDataset {
+  header: {
+    companyName: string; eik?: string; vatNumber?: string;
+    period: { year: number; month: number; from: string; to: string };
+    currency: string; softwareName: string; softwareVersion: string; generatedAt: string;
+  };
+  masterFiles: { customers: unknown[]; suppliers: unknown[]; products: unknown[]; accounts: unknown[]; taxCodes: unknown[] };
+  generalLedgerEntries: unknown[];
+  sourceDocuments: { salesInvoices: unknown[]; purchaseDocuments: unknown[]; payments: unknown[] };
+  counts: {
+    customers: number; suppliers: number; products: number; accounts: number; taxCodes: number;
+    glEntries: number; salesInvoices: number; purchaseDocuments: number; payments: number;
+  };
+}
+
 // --- Banking & Reconciliation (Task 3.2) ---
 export type BankTransactionType = 'inbound' | 'outbound';
 export type ReconciliationStatus = 'unreconciled' | 'reconciled' | 'ignored';

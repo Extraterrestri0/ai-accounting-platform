@@ -14,6 +14,7 @@ import { PaymentsModule } from './modules/payments';
 import { BankingModule } from './modules/banking';
 import { PeriodsModule } from './modules/periods';
 import { ViesModule } from './modules/vies';
+import { SaftModule } from './modules/saft';
 import { ReportingModule } from './modules/reporting';
 import { HealthModule } from './modules/health';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -37,6 +38,7 @@ import { CmsModule } from './modules/cms';
     BankingModule,
     PeriodsModule,
     ViesModule,
+    SaftModule,
     ReportingModule,
     HealthModule,
     ThrottlerModule.forRoot([{ ttl: Number(process.env.RATE_LIMIT_TTL ?? 60000), limit: Number(process.env.RATE_LIMIT_MAX ?? 300) }]),

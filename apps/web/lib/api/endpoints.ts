@@ -8,6 +8,7 @@ import type {
   AccountingPeriod, ViesStatus, ViesValidationResult, ViesDataset,
   MonthlySeries, CashFlowReport,
   BankAccount, BankStatement, BankTransaction, BankingSummary, ImportReport, MatchSuggestion, BankMatchDocumentType,
+  SaftExportRecord, SaftValidationSummary, SaftDataset,
 } from './types';
 
 /** Multipart upload of a bank statement (CSV/XLSX) with auth + company headers. */
@@ -183,4 +184,11 @@ export const Endpoints = {
   bankRejectMatch: (id: string, reason?: string) => api<BankTransaction>(`/banking/transactions/${id}/reject-match`, { method: 'POST', body: { reason } }),
   bankManualMatch: (id: string, body: { documentType: BankMatchDocumentType; documentId: string; amount?: string | number }) => api<{ transaction: BankTransaction; payment: PaymentRow }>(`/banking/transactions/${id}/manual-match`, { method: 'POST', body }),
   bankingSummary: () => api<BankingSummary>('/banking/summary'),
+
+  // --- SAF-T v1 ---
+  saftExports: (p: { page?: number; pageSize?: number } = {}) => api<SaftExportRecord[]>(`/saft/exports${qs(p)}`),
+  generateSaftExport: (year: number, month: number) => api<SaftExportRecord>('/saft/exports', { method: 'POST', body: { year, month } }),
+  saftExport: (id: string) => api<SaftExportRecord>(`/saft/exports/${id}`),
+  saftDataset: (id: string) => api<SaftDataset>(`/saft/exports/${id}/dataset`),
+  saftValidate: (year: number, month: number) => api<SaftValidationSummary>(`/saft/validate/${year}/${month}`),
 };

@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, FileText, Upload, ClipboardCheck,
   BookOpenCheck, ReceiptText, FileSpreadsheet, BarChart3, Settings, PackageSearch,
-  ArrowDownCircle, ArrowUpCircle, History, Landmark,
+  ArrowDownCircle, ArrowUpCircle, History, Landmark, FileCode2,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -41,6 +41,7 @@ export const NAV: NavGroup[] = [
       { key: 'nav.payables', href: '/payables', icon: ArrowUpCircle },
       { key: 'nav.banking', href: '/banking', icon: Landmark },
       { key: 'nav.reports', href: '/reports', icon: BarChart3 },
+      { key: 'nav.saft', href: '/saft', icon: FileCode2 },
     ],
   },
   {
@@ -66,6 +67,7 @@ export const ROUTE_TITLE_KEYS: Record<string, string> = {
   '/payables': 'nav.payables',
   '/banking': 'nav.banking',
   '/reports': 'nav.reports',
+  '/saft': 'nav.saft',
   '/audit': 'nav.audit',
   '/settings': 'nav.settings',
   '/profile': 'profile.title',

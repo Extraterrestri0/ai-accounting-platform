@@ -1,6 +1,6 @@
 import {
   FileSpreadsheet, BookOpenCheck, Wallet, ArrowDownCircle, ArrowUpCircle, FileText, ScanLine,
-  Tags, Database, ReceiptText, BarChart3, Users, Building2, Bell, ShieldCheck, Bot, Cog, Lock, BadgeCheck, Landmark,
+  Tags, Database, ReceiptText, BarChart3, Users, Building2, Bell, ShieldCheck, Bot, Cog, Lock, BadgeCheck, Landmark, FileCode2,
   type LucideIcon,
 } from 'lucide-react';
 import type { AuditEvent } from '@/lib/api/types';
@@ -28,6 +28,7 @@ const CATEGORY_META: Record<string, { icon: LucideIcon; tone: Tone; label: strin
   period: { icon: Lock, tone: 'warning', label: 'Периоди' },
   vies: { icon: BadgeCheck, tone: 'primary', label: 'VIES' },
   bank: { icon: Landmark, tone: 'primary', label: 'Банка' },
+  saft: { icon: FileCode2, tone: 'primary', label: 'SAF-T' },
 };
 
 /** Human BG labels for the known actions (fallbacks humanize the raw action). */
@@ -100,6 +101,11 @@ const ACTION_LABELS: Record<string, string> = {
   'bank.match_confirmed': 'Съвпадение потвърдено',
   'bank.match_rejected': 'Съвпадение отхвърлено',
   'bank.manual_match_confirmed': 'Ръчно равнение',
+  // SAF-T
+  'saft.export_requested': 'SAF-T експорт заявен',
+  'saft.export_generated': 'SAF-T набор от данни генериран',
+  'saft.export_failed': 'SAF-T експорт неуспешен',
+  'saft.dataset_validated': 'SAF-T набор валидиран',
   // VIES
   'vies.validation_requested': 'VIES проверка заявена',
   'vies.validation_completed': 'VIES проверка завършена',
@@ -135,6 +141,7 @@ const ENTITY_LABELS: Record<string, string> = {
   vat_period: 'ДДС период', vat_return: 'ДДС декларация', report_run: 'Отчет',
   accounting_period: 'Счетоводен период', vies_check: 'VIES проверка', vies_dataset: 'VIES декларация',
   bank_account: 'Банкова сметка', bank_statement: 'Извлечение', bank_transaction: 'Банкова транзакция',
+  saft_export: 'SAF-T експорт',
 };
 export function entityTypeLabel(t: string): string {
   return ENTITY_LABELS[t] ?? t;
