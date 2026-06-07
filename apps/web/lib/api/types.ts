@@ -179,11 +179,19 @@ export interface SaftValidationSummary {
   info: SaftValidationIssue[];
   counts: { errors: number; warnings: number; info: number };
 }
-export type SaftExportStatus = 'generated' | 'failed';
+// v1 terminal status is 'generated'; v2 async lifecycle adds queued/processing/completed.
+export type SaftExportStatus = 'generated' | 'queued' | 'processing' | 'completed' | 'failed';
+export interface SaftXsdError { message: string; line?: number; column?: number; }
 export interface SaftExportRecord {
   id: string; year: number; month: number; status: SaftExportStatus;
   generatedBy?: string; generatedAt: string; validationSummary?: SaftValidationSummary; error?: string;
+  /** XSD outcome of the generated XML: true valid / false invalid / null|undefined not-validated. */
+  xsdValid?: boolean | null; schemaVersion?: string | null;
+  /** Present only on single-export reads (joined from the latest XML artifact). */
+  xsdErrors?: SaftXsdError[];
 }
+/** Short-lived signed download for a generated SAF-T XML artifact. */
+export interface SaftDownloadInfo { url: string; filename: string; expiresInSeconds: number; }
 export interface SaftDataset {
   header: {
     companyName: string; eik?: string; vatNumber?: string;

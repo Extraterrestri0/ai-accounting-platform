@@ -4,17 +4,22 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { FileCode2, ArrowRight, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import { Endpoints } from '@/lib/api/endpoints';
+import { SaftStatusBadge, SaftXsdBadge, isInFlight, hasXmlArtifact } from '@/components/app/saft-status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { dateBG } from '@/lib/format';
 
 const MONTHS_BG = ['', 'Януари', 'Февруари', 'Март', 'Април', 'Май', 'Юни', 'Юли', 'Август', 'Септември', 'Октомври', 'Ноември', 'Декември'];
 
-/** Dashboard SAF-T readiness widget: latest export + errors/warnings/missing mappings. */
+/** Dashboard SAF-T readiness widget: latest export status + XSD state + validation counts. */
 export function SaftReadinessWidget({ companyId }: { companyId?: string }) {
-  const q = useQuery({ queryKey: ['saft', 'exports', companyId, 'latest'], queryFn: () => Endpoints.saftExports({ pageSize: 1 }), enabled: !!companyId });
+  const q = useQuery({
+    queryKey: ['saft', 'exports', companyId, 'latest'],
+    queryFn: () => Endpoints.saftExports({ pageSize: 1 }),
+    enabled: !!companyId,
+    refetchInterval: (query) => ((query.state.data ?? []).some((e) => isInFlight(e.status)) ? 3000 : false),
+  });
   const latest = q.data?.[0];
   const c = latest?.validationSummary?.counts;
 
@@ -28,22 +33,22 @@ export function SaftReadinessWidget({ companyId }: { companyId?: string }) {
         {q.isLoading ? (
           <Skeleton className="h-16 w-full" />
         ) : !latest ? (
-          <p className="text-sm text-muted-foreground">Все още няма генериран SAF-T набор. Отворете SAF-T, за да генерирате.</p>
+          <p className="text-sm text-muted-foreground">Все още няма генериран SAF-T експорт. Отворете SAF-T, за да генерирате.</p>
         ) : (
           <>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <span className="text-sm font-medium text-foreground">{MONTHS_BG[latest.month]} {latest.year}</span>
-              {latest.status === 'failed'
-                ? <Badge variant="destructive">Неуспешен</Badge>
-                : c && c.errors > 0 ? <Badge variant="destructive">С грешки</Badge>
-                : <Badge variant="success">Готов</Badge>}
+              <div className="flex items-center gap-1.5">
+                {hasXmlArtifact(latest.status) && <SaftXsdBadge xsdValid={latest.xsdValid} />}
+                <SaftStatusBadge status={latest.status} />
+              </div>
             </div>
             <div className="grid grid-cols-3 gap-2 text-center">
               <Stat icon={XCircle} label="Грешки" value={c?.errors ?? 0} tone={(c?.errors ?? 0) > 0 ? 'text-destructive' : 'text-foreground'} />
               <Stat icon={AlertTriangle} label="Предупр." value={c?.warnings ?? 0} tone={(c?.warnings ?? 0) > 0 ? 'text-warning' : 'text-foreground'} />
               <Stat icon={CheckCircle2} label="Бележки" value={c?.info ?? 0} tone="text-muted-foreground" />
             </div>
-            <p className="text-xs text-muted-foreground">Последно генериран: {dateBG(latest.generatedAt)}</p>
+            <p className="text-xs text-muted-foreground">Последно обновен: {dateBG(latest.generatedAt)}</p>
           </>
         )}
       </CardContent>

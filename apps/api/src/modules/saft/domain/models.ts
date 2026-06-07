@@ -79,4 +79,8 @@ export type SaftExportStatus = 'generated' | 'queued' | 'processing' | 'complete
 export interface SaftExportRecord {
   id: string; year: number; month: number; status: SaftExportStatus;
   generatedBy?: string; generatedAt: string; validationSummary?: ValidationSummary; error?: string;
+  /** XSD outcome of the generated XML: true valid / false invalid / null not-validated (no schema). */
+  xsdValid?: boolean | null; schemaVersion?: string | null;
+  /** Present only on single-export reads (joined from the latest XML artifact). */
+  xsdErrors?: { message: string; line?: number; column?: number }[];
 }

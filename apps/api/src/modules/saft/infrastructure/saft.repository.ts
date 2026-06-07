@@ -107,14 +107,17 @@ export class SaftRepository {
 
   async listExports(db: ScopedClient, companyId: string, limit: number, offset: number): Promise<SaftExportRecord[]> {
     const r = await db.query<ExportRowDb>(
-      `SELECT id, year, month, status, generated_by, generated_at::text AS generated_at, validation_summary, error
+      `SELECT id, year, month, status, generated_by, generated_at::text AS generated_at, validation_summary, error, xsd_valid, schema_version
          FROM saft_exports WHERE company_id = $1 ORDER BY generated_at DESC LIMIT $2 OFFSET $3`, [companyId, limit, offset]);
     return r.rows.map(mapExport);
   }
   async getExport(db: ScopedClient, id: string): Promise<SaftExportRecord | null> {
+    // Joins the latest XML artifact's xsd_errors so a single-export read can surface them.
     const r = await db.query<ExportRowDb>(
-      `SELECT id, year, month, status, generated_by, generated_at::text AS generated_at, validation_summary, error
-         FROM saft_exports WHERE id = $1`, [id]);
+      `SELECT e.id, e.year, e.month, e.status, e.generated_by, e.generated_at::text AS generated_at, e.validation_summary, e.error, e.xsd_valid, e.schema_version, a.xsd_errors
+         FROM saft_exports e
+         LEFT JOIN LATERAL (SELECT xsd_errors FROM saft_export_artifacts WHERE export_id = e.id AND kind = 'xml' ORDER BY created_at DESC LIMIT 1) a ON true
+        WHERE e.id = $1`, [id]);
     return r.rows[0] ? mapExport(r.rows[0]) : null;
   }
   async getExportDataset(db: ScopedClient, id: string): Promise<unknown | null> {
@@ -126,7 +129,7 @@ export class SaftRepository {
   /** An in-flight export for the period, if any — used for duplicate-submit protection. */
   async findActiveExport(db: ScopedClient, companyId: string, year: number, month: number): Promise<SaftExportRecord | null> {
     const r = await db.query<ExportRowDb>(
-      `SELECT id, year, month, status, generated_by, generated_at::text AS generated_at, validation_summary, error
+      `SELECT id, year, month, status, generated_by, generated_at::text AS generated_at, validation_summary, error, xsd_valid, schema_version
          FROM saft_exports
         WHERE company_id = $1 AND year = $2 AND month = $3 AND status IN ('queued','processing')
         ORDER BY requested_at DESC NULLS LAST, generated_at DESC LIMIT 1`, [companyId, year, month]);
@@ -183,7 +186,14 @@ export class SaftRepository {
   }
 }
 
-interface ExportRowDb { id: string; year: number; month: number; status: SaftExportStatus; generated_by: string | null; generated_at: string; validation_summary: ValidationSummary | null; error: string | null; }
+interface ExportRowDb { id: string; year: number; month: number; status: SaftExportStatus; generated_by: string | null; generated_at: string; validation_summary: ValidationSummary | null; error: string | null; xsd_valid?: boolean | null; schema_version?: string | null; xsd_errors?: unknown; }
 function mapExport(r: ExportRowDb): SaftExportRecord {
-  return { id: r.id, year: r.year, month: r.month, status: r.status, generatedBy: r.generated_by ?? undefined, generatedAt: r.generated_at, validationSummary: r.validation_summary ?? undefined, error: r.error ?? undefined };
+  const rec: SaftExportRecord = {
+    id: r.id, year: r.year, month: r.month, status: r.status,
+    generatedBy: r.generated_by ?? undefined, generatedAt: r.generated_at,
+    validationSummary: r.validation_summary ?? undefined, error: r.error ?? undefined,
+    xsdValid: r.xsd_valid ?? null, schemaVersion: r.schema_version ?? undefined,
+  };
+  if (r.xsd_errors != null) rec.xsdErrors = r.xsd_errors as SaftExportRecord['xsdErrors'];
+  return rec;
 }

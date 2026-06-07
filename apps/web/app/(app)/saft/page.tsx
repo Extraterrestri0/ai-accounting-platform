@@ -3,23 +3,33 @@
 import * as React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { FileCode2, Play, ShieldCheck, Loader2, Download, Eye, XCircle, AlertTriangle, Info, CheckCircle2 } from 'lucide-react';
+import { FileCode2, Play, ShieldCheck, Loader2, Download, Eye, XCircle, AlertTriangle, Info, CheckCircle2, FileDown } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { Endpoints } from '@/lib/api/endpoints';
 import { ApiError } from '@/lib/api/client';
 import { PageHeader } from '@/components/app/page-header';
 import { EmptyState, ErrorState, TableSkeleton } from '@/components/app/states';
+import { SaftStatusBadge, SaftXsdBadge, isInFlight, hasXmlArtifact } from '@/components/app/saft-status';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { dateTimeBG } from '@/lib/format';
-import type { SaftDataset, SaftValidationSummary, SaftValidationIssue } from '@/lib/api/types';
+import type { SaftDataset, SaftExportRecord, SaftValidationSummary, SaftValidationIssue, SaftXsdError } from '@/lib/api/types';
 
 const MONTHS = ['Януари', 'Февруари', 'Март', 'Април', 'Май', 'Юни', 'Юли', 'Август', 'Септември', 'Октомври', 'Ноември', 'Декември'];
 const selectCls = 'h-9 rounded-md border border-input bg-card px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 const NOW = { y: 2026, m: 6 };
+
+async function downloadXml(id: string): Promise<void> {
+  try {
+    const dl = await Endpoints.saftDownload(id);
+    window.open(dl.url, '_blank', 'noopener');
+  } catch (e) {
+    toast.error('Изтеглянето е неуспешно', { description: e instanceof ApiError ? e.message : '' });
+  }
+}
 
 export default function SaftPage() {
   const { activeCompany } = useAuth();
@@ -30,7 +40,13 @@ export default function SaftPage() {
   const [validation, setValidation] = React.useState<SaftValidationSummary | null>(null);
   const [previewId, setPreviewId] = React.useState<string | null>(null);
 
-  const exportsQ = useQuery({ queryKey: ['saft', 'exports', companyId], queryFn: () => Endpoints.saftExports({ pageSize: 50 }), enabled: !!companyId });
+  const exportsQ = useQuery({
+    queryKey: ['saft', 'exports', companyId],
+    queryFn: () => Endpoints.saftExports({ pageSize: 50 }),
+    enabled: !!companyId,
+    // Poll while any export is queued/processing so the async lifecycle updates live.
+    refetchInterval: (q) => ((q.state.data ?? []).some((e) => isInFlight(e.status)) ? 3000 : false),
+  });
 
   const validate = useMutation({
     mutationFn: () => Endpoints.saftValidate(year, month),
@@ -40,8 +56,9 @@ export default function SaftPage() {
   const generate = useMutation({
     mutationFn: () => Endpoints.generateSaftExport(year, month),
     onSuccess: (r) => {
-      setValidation(r.validationSummary ?? null);
-      toast[r.status === 'failed' ? 'error' : 'success'](r.status === 'failed' ? 'Генерирането е неуспешно' : 'SAF-T наборът е генериран');
+      if (r.status === 'failed') toast.error('Генерирането е неуспешно');
+      else if (isInFlight(r.status)) toast.success('Експортът е поставен в опашка — обработва се…');
+      else { setValidation(r.validationSummary ?? null); toast.success('SAF-T наборът е генериран'); }
       qc.invalidateQueries({ queryKey: ['saft'] });
     },
     onError: (e) => toast.error('Грешка', { description: e instanceof ApiError ? e.message : '' }),
@@ -52,8 +69,8 @@ export default function SaftPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="SAF-T (готов набор от данни)"
-        description="Генериране на нормализиран SAF-T набор (Header, Master Files, GL, изходни документи) от съществуващите данни. v1 не създава финален XML."
+        title="SAF-T"
+        description="Генериране на нормализиран SAF-T набор (Header, Master Files, GL, изходни документи) и XML от съществуващите данни. Файлът се изтегля за ръчно подаване — не се изпраща към НАП."
         actions={
           <div className="flex items-center gap-2">
             <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className={selectCls}>{MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}</select>
@@ -67,27 +84,26 @@ export default function SaftPage() {
       {validation && <ValidationSummaryCard summary={validation} period={`${MONTHS[month - 1]} ${year}`} />}
 
       <Card>
-        <CardHeader className="space-y-0"><CardTitle className="text-base">История на експортите</CardTitle><CardDescription>Всеки експорт се записва с валидационна обобщена справка.</CardDescription></CardHeader>
+        <CardHeader className="space-y-0"><CardTitle className="text-base">История на експортите</CardTitle><CardDescription>Всеки експорт се записва с валидационна обобщена справка и XSD статус.</CardDescription></CardHeader>
         <CardContent className="p-0">
-          {exportsQ.isLoading ? <div className="p-4"><TableSkeleton rows={5} cols={5} /></div>
+          {exportsQ.isLoading ? <div className="p-4"><TableSkeleton rows={5} cols={6} /></div>
             : exportsQ.isError ? <div className="p-6"><ErrorState onRetry={() => exportsQ.refetch()} /></div>
-            : exports.length === 0 ? <div className="p-6"><EmptyState icon={FileCode2} title="Няма експорти" description="Генерирайте първия си SAF-T набор от данни за избран период." /></div>
+            : exports.length === 0 ? <div className="p-6"><EmptyState icon={FileCode2} title="Няма експорти" description="Генерирайте първия си SAF-T експорт за избран период." /></div>
             : (
               <Table>
-                <TableHeader><TableRow><TableHead>Период</TableHead><TableHead>Статус</TableHead><TableHead className="text-right">Грешки/Предупр./Бележки</TableHead><TableHead>Генериран</TableHead><TableHead className="text-right">Действие</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow><TableHead>Период</TableHead><TableHead>Статус</TableHead><TableHead>XSD</TableHead><TableHead className="text-right">Грешки/Предупр./Бележки</TableHead><TableHead>Генериран</TableHead><TableHead className="text-right">Действие</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {exports.map((ex) => {
                     const c = ex.validationSummary?.counts;
                     return (
                       <TableRow key={ex.id}>
                         <TableCell className="font-medium text-foreground">{MONTHS[ex.month - 1]} {ex.year}</TableCell>
-                        <TableCell>{ex.status === 'failed' ? <Badge variant="destructive">Неуспешен</Badge> : (c && c.errors > 0) ? <Badge variant="warning">С грешки</Badge> : <Badge variant="success">Генериран</Badge>}</TableCell>
+                        <TableCell><SaftStatusBadge status={ex.status} /></TableCell>
+                        <TableCell>{hasXmlArtifact(ex.status) ? <SaftXsdBadge xsdValid={ex.xsdValid} /> : <span className="text-xs text-muted-foreground">—</span>}</TableCell>
                         <TableCell className="text-right tabular-nums text-muted-foreground">{c ? `${c.errors} / ${c.warnings} / ${c.info}` : '—'}</TableCell>
                         <TableCell className="tabular-nums text-muted-foreground">{dateTimeBG(ex.generatedAt)}</TableCell>
                         <TableCell className="text-right">
-                          {ex.status === 'generated'
-                            ? <Button size="sm" variant="outline" onClick={() => setPreviewId(ex.id)}><Eye className="h-4 w-4" /> Преглед</Button>
-                            : <span className="text-xs text-destructive">{ex.error ?? 'грешка'}</span>}
+                          <RowActions ex={ex} onPreview={() => setPreviewId(ex.id)} />
                         </TableCell>
                       </TableRow>
                     );
@@ -99,6 +115,17 @@ export default function SaftPage() {
       </Card>
 
       <PreviewDialog exportId={previewId} onOpenChange={(v) => !v && setPreviewId(null)} />
+    </div>
+  );
+}
+
+function RowActions({ ex, onPreview }: { ex: SaftExportRecord; onPreview: () => void }) {
+  if (ex.status === 'failed') return <span className="text-xs text-destructive">{ex.error ?? 'грешка'}</span>;
+  if (isInFlight(ex.status)) return <span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> Обработва се…</span>;
+  return (
+    <div className="inline-flex gap-2">
+      {hasXmlArtifact(ex.status) && <Button size="sm" variant="outline" onClick={() => void downloadXml(ex.id)}><FileDown className="h-4 w-4" /> XML</Button>}
+      <Button size="sm" variant="outline" onClick={onPreview}><Eye className="h-4 w-4" /> Преглед</Button>
     </div>
   );
 }
@@ -134,10 +161,12 @@ function ValidationSummaryCard({ summary, period }: { summary: SaftValidationSum
 }
 
 function PreviewDialog({ exportId, onOpenChange }: { exportId: string | null; onOpenChange: (v: boolean) => void }) {
-  const q = useQuery({ queryKey: ['saft', 'dataset', exportId], queryFn: () => Endpoints.saftDataset(exportId!), enabled: !!exportId });
-  const ds = q.data as SaftDataset | undefined;
+  const recordQ = useQuery({ queryKey: ['saft', 'export', exportId], queryFn: () => Endpoints.saftExport(exportId!), enabled: !!exportId });
+  const datasetQ = useQuery({ queryKey: ['saft', 'dataset', exportId], queryFn: () => Endpoints.saftDataset(exportId!), enabled: !!exportId });
+  const ds = datasetQ.data as SaftDataset | undefined;
+  const rec = recordQ.data;
 
-  const download = () => {
+  const downloadJson = () => {
     if (!ds) return;
     const blob = new Blob([JSON.stringify(ds, null, 2)], { type: 'application/json;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -151,6 +180,8 @@ function PreviewDialog({ exportId, onOpenChange }: { exportId: string | null; on
     <div className="rounded-lg bg-secondary/60 p-2 text-center"><p className="text-[11px] text-muted-foreground">{label}</p><p className="text-sm font-bold tabular-nums text-foreground">{value}</p></div>
   );
 
+  const xsdErrors: SaftXsdError[] = rec?.xsdErrors ?? [];
+
   return (
     <Dialog open={!!exportId} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -158,10 +189,24 @@ function PreviewDialog({ exportId, onOpenChange }: { exportId: string | null; on
           <DialogTitle className="flex items-center gap-2"><FileCode2 className="h-5 w-5 text-primary" /> SAF-T преглед</DialogTitle>
           <DialogDescription>{ds ? `${ds.header.companyName} · ${ds.header.period.from} – ${ds.header.period.to} · ${ds.header.currency}` : 'Зареждане…'}</DialogDescription>
         </DialogHeader>
-        {q.isLoading ? <p className="py-6 text-sm text-muted-foreground">Зареждане…</p>
+        {datasetQ.isLoading ? <p className="py-6 text-sm text-muted-foreground">Зареждане…</p>
           : !ds ? <p className="py-6 text-sm text-muted-foreground">Няма данни.</p>
           : (
             <div className="space-y-4">
+              {rec && rec.status === 'completed' && (
+                <div className="flex items-center gap-2">
+                  <SaftXsdBadge xsdValid={rec.xsdValid} />
+                  {rec.schemaVersion && <span className="text-xs text-muted-foreground">схема: {rec.schemaVersion}</span>}
+                </div>
+              )}
+              {xsdErrors.length > 0 && (
+                <div className="rounded-lg border border-destructive/30 bg-destructive-soft/40 p-3">
+                  <p className="mb-1 flex items-center gap-1.5 text-sm font-medium text-destructive"><XCircle className="h-4 w-4" /> XSD грешки ({xsdErrors.length})</p>
+                  <ul className="max-h-32 space-y-0.5 overflow-auto pl-6 text-xs text-muted-foreground">
+                    {xsdErrors.slice(0, 50).map((e, i) => <li key={i}>{e.line ? `ред ${e.line}: ` : ''}{e.message}</li>)}
+                  </ul>
+                </div>
+              )}
               <div>
                 <p className="t-overline mb-1.5">Master Files</p>
                 <div className="grid grid-cols-5 gap-2">
@@ -181,7 +226,10 @@ function PreviewDialog({ exportId, onOpenChange }: { exportId: string | null; on
             </div>
           )}
         <DialogFooter className="justify-between">
-          <Button variant="outline" onClick={download} disabled={!ds}><Download className="h-4 w-4" /> Изтегли JSON</Button>
+          <div className="flex gap-2">
+            {rec && hasXmlArtifact(rec.status) && <Button variant="outline" onClick={() => exportId && void downloadXml(exportId)}><FileDown className="h-4 w-4" /> Изтегли XML</Button>}
+            <Button variant="outline" onClick={downloadJson} disabled={!ds}><Download className="h-4 w-4" /> Изтегли JSON</Button>
+          </div>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Затвори</Button>
         </DialogFooter>
       </DialogContent>
