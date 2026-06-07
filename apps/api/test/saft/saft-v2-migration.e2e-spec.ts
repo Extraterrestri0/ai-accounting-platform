@@ -11,8 +11,8 @@ import { Pool } from 'pg';
 import { TenantContextService } from '../../src/platform/tenant-context/tenant-context.service';
 import { DatabaseContextService } from '../../src/platform/database/database-context.service';
 
-const RUN = !!(process.env.PGHOST && process.env.PGUSER && process.env.MIGRATION_USER);
-const d = RUN ? describe : describe.skip;
+// release-blocking DB suite — runs in CI (PG env set), skips locally, fails (not skips) when CI_REQUIRE_DB=1
+const d = require('../helpers/db-e2e').dbDescribe as (name: string, fn: () => void) => void;
 
 const TENANT_A = '5d5d0000-0000-0000-0000-00000000000a';
 const COMPANY_A = '5d5d0000-0000-0000-0000-0000000000ca';

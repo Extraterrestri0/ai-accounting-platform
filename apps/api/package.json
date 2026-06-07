@@ -12,6 +12,7 @@
     "worker:local": "node -r ./scripts/load-env.js dist/worker.js",
     "migrate": "node scripts/migrate.js",
     "migrate:local": "node -r ./scripts/load-env.js scripts/migrate.js",
+    "migrate:validate": "node scripts/validate-migrations.js",
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.cjs"
   },
   "dependencies": {
@@ -53,6 +54,7 @@
     "cross-env": "^10.1.0",
     "eslint": "^8.57.1",
     "jest": "^30.4.2",
-    "ts-jest": "^29.4.11"
+    "ts-jest": "^29.4.11",
+    "ts-node": "^10.9.2"
   }
 }

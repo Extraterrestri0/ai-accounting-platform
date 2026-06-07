@@ -13,8 +13,8 @@ import { TenantContextService } from '../../src/platform/tenant-context/tenant-c
 import { DatabaseContextService } from '../../src/platform/database/database-context.service';
 import { SaftRepository } from '../../src/modules/saft/infrastructure/saft.repository';
 
-const RUN = !!(process.env.PGHOST && process.env.PGUSER && process.env.MIGRATION_USER);
-const d = RUN ? describe : describe.skip;
+// release-blocking DB suite — runs in CI (PG env set), skips locally, fails (not skips) when CI_REQUIRE_DB=1
+const d = require('../helpers/db-e2e').dbDescribe as (name: string, fn: () => void) => void;
 
 const TENANT = '5c5c0000-0000-0000-0000-00000000000c';
 const COMPANY = '5c5c0000-0000-0000-0000-0000000000cc';
