@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Inject, Param, Post, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Inject, NotFoundException, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { SAFT_EXPORT_SERVICE, type ISaftExportService } from '../application/saft-export.service.interface';
 import { SAFT_VALIDATION_SERVICE, type ISaftValidationService } from '../application/saft-validation.service.interface';
 import { RequirePermission, PERMISSIONS } from '../../identity';
@@ -30,10 +30,18 @@ export class SaftController {
   }
 
   @Get('exports/:id') @RequirePermission(PERMISSIONS.SAFT_READ)
-  get(@Param('id') id: string) { return this.exports.getExport(id); }
+  async get(@Param('id', ParseUUIDPipe) id: string) {
+    const rec = await this.exports.getExport(id);
+    if (!rec) throw new NotFoundException('SAF-T export not found.');
+    return rec;
+  }
 
   @Get('exports/:id/dataset') @RequirePermission(PERMISSIONS.SAFT_READ)
-  dataset(@Param('id') id: string) { return this.exports.getExportDataset(id); }
+  async dataset(@Param('id', ParseUUIDPipe) id: string) {
+    const ds = await this.exports.getExportDataset(id);
+    if (!ds) throw new NotFoundException('SAF-T export dataset not found.');
+    return ds;
+  }
 
   @Get('validate/:year/:month') @RequirePermission(PERMISSIONS.SAFT_READ)
   validate(@Param('year') year: string, @Param('month') month: string) {

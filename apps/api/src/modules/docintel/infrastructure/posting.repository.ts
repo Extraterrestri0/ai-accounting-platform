@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { ScopedClient } from '../../../platform';
-import type { PostingKind, PostingLineInput, PostingRequest, PostingStatus } from '../domain/posting/models';
+import type { PostedPurchaseDetail, PostingKind, PostingLineInput, PostingRequest, PostingStatus } from '../domain/posting/models';
 
 interface ReqRow { id: string; review_package_id: string | null; document_id: string | null; requested_by: string; kind: PostingKind; status: PostingStatus; lines: PostingLineInput[] | null; error: string | null; created_at: string; }
 const mapReq = (r: ReqRow): PostingRequest => ({ id: r.id, reviewPackageId: r.review_package_id ?? undefined, documentId: r.document_id ?? undefined, requestedBy: r.requested_by, kind: r.kind, status: r.status, lines: r.lines ?? undefined, error: r.error ?? undefined, createdAt: r.created_at });
@@ -43,5 +43,32 @@ export class PostingRepository {
   async list(db: ScopedClient, limit: number, offset: number): Promise<PostingRequest[]> {
     const r = await db.query<ReqRow>(`SELECT * FROM posting_requests ORDER BY created_at DESC LIMIT $1 OFFSET $2`, [limit, offset]);
     return r.rows.map(mapReq);
+  }
+
+  /**
+   * Batched purchase enrichment for the given review packages (one query). Resolves
+   * supplier / expense category / suggested account from this context's own review +
+   * suggestion tables. Company-scoped by RLS. Returns one row per matched review package.
+   */
+  async purchaseDetailsByReview(db: ScopedClient, reviewPackageIds: string[]): Promise<PostedPurchaseDetail[]> {
+    const r = await db.query<{ review_package_id: string; supplier_id: string | null; supplier_name: string | null; category: string | null; suggestion: string | null; review_status: string | null }>(
+      `SELECT rp.id AS review_package_id,
+              cp.id AS supplier_id, cp.name AS supplier_name,
+              ec.name_bg AS category,
+              COALESCE(sa.code, s.classification_reason) AS suggestion,
+              rp.status AS review_status
+         FROM review_packages rp
+         LEFT JOIN documents d ON d.id = rp.document_id
+         LEFT JOIN LATERAL (SELECT * FROM accounting_suggestions x WHERE x.document_id = rp.document_id ORDER BY x.created_at DESC LIMIT 1) s ON true
+         LEFT JOIN counterparties cp ON cp.id = COALESCE(d.counterparty_id, s.counterparty_id)
+         LEFT JOIN expense_categories ec ON ec.id = s.expense_category_id
+         LEFT JOIN accounts sa ON sa.id = s.suggested_account_id
+        WHERE rp.id = ANY($1)`, [reviewPackageIds]);
+    return r.rows.map((x) => ({
+      reviewPackageId: x.review_package_id,
+      supplierId: x.supplier_id ?? undefined, supplierName: x.supplier_name ?? undefined,
+      classificationCategory: x.category ?? undefined, accountingSuggestion: x.suggestion ?? undefined,
+      approvalStatus: x.review_status ?? undefined,
+    }));
   }
 }

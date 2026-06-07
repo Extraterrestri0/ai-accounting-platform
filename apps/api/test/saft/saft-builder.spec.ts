@@ -1,9 +1,31 @@
 import { SaftDatasetBuilder } from '../../src/modules/saft/application/saft-dataset.builder';
 
-function make(repoOver: any = {}) {
+// One invoice (sales) entry, one purchase entry posted from review, and one REVERSAL
+// of a review entry — the reversal must NOT become a purchase source document.
+const GL_ENTRIES = [
+  { journalEntryId: 'e1', entryNo: 1, postingDate: '2026-05-10', documentReference: 'INV-1', sourceType: 'invoice', sourceId: undefined, reversesEntryId: undefined, lines: [{ lineNumber: 1, accountCode: '411', debit: '120.00', credit: '0.00' }] },
+  { journalEntryId: 'pe7', entryNo: 7, postingDate: '2026-05-12', sourceType: 'review', sourceId: 'rp7', reversesEntryId: undefined, lines: [
+    { lineNumber: 1, accountCode: '602', debit: '200.00', credit: '0.00' },
+    { lineNumber: 2, accountCode: '4531', debit: '40.00', credit: '0.00' },
+    { lineNumber: 3, accountCode: '401', debit: '0.00', credit: '240.00' },
+  ] },
+  { journalEntryId: 'pe7r', entryNo: 8, postingDate: '2026-05-13', sourceType: 'review', sourceId: 'rp7', reversesEntryId: 'pe7', lines: [
+    { lineNumber: 1, accountCode: '602', debit: '0.00', credit: '200.00' },
+    { lineNumber: 2, accountCode: '4531', debit: '0.00', credit: '40.00' },
+    { lineNumber: 3, accountCode: '401', debit: '240.00', credit: '0.00' },
+  ] },
+];
+
+function make(over: any = {}) {
   const ctx: any = { currentOrThrow: () => ({ tenantId: 't1', companyId: 'c1', userId: 'u1' }) };
   const db: any = { run: async (fn: any) => fn({}) };
   const masterdata: any = { getPostingAccounts: jest.fn(async () => ({ payable: '401', purchase_vat_input: '4531', cash_bank: '503', receivable: '411', sales_revenue: '702', sales_vat_output: '4532', purchase_expense_default: '602' })) };
+  const postings: any = {
+    listPostedPurchaseDetails: jest.fn(async () => [
+      { reviewPackageId: 'rp7', supplierName: 'Vendor GmbH', supplierId: 'sup1', classificationCategory: 'Външни услуги', accountingSuggestion: '602', approvalStatus: 'approved' },
+    ]),
+    ...over.postings,
+  };
   const repo: any = {
     companyInfo: jest.fn(async () => ({ name: 'ACME OOD', eik: '123456789', vatNumber: 'BG123456789', currency: 'EUR' })),
     customers: jest.fn(async () => [{ id: 'cust1', name: 'Beta', vatNumber: 'BG999', country: 'BG' }]),
@@ -11,13 +33,12 @@ function make(repoOver: any = {}) {
     products: jest.fn(async () => [{ code: 'P1', description: 'Service', unit: 'pcs', vatRate: '20', kind: 'service', saftCode: 'SVC' }]),
     accounts: jest.fn(async () => [{ accountCode: '702', accountName: 'Revenue', accountType: 'revenue' }]),
     taxCodes: jest.fn(async () => [{ vatCode: 'STD20', vatRate: '20', vatTreatment: 'standard', direction: 'both' }]),
-    glEntries: jest.fn(async () => [{ journalEntryId: 'e1', entryNo: 1, postingDate: '2026-05-10', documentReference: 'INV-1', sourceType: 'invoice', lines: [{ lineNumber: 1, accountCode: '411', debit: '120.00', credit: '0.00' }] }]),
+    glEntries: jest.fn(async () => GL_ENTRIES),
     salesInvoices: jest.fn(async () => [{ invoiceNumber: '2026-0001', invoiceDate: '2026-05-10', customer: 'Beta', netAmount: '100.00', vatAmount: '20.00', grossAmount: '120.00', documentType: 'invoice', vatCode: 'STD20' }]),
-    purchaseEntries: jest.fn(async () => [{ journalEntryId: 'pe1', entryNo: 7, postingDate: '2026-05-12', supplier: 'Vendor GmbH', supplierId: 'sup1', classificationCategory: 'Външни услуги', accountingSuggestion: '602', approvalStatus: 'approved', lines: [{ lineNumber: 1, accountCode: '602', debit: '200.00', credit: '0.00' }, { lineNumber: 2, accountCode: '4531', debit: '40.00', credit: '0.00' }, { lineNumber: 3, accountCode: '401', debit: '0.00', credit: '240.00' }] }]),
     payments: jest.fn(async () => [{ paymentDate: '2026-05-15', amount: '120.00', direction: 'inbound', counterparty: 'Beta', linkedDocumentType: 'sales_invoice', linkedDocumentId: 'inv1', bankReference: 'REF', reconciliationStatus: 'reconciled' }]),
-    ...repoOver,
+    ...over.repo,
   };
-  return { svc: new SaftDatasetBuilder(ctx, db, repo, masterdata), repo, masterdata };
+  return { svc: new SaftDatasetBuilder(ctx, db, repo, masterdata, postings), repo, masterdata, postings };
 }
 
 describe('SaftDatasetBuilder (Task: SAF-T v1)', () => {
@@ -37,20 +58,35 @@ describe('SaftDatasetBuilder (Task: SAF-T v1)', () => {
 
   it('extracts general ledger entries from the immutable ledger', async () => {
     const ds = await make().svc.buildDataset(2026, 5);
-    expect(ds.generalLedgerEntries).toHaveLength(1);
+    expect(ds.generalLedgerEntries).toHaveLength(3);
     expect(ds.generalLedgerEntries[0]).toMatchObject({ journalEntryId: 'e1', sourceType: 'invoice' });
   });
 
-  it('extracts source documents and derives purchase amounts from posted lines', async () => {
-    const ds = await make().svc.buildDataset(2026, 5);
+  it('derives purchase docs from review GL entries + docintel enrichment (no purchase SQL in saft)', async () => {
+    const { svc, postings } = make();
+    const ds = await svc.buildDataset(2026, 5);
+    // Enrichment is fetched in ONE batched call, keyed only by non-reversal review entries.
+    expect(postings.listPostedPurchaseDetails).toHaveBeenCalledTimes(1);
+    expect(postings.listPostedPurchaseDetails).toHaveBeenCalledWith(['rp7']);
     expect(ds.sourceDocuments.salesInvoices[0]).toMatchObject({ invoiceNumber: '2026-0001', grossAmount: '120.00' });
-    expect(ds.sourceDocuments.purchaseDocuments[0]).toMatchObject({ documentNumber: '#7', netAmount: '200.00', vatAmount: '40.00', grossAmount: '240.00', approvalStatus: 'approved', classificationCategory: 'Външни услуги' });
+    expect(ds.sourceDocuments.purchaseDocuments).toHaveLength(1); // the reversal entry is excluded
+    expect(ds.sourceDocuments.purchaseDocuments[0]).toMatchObject({
+      documentNumber: '#7', netAmount: '200.00', vatAmount: '40.00', grossAmount: '240.00',
+      supplier: 'Vendor GmbH', supplierId: 'sup1', approvalStatus: 'approved', classificationCategory: 'Външни услуги',
+    });
     expect(ds.sourceDocuments.payments[0]).toMatchObject({ direction: 'inbound', reconciliationStatus: 'reconciled' });
+  });
+
+  it('does not call the docintel read-model when there are no purchases', async () => {
+    const { svc, postings } = make({ repo: { glEntries: jest.fn(async () => [GL_ENTRIES[0]]) } }); // invoice only
+    const ds = await svc.buildDataset(2026, 5);
+    expect(postings.listPostedPurchaseDetails).not.toHaveBeenCalled();
+    expect(ds.sourceDocuments.purchaseDocuments).toHaveLength(0);
   });
 
   it('reports section counts', async () => {
     const ds = await make().svc.buildDataset(2026, 5);
-    expect(ds.counts).toMatchObject({ customers: 1, suppliers: 1, glEntries: 1, salesInvoices: 1, purchaseDocuments: 1, payments: 1 });
+    expect(ds.counts).toMatchObject({ customers: 1, suppliers: 1, glEntries: 3, salesInvoices: 1, purchaseDocuments: 1, payments: 1 });
   });
 
   it('reads every section scoped to the active company (tenant/company isolation)', async () => {

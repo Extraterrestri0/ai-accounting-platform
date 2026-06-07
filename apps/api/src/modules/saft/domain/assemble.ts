@@ -1,5 +1,28 @@
 import type { SaftGlLine, SaftHeader } from './models';
 
+/** Raw ledger line row (one DB row), before grouping into entries. */
+export interface RawGlLineRow { entryId: string; lineNumber: number; accountCode: string; direction: string; amount: string; narrative?: string; }
+
+/**
+ * Group a flat, batched set of ledger-line rows by their entry id (pure). Lets the
+ * repository fetch ALL lines for a period in one query and assemble them in memory,
+ * instead of one query per entry (N+1).
+ */
+export function groupLinesByEntry(rows: RawGlLineRow[]): Map<string, SaftGlLine[]> {
+  const byEntry = new Map<string, SaftGlLine[]>();
+  for (const r of rows) {
+    const line: SaftGlLine = {
+      lineNumber: r.lineNumber, accountCode: r.accountCode,
+      debit: r.direction === 'debit' ? r.amount : '0.00',
+      credit: r.direction === 'credit' ? r.amount : '0.00',
+      narrative: r.narrative,
+    };
+    const arr = byEntry.get(r.entryId);
+    if (arr) arr.push(line); else byEntry.set(r.entryId, [line]);
+  }
+  return byEntry;
+}
+
 export const SOFTWARE_NAME = 'Счетоводство (MGI-Delta)';
 export const SOFTWARE_VERSION = '1.0.0-saft1';
 

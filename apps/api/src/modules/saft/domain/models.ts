@@ -27,7 +27,7 @@ export interface SaftMasterFiles {
 export interface SaftGlLine { lineNumber: number; accountCode: string; debit: string; credit: string; counterparty?: string; vatCode?: string; narrative?: string; }
 export interface SaftGlEntry {
   journalEntryId: string; entryNo: number; postingDate: string; documentReference?: string; description?: string;
-  sourceType: string; sourceId?: string; lines: SaftGlLine[];
+  sourceType: string; sourceId?: string; reversesEntryId?: string; lines: SaftGlLine[];
 }
 
 // ---- Source documents ----

@@ -1,4 +1,4 @@
-import { monthBounds, entryBalanced, purchaseAmounts, buildHeader, SOFTWARE_NAME } from '../../src/modules/saft/domain/assemble';
+import { monthBounds, entryBalanced, purchaseAmounts, buildHeader, SOFTWARE_NAME, groupLinesByEntry } from '../../src/modules/saft/domain/assemble';
 import { validateDataset } from '../../src/modules/saft/domain/validation';
 import type { SaftDataset, SaftGlLine } from '../../src/modules/saft/domain/models';
 
@@ -22,6 +22,28 @@ describe('SAF-T assemble helpers', () => {
     const h = buildHeader({ companyName: 'ACME', eik: '123', vatNumber: 'BG123', currency: 'EUR', year: 2026, month: 5, generatedAt: '2026-06-01T00:00:00Z' });
     expect(h).toMatchObject({ companyName: 'ACME', vatNumber: 'BG123', currency: 'EUR', softwareName: SOFTWARE_NAME });
     expect(h.period).toEqual({ year: 2026, month: 5, from: '2026-05-01', to: '2026-05-31' });
+  });
+
+  it('groups a flat batched line set by entry id, preserving order and direction (no N+1)', () => {
+    const grouped = groupLinesByEntry([
+      { entryId: 'e1', lineNumber: 1, accountCode: '411', direction: 'debit', amount: '120.00' },
+      { entryId: 'e2', lineNumber: 1, accountCode: '602', direction: 'debit', amount: '200.00' },
+      { entryId: 'e1', lineNumber: 2, accountCode: '702', direction: 'credit', amount: '100.00' },
+      { entryId: 'e1', lineNumber: 3, accountCode: '4532', direction: 'credit', amount: '20.00' },
+    ]);
+    expect(grouped.size).toBe(2);
+    expect(grouped.get('e1')).toEqual([
+      { lineNumber: 1, accountCode: '411', debit: '120.00', credit: '0.00', narrative: undefined },
+      { lineNumber: 2, accountCode: '702', debit: '0.00', credit: '100.00', narrative: undefined },
+      { lineNumber: 3, accountCode: '4532', debit: '0.00', credit: '20.00', narrative: undefined },
+    ]);
+    expect(grouped.get('e2')).toHaveLength(1);
+    // The grouped lines reconstruct a balanced entry exactly as a per-entry query would.
+    expect(entryBalanced(grouped.get('e1')!)).toBe(true);
+  });
+
+  it('returns an empty map for no rows', () => {
+    expect(groupLinesByEntry([]).size).toBe(0);
   });
 });
 

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuditModule } from '../audit';
 import { MasterDataModule } from '../masterdata';
+import { DocIntelModule } from '../docintel';
 import { SaftController } from './api/saft.controller';
 import { SAFT_DATASET_BUILDER } from './application/saft-dataset.builder.interface';
 import { SaftDatasetBuilder } from './application/saft-dataset.builder';
@@ -17,7 +18,7 @@ import { SaftRepository } from './infrastructure/saft.repository';
  * A pure read/aggregation context: it never writes the ledger or any source module.
  */
 @Module({
-  imports: [AuditModule, MasterDataModule],
+  imports: [AuditModule, MasterDataModule, DocIntelModule],
   controllers: [SaftController],
   providers: [
     { provide: SAFT_DATASET_BUILDER, useClass: SaftDatasetBuilder },

@@ -1,19 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import type { ScopedClient } from '../../../platform';
+import { groupLinesByEntry } from '../domain/assemble';
 import type {
-  SaftAccount, SaftExportRecord, SaftExportStatus, SaftGlEntry, SaftGlLine, SaftParty, SaftPaymentDocument,
+  SaftAccount, SaftExportRecord, SaftExportStatus, SaftGlEntry, SaftParty, SaftPaymentDocument,
   SaftProduct, SaftSalesInvoice, SaftTaxCode, ValidationSummary,
 } from '../domain/models';
-
-/** Raw purchase row (amounts computed by the builder from the entry lines). */
-export interface PurchaseEntryRaw {
-  journalEntryId: string; entryNo: number; postingDate: string;
-  supplier?: string; supplierId?: string; classificationCategory?: string;
-  accountingSuggestion?: string; approvalStatus?: string; lines: SaftGlLine[];
-}
-
-const dr = (dir: string, amt: string): string => (dir === 'debit' ? amt : '0.00');
-const cr = (dir: string, amt: string): string => (dir === 'credit' ? amt : '0.00');
 
 @Injectable()
 export class SaftRepository {
@@ -56,22 +47,31 @@ export class SaftRepository {
   }
 
   // ---- general ledger ----
-  private async linesFor(db: ScopedClient, entryId: string): Promise<SaftGlLine[]> {
-    const r = await db.query<{ line_no: number; code: string; direction: string; amount: string; narrative: string | null }>(
-      `SELECT jl.line_no, a.code, jl.direction, jl.amount, jl.narrative
-         FROM journal_lines jl JOIN accounts a ON a.id = jl.account_id WHERE jl.entry_id = $1 ORDER BY jl.line_no`, [entryId]);
-    return r.rows.map((x) => ({ lineNumber: x.line_no, accountCode: x.code, debit: dr(x.direction, x.amount), credit: cr(x.direction, x.amount), narrative: x.narrative ?? undefined }));
-  }
-
+  /**
+   * Read posted entries + their lines for a period in exactly TWO queries (no N+1):
+   * one for the entries, one for ALL their lines via `entry_id = ANY(...)`, then
+   * grouped in memory. Read-only on the immutable ledger; company-scoped by RLS.
+   */
   async glEntries(db: ScopedClient, companyId: string, from: string, to: string): Promise<SaftGlEntry[]> {
-    const e = await db.query<{ id: string; entry_no: number; posting_date: string; description: string; source_type: string; source_ref: string | null }>(
-      `SELECT id, entry_no, posting_date::text AS posting_date, description, source_type, source_ref
+    const e = await db.query<{ id: string; entry_no: number; posting_date: string; description: string; source_type: string; source_ref: string | null; reverses_entry_id: string | null }>(
+      `SELECT id, entry_no, posting_date::text AS posting_date, description, source_type, source_ref, reverses_entry_id
          FROM journal_entries WHERE company_id = $1 AND posting_date BETWEEN $2 AND $3 ORDER BY entry_no`, [companyId, from, to]);
-    const out: SaftGlEntry[] = [];
-    for (const row of e.rows) {
-      out.push({ journalEntryId: row.id, entryNo: row.entry_no, postingDate: row.posting_date, documentReference: row.source_ref ?? undefined, description: row.description ?? undefined, sourceType: row.source_type, sourceId: row.source_ref ?? undefined, lines: await this.linesFor(db, row.id) });
-    }
-    return out;
+    if (e.rows.length === 0) return [];
+
+    const ids = e.rows.map((r) => r.id);
+    const l = await db.query<{ entry_id: string; line_no: number; code: string; direction: string; amount: string; narrative: string | null }>(
+      `SELECT jl.entry_id, jl.line_no, a.code, jl.direction, jl.amount, jl.narrative
+         FROM journal_lines jl JOIN accounts a ON a.id = jl.account_id
+        WHERE jl.entry_id = ANY($1) ORDER BY jl.entry_id, jl.line_no`, [ids]);
+    const linesByEntry = groupLinesByEntry(l.rows.map((x) => ({ entryId: x.entry_id, lineNumber: x.line_no, accountCode: x.code, direction: x.direction, amount: x.amount, narrative: x.narrative ?? undefined })));
+
+    return e.rows.map((row) => ({
+      journalEntryId: row.id, entryNo: row.entry_no, postingDate: row.posting_date,
+      documentReference: row.source_ref ?? undefined, description: row.description ?? undefined,
+      sourceType: row.source_type, sourceId: row.source_ref ?? undefined,
+      reversesEntryId: row.reverses_entry_id ?? undefined,
+      lines: linesByEntry.get(row.id) ?? [],
+    }));
   }
 
   // ---- source documents ----
@@ -82,30 +82,6 @@ export class SaftRepository {
          FROM invoices i
         WHERE i.company_id = $1 AND i.status = 'issued' AND i.issue_date BETWEEN $2 AND $3 ORDER BY i.invoice_number`, [companyId, from, to]);
     return r.rows.map((x) => ({ invoiceNumber: x.invoice_number ?? undefined, invoiceDate: x.issue_date ?? undefined, customer: x.customer_name ?? undefined, customerId: x.customer_id ?? undefined, netAmount: x.net_total, vatAmount: x.vat_total, grossAmount: x.gross_total, vatCode: x.vat_code ?? undefined, documentType: x.document_kind }));
-  }
-
-  async purchaseEntries(db: ScopedClient, companyId: string, from: string, to: string): Promise<PurchaseEntryRaw[]> {
-    const e = await db.query<{ entry_id: string; entry_no: number; posting_date: string; supplier_id: string | null; supplier_name: string | null; category: string | null; suggestion: string | null; review_status: string | null }>(
-      `SELECT je.id AS entry_id, je.entry_no, je.posting_date::text AS posting_date,
-              cp.id AS supplier_id, cp.name AS supplier_name,
-              ec.name_bg AS category,
-              COALESCE(sa.code, s.classification_reason) AS suggestion,
-              rp.status AS review_status
-         FROM journal_entries je
-         LEFT JOIN review_packages rp ON rp.id::text = je.source_ref
-         LEFT JOIN documents d ON d.id = rp.document_id
-         LEFT JOIN LATERAL (SELECT * FROM accounting_suggestions x WHERE x.document_id = rp.document_id ORDER BY x.created_at DESC LIMIT 1) s ON true
-         LEFT JOIN counterparties cp ON cp.id = COALESCE(d.counterparty_id, s.counterparty_id)
-         LEFT JOIN expense_categories ec ON ec.id = s.expense_category_id
-         LEFT JOIN accounts sa ON sa.id = s.suggested_account_id
-        WHERE je.company_id = $1 AND je.source_type = 'review' AND je.reverses_entry_id IS NULL
-          AND je.posting_date BETWEEN $2 AND $3
-        ORDER BY je.entry_no`, [companyId, from, to]);
-    const out: PurchaseEntryRaw[] = [];
-    for (const row of e.rows) {
-      out.push({ journalEntryId: row.entry_id, entryNo: row.entry_no, postingDate: row.posting_date, supplier: row.supplier_name ?? undefined, supplierId: row.supplier_id ?? undefined, classificationCategory: row.category ?? undefined, accountingSuggestion: row.suggestion ?? undefined, approvalStatus: row.review_status ?? undefined, lines: await this.linesFor(db, row.entry_id) });
-    }
-    return out;
   }
 
   async payments(db: ScopedClient, companyId: string, from: string, to: string): Promise<SaftPaymentDocument[]> {

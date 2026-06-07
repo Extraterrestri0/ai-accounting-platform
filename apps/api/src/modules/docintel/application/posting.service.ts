@@ -6,7 +6,7 @@ import { PERIOD_SERVICE, type IAccountingPeriodService } from '../../periods';
 import { REVIEW_SERVICE, type IReviewService } from './review.service.interface';
 import { PostingRepository } from '../infrastructure/posting.repository';
 import { validatePosting, PostingValidationError } from '../domain/posting/validation';
-import type { PostingLineInput, PostingOutcome, PostingRequest } from '../domain/posting/models';
+import type { PostedPurchaseDetail, PostingLineInput, PostingOutcome, PostingRequest } from '../domain/posting/models';
 import type { IPostingService } from './posting.service.interface';
 
 class PostingError extends Error {}
@@ -110,6 +110,12 @@ export class PostingService implements IPostingService {
     this.scope();
     const size = Math.min(100, Math.max(1, pageSize));
     return this.db.run((db) => this.repo.list(db, size, (Math.max(1, page) - 1) * size));
+  }
+
+  listPostedPurchaseDetails(reviewPackageIds: string[]): Promise<PostedPurchaseDetail[]> {
+    this.scope();
+    if (reviewPackageIds.length === 0) return Promise.resolve([]);
+    return this.db.run((db) => this.repo.purchaseDetailsByReview(db, reviewPackageIds));
   }
 
   /** Resolve the document id behind a review package (review detail is keyed by document). */

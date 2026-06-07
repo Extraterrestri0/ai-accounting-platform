@@ -1,9 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { DatabaseContextService, TenantContextService } from '../../../platform';
-import { AUDIT_SERVICE, type IAuditService } from '../../audit';
+import { TenantContextService } from '../../../platform';
 import { SAFT_DATASET_BUILDER, type ISaftDatasetBuilder } from './saft-dataset.builder.interface';
 import { validateDataset } from '../domain/validation';
-import { SaftEvents } from '../events';
 import type { SaftDataset, ValidationSummary } from '../domain/models';
 import type { ISaftValidationService } from './saft-validation.service.interface';
 
@@ -11,9 +9,7 @@ import type { ISaftValidationService } from './saft-validation.service.interface
 export class SaftValidationService implements ISaftValidationService {
   constructor(
     private readonly ctx: TenantContextService,
-    private readonly db: DatabaseContextService,
     @Inject(SAFT_DATASET_BUILDER) private readonly builder: ISaftDatasetBuilder,
-    @Inject(AUDIT_SERVICE) private readonly audit: IAuditService,
   ) {}
 
   /** Pure delegation to the domain validator. */
@@ -21,15 +17,15 @@ export class SaftValidationService implements ISaftValidationService {
     return validateDataset(dataset);
   }
 
+  /**
+   * Side-effect-free preview validation for a period (used by a GET endpoint).
+   * Builds the dataset and runs the pure validator — it does NOT persist anything
+   * and does NOT write an audit record. Auditing happens only when an export is
+   * actually generated (a POST), where the validation summary is stored with it.
+   */
   async validatePeriod(year: number, month: number): Promise<ValidationSummary> {
-    const c = this.ctx.currentOrThrow();
+    this.ctx.currentOrThrow(); // fail-closed: require tenant context
     const dataset = await this.builder.buildDataset(year, month);
-    const summary = this.validateDataset(dataset);
-    await this.db.run((db) => this.audit.append(db, {
-      companyId: c.companyId, actorType: c.userId ? 'user' : 'system', actorId: c.userId,
-      action: SaftEvents.DatasetValidated, entityType: 'saft_export',
-      after: { year, month, validation: summary.counts },
-    }));
-    return summary;
+    return this.validateDataset(dataset);
   }
 }
