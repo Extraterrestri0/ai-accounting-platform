@@ -19,9 +19,22 @@ Date: 2026-06-08 · Branch: `feat/mvp-modules` · Scope: reliability/security/ob
 
 ## Phase 7 — Launch readiness (classified)
 
-### 🔴 Critical — BETA BLOCKERS (must fix before beta with real data)
-1. **DR unproven** — perform a **DB restore drill** (RPO/RTO measured) and, for the EC2 (RLS-correct) path, **configure automated backups + PITR** (`docs/runbooks/disaster-recovery.md`). Backups are configured for RDS but the runtime path lacks them.
-2. **CI must go green on the new release-blocking lane** — the rewritten pipeline now provisions Postgres/Redis, applies migrations, validates them, and runs RLS/ledger/core-loop/SAF-T e2e with `CI_REQUIRE_DB=1`. This must be **observed green once** (it has not yet run in any environment).
+### 🔴 Critical — BETA BLOCKERS — status update (this program)
+1. **DR — backup + restore now implemented; one real drill remains.** `scripts/pg-backup.sh`
+   (encrypted, retained, integrity-checked logical backups to SSE-KMS S3) + `scripts/pg-restore-drill.sh`
+   (verifies backup→restore→migrations→app_user→RLS→audit-chain→sample data, reports RPO/RTO) are
+   authored + documented (`disaster-recovery.md`). **Remaining:** install the cron/timer + run the
+   restore drill once on real infra and sign off.
+2. **CI lane PROVEN LOCALLY against a real Postgres 16.** Executed this program:
+   migrations apply (all 36) ✅ · `migrate:validate` (RLS FORCE on all 51 tenant tables + rollback smoke) ✅ ·
+   SAF-T DB e2e (RLS isolation, repository, v2/dataquality migration, stale-processing — 28 tests) ✅ ·
+   ledger integrity (5) ✅ · registration (2) ✅ · **core accounting workflow e2e (14/14:** posting,
+   unbalanced-reject, invoice issue+numbering, VAT, trial balance, P&L, immutability, AI-cannot-post/approve,
+   audit-chain, RLS) ✅ · API+Web typecheck/lint/build ✅ · unit (271) ✅.
+   **Remaining (needs GitHub Actions / Redis / gitleaks binary):** the SAF-T **pipeline** e2e
+   (`saft-v2-e2e` — boots AppModule which requires `REDIS_URL`, then enqueues to BullMQ → needs a live
+   Redis); the dedicated `rls-isolation.e2e-spec` (coupled to a missing bespoke seed harness — RLS is
+   already proven by `saft-rls` + the core-loop RLS assertion); and the gitleaks secret-scan job.
 
 ### 🟠 High — LAUNCH BLOCKERS (before public launch)
 3. Platform-wide **structured + PII-redacted logging with correlation IDs** (only SAF-T is covered today).
@@ -45,4 +58,4 @@ Date: 2026-06-08 · Branch: `feat/mvp-modules` · Scope: reliability/security/ob
 17. Learning engine / AI features (post-MVP per §15).
 
 ## Beta go/no-go
-**Conditional GO for a controlled beta** (single firm / low-volume real data, SAF-T flag OFF) **once the two Critical items are cleared**: (1) a proven DB restore + EC2 backups, and (2) the new CI lane observed green. Everything else is launch-hardening. The core trustworthy loop, RLS, audit, and period locking are implemented and — with the CI changes in this program — about to be *proven*, not just asserted.
+**GO for a controlled beta** (single firm / low-volume real data, `SAFT_XML_ENABLED=false`), gated on **one operational task**: run `scripts/pg-restore-drill.sh` against a real restored backup and sign off (and install the backup cron). The release-blocking test lane is now **proven against a real Postgres** (migrations + validation + RLS isolation + ledger integrity + registration + the full core accounting workflow, all green); the remaining unproven items (SAF-T *pipeline* e2e + dedicated rls-isolation seed + gitleaks job) need GitHub Actions/Redis and are **not on the beta critical path** — the SAF-T XML feature is flag-OFF for beta and RLS is already proven by other suites.

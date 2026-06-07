@@ -34,7 +34,8 @@ beforeAll(() => {
   ctx = new TenantContextService();
   db = new DatabaseContextService(pool, ctx);
   audit = new AuditService(ctx, db, new AuditRepository());
-  ledger = new LedgerService(ctx, db, new JournalRepository(), audit);
+  // 5th dep = the period-lock guard; periods aren't under test here, so assertOpen is a no-op.
+  ledger = new LedgerService(ctx, db, new JournalRepository(), audit, { assertOpen: async () => undefined } as any);
 });
 afterAll(async () => { await pool.end(); });
 
