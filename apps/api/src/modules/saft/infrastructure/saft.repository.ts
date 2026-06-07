@@ -121,6 +121,48 @@ export class SaftRepository {
     const r = await db.query<{ dataset_json: unknown }>(`SELECT dataset_json FROM saft_exports WHERE id = $1`, [id]);
     return r.rows[0] ? r.rows[0].dataset_json : null;
   }
+
+  // ---- v2 async lifecycle (state machine) ----
+  /** An in-flight export for the period, if any — used for duplicate-submit protection. */
+  async findActiveExport(db: ScopedClient, companyId: string, year: number, month: number): Promise<SaftExportRecord | null> {
+    const r = await db.query<ExportRowDb>(
+      `SELECT id, year, month, status, generated_by, generated_at::text AS generated_at, validation_summary, error
+         FROM saft_exports
+        WHERE company_id = $1 AND year = $2 AND month = $3 AND status IN ('queued','processing')
+        ORDER BY requested_at DESC NULLS LAST, generated_at DESC LIMIT 1`, [companyId, year, month]);
+    return r.rows[0] ? mapExport(r.rows[0]) : null;
+  }
+
+  /** Create a queued export row (the worker fills the rest later). */
+  async insertQueued(db: ScopedClient, tenantId: string, companyId: string, e: { year: number; month: number; requestedBy?: string }): Promise<string> {
+    const r = await db.query<{ id: string }>(
+      `INSERT INTO saft_exports (tenant_id, company_id, year, month, status, requested_by, requested_at, generated_by)
+       VALUES ($1,$2,$3,$4,'queued',$5, now(), $5) RETURNING id`,
+      [tenantId, companyId, e.year, e.month, e.requestedBy ?? null]);
+    return r.rows[0].id;
+  }
+
+  /**
+   * Atomic claim: queued|failed → processing. Returns true only if THIS call moved it,
+   * so duplicate job deliveries (or a job that ran after completion) are no-ops — idempotent.
+   */
+  async claimForProcessing(db: ScopedClient, id: string): Promise<boolean> {
+    const r = await db.query(
+      `UPDATE saft_exports SET status='processing', started_at=now(), attempt_count=attempt_count+1
+        WHERE id=$1 AND status IN ('queued','failed')`, [id]);
+    return (r.rowCount ?? 0) > 0;
+  }
+
+  async markCompleted(db: ScopedClient, id: string, e: { datasetJson: unknown; validationSummary: ValidationSummary | null }): Promise<void> {
+    await db.query(
+      `UPDATE saft_exports SET status='completed', completed_at=now(), dataset_json=$2, validation_summary=$3, error=NULL, last_error=NULL
+        WHERE id=$1`,
+      [id, e.datasetJson == null ? null : JSON.stringify(e.datasetJson), e.validationSummary == null ? null : JSON.stringify(e.validationSummary)]);
+  }
+
+  async markFailed(db: ScopedClient, id: string, error: string): Promise<void> {
+    await db.query(`UPDATE saft_exports SET status='failed', last_error=$2, error=$2, completed_at=now() WHERE id=$1`, [id, error]);
+  }
 }
 
 interface ExportRowDb { id: string; year: number; month: number; status: SaftExportStatus; generated_by: string | null; generated_at: string; validation_summary: ValidationSummary | null; error: string | null; }

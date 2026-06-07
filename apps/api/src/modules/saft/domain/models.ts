@@ -73,7 +73,9 @@ export interface ValidationSummary {
 }
 
 // ---- Export record ----
-export type SaftExportStatus = 'generated' | 'failed';
+// 'generated' is the v1 (synchronous) terminal status, kept for back-compat.
+// v2 async lifecycle: queued → processing → completed | failed.
+export type SaftExportStatus = 'generated' | 'queued' | 'processing' | 'completed' | 'failed';
 export interface SaftExportRecord {
   id: string; year: number; month: number; status: SaftExportStatus;
   generatedBy?: string; generatedAt: string; validationSummary?: ValidationSummary; error?: string;

@@ -2,8 +2,20 @@ import type { ApplicationService } from '../../../shared-kernel';
 import type { SaftDataset, SaftExportRecord } from '../domain/models';
 
 export interface ISaftExportService extends ApplicationService {
-  /** Build → validate → persist (status generated|failed) → audit. Returns the record. */
+  /** v1 SYNCHRONOUS: build → validate → persist (status generated|failed) → audit. Returns the record. */
   generateExport(year: number, month: number): Promise<SaftExportRecord>;
+  /**
+   * v2 ASYNC: create a 'queued' export + audit 'requested' + enqueue a background job, returning
+   * the queued record. Duplicate-submit safe: an already queued/processing export for the same
+   * period is returned instead of creating a new one.
+   */
+  requestExport(year: number, month: number): Promise<SaftExportRecord>;
+  /**
+   * Worker entrypoint. Idempotent state machine: claims queued|failed → processing, builds +
+   * validates + persists the dataset → completed; on error → failed (+ rethrow for retry/backoff).
+   * A duplicate delivery after completion is a no-op.
+   */
+  processExport(exportId: string): Promise<void>;
   getExport(id: string): Promise<SaftExportRecord | null>;
   listExports(page?: number, pageSize?: number): Promise<SaftExportRecord[]>;
   /** The stored normalized dataset JSON for an export (for preview / download). */

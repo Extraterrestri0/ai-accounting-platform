@@ -1,15 +1,18 @@
-import { BadRequestException, Body, Controller, Get, Inject, NotFoundException, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Inject, NotFoundException, Param, ParseUUIDPipe, Post, Query, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { SAFT_EXPORT_SERVICE, type ISaftExportService } from '../application/saft-export.service.interface';
 import { SAFT_VALIDATION_SERVICE, type ISaftValidationService } from '../application/saft-validation.service.interface';
 import { RequirePermission, PERMISSIONS } from '../../identity';
+import { FeatureFlags } from '../../../config/feature-flags';
 import type { GenerateExportDto } from './dto/saft.dto';
 
-/** SAF-T v1 endpoints. Reads SAFT_READ; generation SAFT_GENERATE. Company-scoped (RLS). */
+/** SAF-T endpoints. Reads SAFT_READ; generation SAFT_GENERATE. Company-scoped (RLS). */
 @Controller('saft')
 export class SaftController {
   constructor(
     @Inject(SAFT_EXPORT_SERVICE) private readonly exports: ISaftExportService,
     @Inject(SAFT_VALIDATION_SERVICE) private readonly validation: ISaftValidationService,
+    private readonly flags: FeatureFlags,
   ) {}
 
   private ym(year: number | string, month: number | string): { year: number; month: number } {
@@ -18,9 +21,19 @@ export class SaftController {
     return { year: y, month: m };
   }
 
+  /**
+   * Generate a SAF-T export. With SAFT_XML_ENABLED on, this enqueues a background job
+   * and returns 202 Accepted + the queued record; off, it preserves v1 synchronous
+   * behavior (build now, return the generated record, default 201).
+   */
   @Post('exports') @RequirePermission(PERMISSIONS.SAFT_GENERATE)
-  generate(@Body() dto: GenerateExportDto) {
+  async generate(@Body() dto: GenerateExportDto, @Res({ passthrough: true }) res: Response) {
     const { year, month } = this.ym(dto?.year, dto?.month);
+    if (this.flags.saftXmlEnabled()) {
+      const rec = await this.exports.requestExport(year, month);
+      res.status(202);
+      return rec;
+    }
     return this.exports.generateExport(year, month);
   }
 
