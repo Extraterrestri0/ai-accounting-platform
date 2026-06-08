@@ -13,6 +13,8 @@
     "migrate": "node scripts/migrate.js",
     "migrate:local": "node -r ./scripts/load-env.js scripts/migrate.js",
     "migrate:validate": "node scripts/validate-migrations.js",
+    "ocr:check": "node -r ./scripts/load-env.js scripts/ocr-provider-check.js",
+    "ocr:validate": "node -r ./scripts/load-env.js scripts/ocr-validation.js",
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.cjs"
   },
   "dependencies": {
