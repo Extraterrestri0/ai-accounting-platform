@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DatabaseContextService, TenantContextService } from '../../../platform';
 import { AUDIT_SERVICE, type IAuditService } from '../../audit';
 import { DOCUMENT_SERVICE, type IDocumentService } from './document.service.interface';
@@ -6,17 +6,18 @@ import type { IExtractionService } from './extraction.service.interface';
 import { STORAGE_SERVICE, type StorageService } from './storage.port';
 import { OCR_PROVIDER, type OcrProvider } from './ocr.port';
 import { ExtractionRepository } from '../infrastructure/extraction.repository';
-import { extractFromText } from '../domain/extraction/field-extractor';
 import { extractFromXml } from '../domain/extraction/xml-extractor';
-import { fromVendorFields, mergeFields } from '../domain/extraction/merge';
+import { fromVendorFields } from '../domain/extraction/merge';
+import { assemble } from '../domain/extraction/pipeline';
 import { applyValidation, overallConfidence, reviewFlags } from '../domain/extraction/confidence';
 import { DocIntelEvents } from '../events';
-import type { DocumentExtraction, ExtractedField, ReviewPackage, RunMethod } from '../domain/extraction/models';
+import type { DocumentExtraction, ExtractedField, ExtractionDiagnostics, ReviewPackage, RunMethod } from '../domain/extraction/models';
 
 class ExtractionError extends Error {}
 
 @Injectable()
 export class ExtractionService implements IExtractionService {
+  private readonly log = new Logger('Extraction');
   constructor(
     private readonly ctx: TenantContextService,
     private readonly db: DatabaseContextService,
@@ -44,36 +45,39 @@ export class ExtractionService implements IExtractionService {
     let fields: ExtractedField[];
     let method: RunMethod; let engine: string;
     let provider: string | undefined; let model: string | undefined;
+    let diagnostics: ExtractionDiagnostics;
     if (isXml) {
       method = 'xml'; engine = 'ubl-xml'; provider = 'xml'; model = 'ubl-xml';
       fields = applyValidation(extractFromXml(bytes.toString('utf8')));
+      diagnostics = {
+        provider, model, engine, method, layersRun: ['xml', 'validation'],
+        found: fields.map((f) => f.key), derived: [], rejected: [],
+        missingRequired: reviewFlags(fields).missingRequired, provenance: [],
+      };
     } else {
       const ocr = await this.ocr.recognize(bytes, doc.mimeType);
       engine = ocr.engine; provider = ocr.provider; model = ocr.model;
-      if (ocr.fields && ocr.fields.length > 0) {
-        // Document-AI returned STRUCTURED fields (with vendor confidence). Backfill any
-        // missing keys with the Bulgarian regex pass, then apply deterministic validation
-        // (validators still override confidence — Invariant 6).
-        const merged = mergeFields(fromVendorFields(ocr.fields), extractFromText(ocr.text));
-        method = merged.backfilled > 0 ? 'hybrid' : 'ocr';
-        fields = applyValidation(merged.fields);
-      } else {
-        // Pure-OCR provider returned text only → derive fields with the regex extractor.
-        method = 'ocr';
-        fields = applyValidation(extractFromText(ocr.text));
-      }
+      // Layered pipeline (build-on-top): provider structured fields (if any) → OCR-text
+      // regex backfill → heuristic accounting derivation → deterministic validation.
+      // Every layer only ADDS; rejected/derived/provenance are captured as diagnostics.
+      const primary = ocr.fields && ocr.fields.length > 0 ? fromVendorFields(ocr.fields) : [];
+      method = primary.length > 0 ? 'hybrid' : 'ocr';
+      const built = assemble({ primary, text: ocr.text, engine, method, provider, model });
+      fields = built.fields;
+      diagnostics = built.diagnostics;
     }
     const overall = overallConfidence(fields);
+    this.log.log(`extraction ${documentId}: provider=${provider} method=${method} found=${diagnostics.found.length} derived=${diagnostics.derived.length} rejected=${diagnostics.rejected.length} missingRequired=[${diagnostics.missingRequired.join(',')}] conf=${overall}`);
 
     return this.db.run(async (db) => {
       if (await this.repo.hasActiveRun(db, documentId)) throw new ExtractionError('An extraction is already in progress for this document.');
       const runId = await this.repo.createRun(db, tenantId, companyId, documentId, method, engine, provider, model);
       try {
         const extractionId = await this.repo.saveExtraction(db, tenantId, companyId, documentId, runId, 'invoice', overall, fields);
-        await this.repo.finishRun(db, runId, 'succeeded', overall);
+        await this.repo.finishRun(db, runId, 'succeeded', overall, undefined, diagnostics);
         // audit as the AI/automated actor (capability-limited identity) — proposes only
-        await this.audit.append(db, { companyId, actorType: 'ai', action: DocIntelEvents.ExtractionCompleted, entityType: 'document_extraction', entityId: extractionId, after: { method, engine, provider, model, overallConfidence: overall, fieldCount: fields.length } });
-        return { id: extractionId, documentId, runId, docType: 'invoice', overallConfidence: overall, status: 'extracted', fields };
+        await this.audit.append(db, { companyId, actorType: 'ai', action: DocIntelEvents.ExtractionCompleted, entityType: 'document_extraction', entityId: extractionId, after: { method, engine, provider, model, overallConfidence: overall, fieldCount: fields.length, derived: diagnostics.derived.length, rejected: diagnostics.rejected.length } });
+        return { id: extractionId, documentId, runId, docType: 'invoice', overallConfidence: overall, status: 'extracted', fields, diagnostics };
       } catch (e) {
         await this.repo.finishRun(db, runId, 'failed', null, (e as Error).message);
         throw e;
@@ -90,6 +94,6 @@ export class ExtractionService implements IExtractionService {
     this.scope();
     const ex = await this.db.run((db) => this.repo.getCurrentExtraction(db, documentId));
     if (!ex) throw new ExtractionError(`No extraction found for document ${documentId}.`);
-    return { documentId, extractionId: ex.id, docType: ex.docType, overallConfidence: ex.overallConfidence, fields: ex.fields, flags: reviewFlags(ex.fields) };
+    return { documentId, extractionId: ex.id, docType: ex.docType, overallConfidence: ex.overallConfidence, fields: ex.fields, flags: reviewFlags(ex.fields), diagnostics: ex.diagnostics };
   }
 }

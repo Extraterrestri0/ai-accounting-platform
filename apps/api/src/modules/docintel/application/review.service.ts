@@ -75,7 +75,7 @@ export class ReviewService implements IReviewService {
     }
     return {
       package: pkg, documentDownloadUrl: downloadUrl,
-      extraction: { overallConfidence: review.overallConfidence, fields: Array.from(byKey.values()), flags: review.flags },
+      extraction: { overallConfidence: review.overallConfidence, fields: Array.from(byKey.values()), flags: review.flags, diagnostics: review.diagnostics },
       suggestion, comments, actions,
     };
   }

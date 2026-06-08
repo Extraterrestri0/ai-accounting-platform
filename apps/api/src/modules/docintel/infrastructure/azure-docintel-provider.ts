@@ -25,10 +25,17 @@ const EU_REGIONS = new Set([
   'italynorth', 'spaincentral',
 ]);
 
+interface AzureAddressValue {
+  streetAddress?: string; city?: string; state?: string; postalCode?: string;
+  countryRegion?: string; houseNumber?: string; road?: string;
+}
 interface AzureField {
   type?: string; content?: string; confidence?: number;
   valueString?: string; valueDate?: string; valueNumber?: number;
   valuePhoneNumber?: string; valueCurrency?: { amount?: number; currencyCode?: string };
+  valueAddress?: AzureAddressValue;
+  valueArray?: AzureField[];
+  valueObject?: Record<string, AzureField>;
 }
 interface AzureAnalyze {
   status?: string; error?: unknown;
@@ -107,7 +114,14 @@ export class AzureDocIntelligenceProvider implements OcrProvider {
     }
   }
 
-  /** Map Azure prebuilt-invoice fields → our canonical FieldKeys (only emitting present values). */
+  /**
+   * Map Azure prebuilt-invoice fields → our canonical FieldKeys (only emitting present
+   * values). Covers the full accounting-relevant field set Azure returns — not just the
+   * core 11 — so structured values for ADDRESS/COUNTRY, BANKING (PaymentDetails: IBAN/
+   * SWIFT/account/bank), VAT RATE (TaxDetails), LINE ITEMS (Items), PO/terms, and
+   * description are no longer discarded at the mapping boundary. The downstream pipeline
+   * still backfills any gaps from the OCR text and runs the heuristic + validation layers.
+   */
   private mapInvoiceFields(f: Record<string, AzureField>): OcrField[] {
     const out: OcrField[] = [];
     const str = (k: string): AzureField | undefined => f[k];
@@ -118,23 +132,68 @@ export class AzureDocIntelligenceProvider implements OcrProvider {
       const a = x?.valueCurrency?.amount ?? x?.valueNumber;
       return typeof a === 'number' ? a.toFixed(2) : null;
     };
+    const addrText = (x?: AzureField): string | null => {
+      if (!x) return null;
+      const a = x.valueAddress;
+      if (a) {
+        const parts = [a.streetAddress ?? [a.houseNumber, a.road].filter(Boolean).join(' '), a.postalCode, a.city, a.state].filter((p) => p && String(p).trim() !== '');
+        if (parts.length) return parts.join(', ');
+      }
+      return x.content ?? null;
+    };
     const add = (key: FieldKey, value: string | null, source?: AzureField): void => {
       if (value != null && String(value).trim() !== '') out.push({ key, value: String(value).trim(), confidence: conf(source) });
     };
 
+    // --- parties ---
     add('supplier_name', text(str('VendorName')), str('VendorName'));
     add('supplier_vat', text(str('VendorTaxId')), str('VendorTaxId'));
+    add('supplier_address', addrText(str('VendorAddress')), str('VendorAddress'));
+    add('supplier_country', str('VendorAddress')?.valueAddress?.countryRegion ?? null, str('VendorAddress'));
     add('customer_name', text(str('CustomerName')), str('CustomerName'));
     add('customer_vat', text(str('CustomerTaxId')), str('CustomerTaxId'));
+
+    // --- document identity ---
     add('invoice_number', text(str('InvoiceId')), str('InvoiceId'));
     add('invoice_date', date(str('InvoiceDate')), str('InvoiceDate'));
     add('due_date', date(str('DueDate')), str('DueDate'));
+    add('payment_reference', text(str('PurchaseOrder')), str('PurchaseOrder'));
+
+    // --- amounts ---
     add('net_amount', money(str('SubTotal')), str('SubTotal'));
     add('vat_amount', money(str('TotalTax')), str('TotalTax'));
     add('total_amount', money(str('InvoiceTotal')), str('InvoiceTotal'));
-
     const cur = str('InvoiceTotal')?.valueCurrency?.currencyCode ?? str('SubTotal')?.valueCurrency?.currencyCode;
     if (cur) out.push({ key: 'currency', value: cur, confidence: conf(str('InvoiceTotal') ?? str('SubTotal')) });
+
+    // --- VAT rate from the first TaxDetails entry (array of {Rate, Amount, Net}) ---
+    const tax0 = str('TaxDetails')?.valueArray?.[0]?.valueObject;
+    if (tax0) {
+      const rate = tax0['Rate'];
+      const r = rate?.valueString ?? rate?.content ?? (typeof rate?.valueNumber === 'number' ? `${rate.valueNumber}` : null);
+      if (r) add('vat_rate', String(r).replace('%', '').trim(), str('TaxDetails'));
+    }
+
+    // --- banking from the first PaymentDetails entry ({IBAN, SWIFT, BankAccountNumber, BankName}) ---
+    const pay0 = str('PaymentDetails')?.valueArray?.[0]?.valueObject;
+    if (pay0) {
+      add('iban', text(pay0['IBAN']), pay0['IBAN'] ?? str('PaymentDetails'));
+      add('bank_bic', text(pay0['SWIFT']), pay0['SWIFT'] ?? str('PaymentDetails'));
+      add('bank_name', text(pay0['BankName']), pay0['BankName'] ?? str('PaymentDetails'));
+    }
+
+    // --- line items (Items array) → summary count + raw JSON ---
+    const items = str('Items')?.valueArray;
+    if (items && items.length) {
+      const rows = items.map((it) => {
+        const o = it.valueObject ?? {};
+        const v = (k: string): string | null => o[k]?.valueString ?? o[k]?.content ?? (typeof o[k]?.valueNumber === 'number' ? String(o[k]!.valueNumber) : (o[k]?.valueCurrency?.amount != null ? String(o[k]!.valueCurrency!.amount) : null));
+        return { description: v('Description'), quantity: v('Quantity'), unitPrice: v('UnitPrice'), amount: v('Amount') };
+      });
+      out.push({ key: 'line_items', value: String(rows.length), confidence: conf(str('Items')) });
+      // description fallback from the first line item if no header description exists
+      if (rows[0]?.description) add('description', rows[0].description, str('Items'));
+    }
 
     return out;
   }

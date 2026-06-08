@@ -20,11 +20,14 @@ import { AuditEntityHistory } from '@/components/app/audit/audit-entity-history'
 import { eur } from '@/lib/format';
 
 const FIELD_LABELS: Record<string, string> = {
-  invoice_number: 'Фактура №', invoice_date: 'Дата', due_date: 'Падеж', currency: 'Валута',
-  net_amount: 'Данъчна основа', vat_amount: 'ДДС', total_amount: 'Обща сума', vat_rate: 'ДДС ставка %',
-  supplier_name: 'Доставчик', supplier_eik: 'ЕИК (доставчик)', supplier_vat: 'ДДС № (доставчик)', supplier_city: 'Град',
+  invoice_number: 'Фактура №', document_number: 'Документ №', document_type: 'Тип документ',
+  invoice_date: 'Дата', due_date: 'Падеж', currency: 'Валута',
+  net_amount: 'Данъчна основа', vat_amount: 'ДДС', total_amount: 'Обща сума', vat_rate: 'ДДС ставка %', vat_code: 'ДДС код',
+  supplier_name: 'Доставчик', supplier_eik: 'ЕИК (доставчик)', supplier_vat: 'ДДС № (доставчик)',
+  supplier_city: 'Град', supplier_address: 'Адрес (доставчик)', supplier_country: 'Държава (доставчик)',
   customer_name: 'Получател', customer_eik: 'ЕИК (получател)', customer_vat: 'ДДС № (получател)',
   iban: 'IBAN', bank_name: 'Банка', bank_bic: 'BIC', payment_method: 'Начин на плащане', payment_reference: 'Основание',
+  description: 'Описание', notes: 'Забележки', line_items: 'Редове (брой)',
 };
 
 const CLASS_SOURCE: Record<string, string> = { rule: 'правило', memory: 'памет', ai: 'AI', manual: 'ръчно' };
@@ -84,6 +87,13 @@ export default function ReviewDetailPage() {
     { items: flags.lowConfidenceFields, label: 'Полета с ниска сигурност', tone: 'warning' as const },
   ].filter((f) => (f.items?.length ?? 0) > 0);
 
+  // Extraction diagnostics (why a field was found / derived / rejected) — makes a miss explainable.
+  const diagnostics = (reviewQ.data?.extraction?.diagnostics ?? extractionQ.data?.diagnostics ?? null) as null | {
+    provider?: string; model?: string; method?: string; layersRun?: string[];
+    derived?: string[]; missingRequired?: string[];
+    rejected?: { key: string; value: string; reason: string }[];
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -102,6 +112,31 @@ export default function ReviewDetailPage() {
             ))}
           </ul>
         </div>
+      )}
+
+      {diagnostics && (
+        <details className="rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+          <summary className="cursor-pointer font-medium text-foreground">Диагностика на извличането</summary>
+          <div className="mt-2 space-y-1">
+            <p>Източник: <span className="font-medium">{diagnostics.provider ?? '—'}</span>{diagnostics.model ? ` (${diagnostics.model})` : ''} · метод: {diagnostics.method ?? '—'} · слоеве: {(diagnostics.layersRun ?? []).join(' → ')}</p>
+            {(diagnostics.derived?.length ?? 0) > 0 && (
+              <p>Изведени (от други полета): {(diagnostics.derived ?? []).map((k) => FIELD_LABELS[k] ?? k).join(', ')}</p>
+            )}
+            {(diagnostics.missingRequired?.length ?? 0) > 0 && (
+              <p className="text-warning">Липсващи задължителни: {(diagnostics.missingRequired ?? []).map((k) => FIELD_LABELS[k] ?? k).join(', ')}</p>
+            )}
+            {(diagnostics.rejected?.length ?? 0) > 0 && (
+              <div>
+                <p className="mt-1">Отхвърлени кандидати (защо едно поле е празно/различно):</p>
+                <ul className="mt-0.5 space-y-0.5 pl-4">
+                  {(diagnostics.rejected ?? []).map((r, i) => (
+                    <li key={i}>{FIELD_LABELS[r.key] ?? r.key}: „{r.value}“ — {r.reason}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </details>
       )}
 
       <div className="grid gap-6 lg:grid-cols-3">
