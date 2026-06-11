@@ -89,10 +89,32 @@ Per field the runner reports **present / exact / partial / missing+wrong / corre
 - False-positives on `null` fields → launch-blocking (hallucination); make the relevant extractor stricter.
 - A high **partial** rate on supplier name is acceptable for beta (human review catches it) but should be driven down before launch.
 
-## 8. CI / staging (no credentials in CI)
+## 8. How to report accuracy results
+After a real run, record a short, reviewable result (the runner prints everything you need). Capture:
+- **Provider used** — from `npm run ocr:check` (must be `AzureDocIntelligenceProvider`, model + API version), so the result is attributable to a real provider, not the dev fallback.
+- **Sample size & mix** — number of documents + the breakdown (BG/EU, PDF/scan, with/without VAT, with/without IBAN).
+- **Accuracy table** — the per-field block from the runner (present / exact / partial / missing+wrong / correct-absent / false-positive / present-accuracy).
+- **Headline metrics** — field-level accuracy %, false-positive count, per-document accuracy.
+- **Targets verdict** — the four target lines (≥95% field-level · 0 critical amount · 0 VAT · 0 supplier-identity), each pass/fail.
+- **Top failures + root cause** — copy the runner's failures list and add a one-line cause per item.
+- **Run metadata** — date, who ran it, Azure model/version, extractor commit hash, where the sample set came from.
+
+Suggested report skeleton (paste into the Beta Readiness Report / a sign-off doc):
+```
+OCR accuracy validation — <date> — by <name>
+Provider: AzureDocIntelligenceProvider (prebuilt-invoice/<api-version>) — ocr:check GREEN
+Sample: N docs (X BG / Y EU; P PDF / S scan; with/without VAT; with/without IBAN)
+Field-level accuracy: NN.N%  | false-positives: N  | docs ≥95%: N/total
+Targets: [ ] ≥95% field-level  [ ] 0 amount  [ ] 0 VAT  [ ] 0 supplier-identity
+Top failures: <field@doc — expected vs got — cause>
+Verdict: PASS / FAIL for <beta|launch>; extractor commit <hash>
+```
+Save the full console output as evidence (e.g. `docs/runbooks/evidence/ocr-validation-<date>.log`) next to the DR-drill evidence. **Never commit the real invoices or the filled ground truth** (private data) — only the metrics/log.
+
+## 9. CI / staging (no credentials in CI)
 - **Do NOT add Azure credentials to CI.** This validation needs a real provider + private invoices and is **run manually in staging**, not in the PR pipeline.
 - CI may run only the **safe** parts: the template/JSON validation and the runner in **`--dry-run`** (no OCR, no creds) — to keep the scaffold honest.
-- **Manual staging run:** on a staging host with the Azure secret injected from the vault and the sample set mounted to `test/fixtures/ocr-samples/`, run `npm run ocr:check && npm run ocr:validate -- --ground-truth …`. Record the accuracy table + targets verdict in the Beta Readiness Report / DR-style sign-off. Re-run whenever the extractor or the Azure model version changes.
+- **Manual staging run:** on a staging host with the Azure secret injected from the vault and the sample set mounted to `test/fixtures/ocr-samples/`, run `npm run ocr:check && npm run ocr:validate -- --ground-truth …`. Record the accuracy table + targets verdict per §8. Re-run whenever the extractor or the Azure model version changes.
 
 ## Reusable sibling harnesses
 - `npm run …` not wired, run directly: `node scripts/validate-extraction-real.js` — scores the platform’s own born-digital PDFs (no OCR vendor needed).
