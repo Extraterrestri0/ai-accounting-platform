@@ -31,6 +31,20 @@ export const saftStorageWriteDuration = new Histogram({
   name: 'saft_storage_write_duration_seconds', help: 'Time to write the XML artifact to storage.', buckets: DURATION_BUCKETS, registers: [registry],
 });
 
+// --- AI Accountant (assistant module, ADR-001 §7 observability) ---
+export const assistantQuestions = new Counter({
+  name: 'assistant_questions_total', help: 'Assistant questions asked.', labelNames: ['question_key'], registers: [registry],
+});
+export const assistantResponseSeconds = new Histogram({
+  name: 'assistant_response_seconds', help: 'Assistant end-to-end answer time.', buckets: DURATION_BUCKETS, registers: [registry],
+});
+export const assistantAbstentions = new Counter({
+  name: 'assistant_abstentions_total', help: 'Assistant answers that abstained (no grounded answer possible).', registers: [registry],
+});
+export const assistantLlmUsed = new Counter({
+  name: 'assistant_llm_used_total', help: 'Answers where LLM phrasing was used (and passed verification).', registers: [registry],
+});
+
 // Scrape-time gauges (refreshed from the queue before serialization).
 export const saftQueueDepth = new Gauge({ name: 'saft_queue_depth', help: 'Waiting + delayed SAF-T export jobs.', registers: [registry] });
 export const saftFailedJobs = new Gauge({ name: 'saft_failed_jobs', help: 'Failed (DLQ) SAF-T export jobs in the queue.', registers: [registry] });

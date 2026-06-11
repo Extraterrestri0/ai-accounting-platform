@@ -19,6 +19,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ConfidenceBadge, ConfidenceMeter } from '@/components/app/confidence';
 import { DualMoney } from '@/components/app/money';
 import { AuditEntityHistory } from '@/components/app/audit/audit-entity-history';
+import { AssistantPanel } from '@/components/app/assistant-panel';
 import { eur } from '@/lib/format';
 
 const FIELD_LABELS: Record<string, string> = {
@@ -388,6 +389,9 @@ export default function ReviewDetailPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* AI Accountant — read-only explanations grounded in this document (ADR-001) */}
+          <AssistantPanel surface="invoice" context={{ documentId: id }} />
 
           {pkg?.id && (
             <Card>

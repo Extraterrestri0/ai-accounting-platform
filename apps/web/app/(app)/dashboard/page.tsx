@@ -9,6 +9,7 @@ import { useT } from '@/lib/i18n';
 import type { DocumentRow, Paginated } from '@/lib/api/types';
 import { PageHeader } from '@/components/app/page-header';
 import { StatCard } from '@/components/app/stat-card';
+import { AssistantPanel } from '@/components/app/assistant-panel';
 import { StatusBadge } from '@/components/app/status-badge';
 import { ReceivablesWidget, PayablesWidget } from '@/components/app/arap-dashboard-widgets';
 import { RecentActivityWidget } from '@/components/app/audit/recent-activity-widget';
@@ -88,6 +89,9 @@ export default function DashboardPage() {
         <ExpensesWidget companyId={companyId} year={NOW.y} />
         <NetCashWidget companyId={companyId} year={NOW.y} />
       </div>
+
+      {/* AI Accountant — read-only Q&A over receivables/payables (ADR-001) */}
+      <AssistantPanel surface="dashboard" />
 
       {/* Receivables & Payables (Task 3.1) + Banking (Task 3.2) */}
       <div className="grid gap-6 lg:grid-cols-3">

@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth/auth-context';
 import { Endpoints } from '@/lib/api/endpoints';
 import { PageHeader } from '@/components/app/page-header';
 import { StatCard } from '@/components/app/stat-card';
+import { AssistantPanel } from '@/components/app/assistant-panel';
 import { EmptyState } from '@/components/app/states';
 import { AgingTable } from '@/components/app/aging-table';
 import { MonthlyReportPanel, CashFlowPanel } from '@/components/app/management-reports';
@@ -53,6 +54,9 @@ export default function ReportsPage() {
         <StatCard label="Разходи" value={eur(pnl?.expense ?? 0)} sub={`≈ ${bgn(pnl?.expense ?? 0)}`} icon={TrendingDown} tone="neutral" />
         <StatCard label="Финансов резултат" value={eur(pnl?.netProfit ?? 0)} sub={`≈ ${bgn(pnl?.netProfit ?? 0)} · ${Number(pnl?.netProfit ?? 0) >= 0 ? 'Печалба' : 'Загуба'}`} icon={Scale} tone={Number(pnl?.netProfit ?? 0) >= 0 ? 'success' : 'warning'} valueTone={Number(pnl?.netProfit ?? 0) >= 0 ? 'success' : 'warning'} />
       </div>
+
+      {/* AI Accountant — read-only explanations for the month of the "from" date (ADR-001) */}
+      <AssistantPanel surface="reports" context={{ year: Number(from.slice(0, 4)) || new Date().getFullYear(), month: Number(from.slice(5, 7)) || new Date().getMonth() + 1 }} />
 
       <Tabs defaultValue="tb">
         <TabsList>

@@ -22,6 +22,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuditModule } from './modules/audit';
 import { NotificationModule } from './modules/notification';
 import { CmsModule } from './modules/cms';
+import { AssistantModule } from './modules/assistant';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { CmsModule } from './modules/cms';
     AuditModule,
     NotificationModule,
     CmsModule,
+    AssistantModule, // AI Accountant — read-only grounded explanations (ADR-001)
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

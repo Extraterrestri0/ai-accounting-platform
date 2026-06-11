@@ -9,6 +9,7 @@ import { Endpoints } from '@/lib/api/endpoints';
 import { ApiError } from '@/lib/api/client';
 import { PageHeader } from '@/components/app/page-header';
 import { StatCard } from '@/components/app/stat-card';
+import { AssistantPanel } from '@/components/app/assistant-panel';
 import { EmptyState } from '@/components/app/states';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -77,6 +78,9 @@ export default function VatPage() {
           valueTone={refundable > 0 ? 'success' : payable > 0 ? 'warning' : 'success'}
         />
       </div>
+
+      {/* AI Accountant — read-only explanations for the selected period (ADR-001) */}
+      <AssistantPanel surface="vat" context={{ year, month }} />
 
       <Tabs defaultValue="purchase">
         <TabsList>

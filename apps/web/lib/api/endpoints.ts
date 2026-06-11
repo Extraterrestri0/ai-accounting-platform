@@ -196,7 +196,22 @@ export const Endpoints = {
 
   // --- health (pipeline status — lets the UI warn when scan/extract is down) ---
   health: () => api<HealthReport>('/health', { company: false }),
+
+  // --- AI Accountant (read-only; ADR-001). Fixed questions in Phase 1 — no free chat. ---
+  assistantQuestions: (surface: string) => api<AssistantQuestion[]>(`/assistant/questions?surface=${surface}`),
+  assistantAsk: (body: { question: { kind: 'key'; key: string }; context?: { documentId?: string; year?: number; month?: number } }) =>
+    api<AssistantAnswer>('/assistant/ask', { method: 'POST', body }),
 };
+
+export interface AssistantQuestion { key: string; surface: string; labelBg: string; requires: 'document' | 'period' | 'none'; }
+export interface AssistantCitation {
+  type: string; id: string; label: string; href?: string; fact?: string;
+  ruleCard?: { version: string; legalReference: string; reviewPending: boolean };
+}
+export interface AssistantAnswer {
+  id: string; answer: string; citations: AssistantCitation[]; confidence: number;
+  llmUsed: boolean; abstained: boolean; generatedAt: string;
+}
 
 export interface HealthComponent { status: 'up' | 'down' | 'degraded' | 'disabled'; detail?: string; latencyMs?: number; }
 export interface HealthReport { status: 'ok' | 'degraded' | 'down'; uptimeSec: number; checks: Record<string, HealthComponent>; }
