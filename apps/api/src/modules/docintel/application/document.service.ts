@@ -1,11 +1,12 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { DatabaseContextService, TenantContextService } from '../../../platform';
 import { AUDIT_SERVICE, type IAuditService } from '../../audit';
 import { DocumentRepository } from '../infrastructure/document.repository';
 import { STORAGE_SERVICE, type StorageService } from './storage.port';
 import { MALWARE_SCAN_QUEUE, type MalwareScanQueue } from './scan.port';
 import {
-  DocumentNotFoundError, FileTooLargeError, FileTypeMismatchError, InvalidDocumentStateError, UnsupportedFileTypeError,
+  DocumentNotFoundError, FileTooLargeError, FileTypeMismatchError, InvalidDocumentStateError,
+  ScanQueueUnavailableError, UnsupportedFileTypeError,
 } from '../domain/errors';
 import { detectFileType, extensionOf, isAllowedExtension, MAX_UPLOAD_BYTES } from '../domain/validation/file-type';
 import { DocIntelEvents } from '../events';
@@ -18,6 +19,7 @@ const DOWNLOAD_TTL = 300; // 5 minutes
 
 @Injectable()
 export class DocumentService implements IDocumentService {
+  private readonly log = new Logger('DocumentService');
   constructor(
     private readonly ctx: TenantContextService,
     private readonly db: DatabaseContextService,
@@ -57,7 +59,10 @@ export class DocumentService implements IDocumentService {
 
   async finalizeUpload(documentId: string, input: FinalizeUploadInput): Promise<Document> {
     const { tenantId, companyId, userId } = this.scope();
-    return this.db.run(async (db) => {
+
+    // 1) Validate + durably persist the upload as 'scanning' (committed). Independent of the
+    //    queue so a transient Redis outage cannot roll back the immutable version/audit rows.
+    const uploaded = await this.db.run(async (db) => {
       const doc = await this.repo.getById(db, documentId);
       if (!doc) throw new DocumentNotFoundError(documentId);
       if (doc.status !== 'pending_upload') throw new InvalidDocumentStateError(`Document ${documentId} is not awaiting upload (status ${doc.status}).`);
@@ -77,11 +82,49 @@ export class DocumentService implements IDocumentService {
       const versionNo = await this.repo.nextVersionNo(db, documentId);
       await this.repo.addVersion(db, tenantId, companyId, { documentId, versionNo, storageKey: key, checksum: input.checksumSha256, sizeBytes: head.sizeBytes });
       await this.repo.upsertMetadata(db, tenantId, companyId, { documentId, detectedType: detected });
-      const uploaded = await this.repo.setStatus(db, documentId, 'scanning', { checksum: input.checksumSha256, sizeBytes: head.sizeBytes });
-
-      await this.scanQueue.enqueue({ documentId, tenantId, companyId, storageKey: key });
+      const u = await this.repo.setStatus(db, documentId, 'scanning', { checksum: input.checksumSha256, sizeBytes: head.sizeBytes });
       await this.audit.append(db, { companyId, actorType: 'user', actorId: userId, action: DocIntelEvents.DocumentReceived, entityType: 'document', entityId: documentId, after: { detectedType: detected, sizeBytes: head.sizeBytes, checksum: input.checksumSha256, version: versionNo } });
-      return uploaded;
+      return { doc: u, key };
+    });
+
+    // 2) Enqueue the scan AFTER the document is persisted. If the queue is unreachable, mark the
+    //    document recoverable-'failed' and surface a clear 503 — never leave it silently stuck in
+    //    'scanning' with no job to advance it (the client can retry, or re-run via requeueScan).
+    try {
+      await this.scanQueue.enqueue({ documentId, tenantId, companyId, storageKey: uploaded.key });
+      return uploaded.doc;
+    } catch (e) {
+      const reason = e instanceof Error ? e.message : String(e);
+      this.log.error(`scan enqueue failed for ${documentId}: ${reason}`);
+      await this.db.run(async (db) => {
+        await this.repo.setStatus(db, documentId, 'failed');
+        await this.audit.append(db, { companyId, actorType: 'system', action: 'document.scan_enqueue_failed', entityType: 'document', entityId: documentId, after: { status: 'failed', reason } });
+      });
+      throw new ServiceUnavailableException(new ScanQueueUnavailableError(reason).message);
+    }
+  }
+
+  /**
+   * Re-enqueue the malware scan for a document stuck in 'scanning' or recovered from 'failed'
+   * (e.g. the queue was down at upload time). Infra recovery only — touches no ledger/money path.
+   */
+  async requeueScan(documentId: string): Promise<Document> {
+    const { tenantId, companyId, userId } = this.scope();
+    const doc = await this.db.run((db) => this.repo.getById(db, documentId));
+    if (!doc) throw new DocumentNotFoundError(documentId);
+    if (doc.status !== 'scanning' && doc.status !== 'failed') throw new InvalidDocumentStateError(`Document ${documentId} cannot be rescanned (status ${doc.status}).`);
+    if (!doc.storageKey) throw new InvalidDocumentStateError('Document has no stored file to scan.');
+    try {
+      await this.scanQueue.enqueue({ documentId, tenantId, companyId, storageKey: doc.storageKey });
+    } catch (e) {
+      const reason = e instanceof Error ? e.message : String(e);
+      this.log.error(`scan re-enqueue failed for ${documentId}: ${reason}`);
+      throw new ServiceUnavailableException(new ScanQueueUnavailableError(reason).message);
+    }
+    return this.db.run(async (db) => {
+      const updated = await this.repo.setStatus(db, documentId, 'scanning');
+      await this.audit.append(db, { companyId, actorType: 'user', actorId: userId, action: 'document.scan_requeued', entityType: 'document', entityId: documentId, before: { status: doc.status }, after: { status: 'scanning' } });
+      return updated;
     });
   }
 

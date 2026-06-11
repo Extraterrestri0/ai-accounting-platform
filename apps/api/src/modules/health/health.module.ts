@@ -4,6 +4,7 @@ import { MetricsController } from './api/metrics.controller';
 import { HealthService, STORAGE_HEALTH_PROBE } from './application/health.service';
 import { LocalStorageProbe } from './application/local-storage.probe';
 import { SaftQueueMonitor } from './application/saft-queue.monitor';
+import { DocPipelineMonitor } from './application/doc-pipeline.monitor';
 import { StartupValidationService } from './application/startup-validation.service';
 
 /** Health + readiness/liveness + Prometheus /metrics + SAF-T queue/worker monitoring. PG_POOL from the global PlatformModule. */
@@ -13,6 +14,7 @@ import { StartupValidationService } from './application/startup-validation.servi
     HealthService,
     StartupValidationService,
     SaftQueueMonitor,
+    DocPipelineMonitor,
     { provide: STORAGE_HEALTH_PROBE, useClass: LocalStorageProbe },
   ],
   exports: [HealthService],

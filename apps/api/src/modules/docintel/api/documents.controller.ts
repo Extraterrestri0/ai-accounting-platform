@@ -25,6 +25,10 @@ export class DocumentsController {
     return this.docs.recordScanResult(id, dto.result, dto.engine);
   }
 
+  // Recovery: re-enqueue the scan for a document stuck in 'scanning'/'failed' (e.g. queue was down).
+  @Post(':id/rescan') @RequirePermission(PERMISSIONS.DOCUMENT_UPLOAD)
+  rescan(@Param('id') id: string) { return this.docs.requeueScan(id); }
+
   @Get() @RequirePermission(PERMISSIONS.COMPANY_READ)
   list(@Query('status') status?: DocumentStatus, @Query('type') type?: DetectedType,
        @Query('search') search?: string, @Query('page') page?: string, @Query('pageSize') pageSize?: string) {

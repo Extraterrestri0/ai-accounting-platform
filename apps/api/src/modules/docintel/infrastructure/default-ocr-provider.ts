@@ -1,12 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { OcrProvider, OcrResult } from '../application/ocr.port';
+import { OcrUnavailableError } from '../domain/errors';
 
 /**
  * Production OCR provider.
  *  - Born-digital PDFs (embedded text) → extracted directly with pdfjs-dist (offline, exact).
- *  - Scanned images / image-only PDFs → delegated to a configured EU, zero-retention OCR
- *    vendor over HTTPS (OCR_VENDOR_URL); the bytes never persist with us (Invariant 7).
- * No stub fallback: if neither path yields text, it throws so the document stays in review.
+ *    If the embedded text is POOR/EMPTY (scanned or image-only PDF) the file falls through
+ *    to the OCR vendor — extraction never stops at a bad text layer.
+ *  - Scanned images / image-only PDFs → delegated to a configured OCR vendor over HTTP(S)
+ *    (OCR_VENDOR_URL); the bytes never persist with us (Invariant 7).
+ *  - NO silent fake results: without a vendor, image content raises OcrUnavailableError so the
+ *    user sees a clear "OCR not configured" message. The deterministic dev sample only runs
+ *    when OCR_DEV_SAMPLE=true (tests/demo) and is flagged as such in diagnostics.
  */
 interface PdfTextItem { str?: string }
 interface PdfPage { getTextContent(): Promise<{ items: PdfTextItem[] }> }
@@ -53,8 +58,11 @@ export class DefaultOcrProvider implements OcrProvider {
   async recognize(bytes: Buffer, mimeType: string): Promise<OcrResult> {
     if (mimeType === 'application/pdf') {
       const text = await this.extractPdfText(bytes);
-      if (text.trim().length > 0) return { text, pageCount: this.countPages(bytes), engine: 'pdf-text@embedded', provider: 'pdfjs', model: 'pdfjs' };
-      // image-only PDF → fall through to the vendor
+      // A meaningful text layer is used directly. A POOR one (a few stray chars on a scan)
+      // is not trusted — fall through to OCR rather than stopping with garbage.
+      const minChars = Number(process.env.OCR_PDF_TEXT_MIN ?? 40);
+      if (text.trim().length >= minChars) return { text, pageCount: this.countPages(bytes), engine: 'pdf-text@embedded', provider: 'pdfjs', model: 'pdfjs' };
+      if (text.trim().length > 0) this.log.warn(`PDF text layer too poor (${text.trim().length} chars < ${minChars}) — falling back to OCR.`);
     }
     return this.vendorOcr(bytes, mimeType);
   }
@@ -80,15 +88,21 @@ export class DefaultOcrProvider implements OcrProvider {
   private async vendorOcr(bytes: Buffer, mimeType: string): Promise<OcrResult> {
     const url = process.env.OCR_VENDOR_URL;
     if (!url) {
-      // No EU OCR vendor configured → deterministic dev OCR so the workflow always functions.
-      // Born-digital PDFs already returned their real embedded text above; this covers image-only /
-      // text-less / placeholder files: any readable text is used, otherwise a deterministic sample invoice.
-      this.log.warn('OCR_VENDOR_URL not set — using deterministic dev OCR.');
+      // No OCR vendor configured. Plain-text content is still genuinely readable (real data),
+      // but IMAGE content cannot be read — and inventing the dev sample would present fake
+      // data as a customer's invoice. Default: refuse with a clear, user-facing error.
       const decoded = bytes.toString('utf8');
       const printable = decoded.replace(/[^\x20-\x7EЀ-ӿ\n\r\t]/g, '');
       const looksLikeText = printable.length > 30 && printable.length / Math.max(decoded.length, 1) > 0.6;
-      const text = looksLikeText ? decoded : SAMPLE_INVOICE_TEXT;
-      return { text, pageCount: 1, engine: looksLikeText ? 'dev-ocr@text' : 'dev-ocr@sample', provider: 'dev', model: looksLikeText ? 'text' : 'sample' };
+      if (looksLikeText) return { text: decoded, pageCount: 1, engine: 'dev-ocr@text', provider: 'dev', model: 'text' };
+      if (process.env.OCR_DEV_SAMPLE === 'true') {
+        // Explicit opt-in for tests/demo only — flagged via engine so diagnostics mark it
+        // devFallbackUsed and the UI labels it as NOT a real extraction.
+        this.log.warn('OCR_VENDOR_URL not set — OCR_DEV_SAMPLE=true, returning the deterministic dev sample (NOT real data).');
+        return { text: SAMPLE_INVOICE_TEXT, pageCount: 1, engine: 'dev-ocr@sample', provider: 'dev', model: 'sample' };
+      }
+      this.log.warn('OCR_VENDOR_URL not set and content requires OCR — refusing (no fake results).');
+      throw new OcrUnavailableError();
     }
     const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': mimeType, Authorization: `Bearer ${process.env.OCR_VENDOR_KEY ?? ''}` }, body: new Uint8Array(bytes) });
     if (!res.ok) throw new Error(`OCR vendor error ${res.status}`);

@@ -60,5 +60,30 @@ export function applyHeuristics(fields: ExtractedField[]): { fields: ExtractedFi
   if (!has('document_number') && has('invoice_number')) add('document_number', byKey.get('invoice_number')!.valueText!, 0.7, 'derived: same as invoice number');
   else if (!has('invoice_number') && has('document_number')) add('invoice_number', byKey.get('document_number')!.valueText!, 0.7, 'derived: same as document number');
 
+  // --- VAT treatment from explicit document evidence only (never guessed) ---
+  if (!has('vat_treatment')) {
+    const reason = (byKey.get('vat_exemption_reason')?.valueText ?? '').toLowerCase();
+    const rate = num(byKey.get('vat_rate'));
+    if (/обратно\s*начисляване|reverse\s*charge|чл\.?\s*82/.test(reason)) add('vat_treatment', 'reverse_charge', 0.75, 'derived: reverse-charge basis on the document');
+    else if (/вътреобщностн|intra-?community|чл\.?\s*53/.test(reason)) add('vat_treatment', 'intra_community', 0.75, 'derived: intra-community basis on the document');
+    else if (reason) add('vat_treatment', 'exempt', 0.7, 'derived: non-charging basis stated on the document');
+    else if (rate === 20) add('vat_treatment', 'standard', 0.7, 'derived: 20% rate');
+    else if (rate === 9) add('vat_treatment', 'reduced', 0.7, 'derived: 9% rate');
+    // rate 0 WITHOUT a stated reason is left empty — guessing exempt vs zero-rated would assert
+    // a tax fact the document does not state (Invariant 6).
+  }
+
+  // --- payment method: normalize free text to a canonical value (kept in valueNormalized) ---
+  const pm = byKey.get('payment_method');
+  if (pm?.valueText && !pm.valueNormalized) {
+    const v = pm.valueText.toLowerCase();
+    const norm = /брой|cash/.test(v) ? 'cash'
+      : /карта|card/.test(v) ? 'card'
+      : /банк|превод|transfer|wire/.test(v) ? 'bank_transfer'
+      : 'other';
+    pm.valueNormalized = norm;
+    notes.push({ key: 'payment_method', reason: `normalized: "${pm.valueText}" → ${norm}` });
+  }
+
   return { fields: out, notes };
 }

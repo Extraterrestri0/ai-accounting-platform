@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ArrowLeft, RefreshCw, Sparkles, Check, X, BookOpenCheck, Loader2, FileText, CheckCircle2, Pencil, Save, AlertTriangle, History } from 'lucide-react';
+import { ArrowLeft, RefreshCw, RotateCw, Sparkles, Check, X, BookOpenCheck, Loader2, FileText, CheckCircle2, Pencil, Save, AlertTriangle, History } from 'lucide-react';
 import { Endpoints } from '@/lib/api/endpoints';
 import { ApiError } from '@/lib/api/client';
+import { useT } from '@/lib/i18n';
+import type { DocumentRow } from '@/lib/api/types';
 import { PageHeader } from '@/components/app/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,21 +23,43 @@ import { eur } from '@/lib/format';
 
 const FIELD_LABELS: Record<string, string> = {
   invoice_number: 'Фактура №', document_number: 'Документ №', document_type: 'Тип документ',
-  invoice_date: 'Дата', due_date: 'Падеж', currency: 'Валута',
+  invoice_date: 'Дата', tax_event_date: 'Дата на дан. събитие', due_date: 'Падеж', currency: 'Валута',
   net_amount: 'Данъчна основа', vat_amount: 'ДДС', total_amount: 'Обща сума', vat_rate: 'ДДС ставка %', vat_code: 'ДДС код',
+  vat_treatment: 'ДДС третиране', vat_exemption_reason: 'Основание за неначисляване',
   supplier_name: 'Доставчик', supplier_eik: 'ЕИК (доставчик)', supplier_vat: 'ДДС № (доставчик)',
   supplier_city: 'Град', supplier_address: 'Адрес (доставчик)', supplier_country: 'Държава (доставчик)',
   customer_name: 'Получател', customer_eik: 'ЕИК (получател)', customer_vat: 'ДДС № (получател)',
+  customer_address: 'Адрес (получател)', customer_country: 'Държава (получател)',
   iban: 'IBAN', bank_name: 'Банка', bank_bic: 'BIC', payment_method: 'Начин на плащане', payment_reference: 'Основание',
+  po_number: 'Поръчка №', contract_number: 'Договор №', delivery_note_number: 'Стокова разписка №',
+  vehicle_reg_number: 'МПС рег. №',
   description: 'Описание', notes: 'Забележки', line_items: 'Редове (брой)',
 };
 
 const CLASS_SOURCE: Record<string, string> = { rule: 'правило', memory: 'памет', ai: 'AI', manual: 'ръчно' };
 
+const SCAN_ACTIVE = (s?: string) => s === 'scanning' || s === 'pending_upload';
+const STALL_MS = 20000; // how long a doc may sit in 'scanning' before we call it delayed
+
 export default function ReviewDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const qc = useQueryClient();
+  const t = useT();
+
+  // Document status — poll while the scan/extract pipeline is still working so a stuck doc
+  // (e.g. Redis/worker down) surfaces an actionable banner instead of an empty "no fields" page.
+  const documentQ = useQuery({
+    queryKey: ['document', id],
+    queryFn: () => Endpoints.document(id).catch(() => null),
+    refetchInterval: (q) => (SCAN_ACTIVE((q.state.data as DocumentRow | null)?.status) ? 4000 : false),
+  });
+  const docStatus = documentQ.data?.status;
+  const [scanSince, setScanSince] = React.useState<number | null>(null);
+  React.useEffect(() => {
+    setScanSince((prev) => (SCAN_ACTIVE(docStatus) ? (prev ?? Date.now()) : null));
+  }, [docStatus]);
+  const scanDelayed = scanSince != null && Date.now() - scanSince > STALL_MS;
 
   const extractionQ = useQuery({ queryKey: ['extraction', id], queryFn: () => Endpoints.extraction(id).catch(() => null) });
   const suggestionQ = useQuery({ queryKey: ['suggestion', id], queryFn: () => Endpoints.suggestion(id).catch(() => null) });
@@ -50,10 +74,17 @@ export default function ReviewDetailPage() {
     qc.invalidateQueries({ queryKey: ['extraction', id] });
     qc.invalidateQueries({ queryKey: ['suggestion', id] });
     qc.invalidateQueries({ queryKey: ['reviewDetail', id] });
+    qc.invalidateQueries({ queryKey: ['document', id] });
     qc.invalidateQueries({ queryKey: ['documents'] });
   };
 
   const rerun = useMutation({ mutationFn: () => Endpoints.runExtraction(id), onSuccess: () => { toast.success('Извличането е стартирано'); setTimeout(invalidate, 1200); }, onError: errToast });
+  // Recovery: re-enqueue the scan when the pipeline stalled or failed (Redis/worker was down).
+  const rescan = useMutation({
+    mutationFn: () => Endpoints.rescanDocument(id),
+    onSuccess: () => { toast.success(t('pipeline.rescan')); setScanSince(Date.now()); qc.invalidateQueries({ queryKey: ['document', id] }); },
+    onError: errToast,
+  });
   const suggest = useMutation({ mutationFn: () => Endpoints.generateSuggestion(id), onSuccess: () => { toast.success('Генерирано предложение'); invalidate(); }, onError: errToast });
   const startReview = useMutation({ mutationFn: () => Endpoints.createReview(id), onSuccess: () => { toast.success('Прегледът е започнат'); invalidate(); }, onError: errToast });
   const approve = useMutation({ mutationFn: () => Endpoints.approveReview(pkg.id), onSuccess: () => { toast.success('Одобрено'); invalidate(); }, onError: errToast });
@@ -92,7 +123,12 @@ export default function ReviewDetailPage() {
     provider?: string; model?: string; method?: string; layersRun?: string[];
     derived?: string[]; missingRequired?: string[];
     rejected?: { key: string; value: string; reason: string }[];
+    fileType?: string; usedEmbeddedText?: boolean; devFallbackUsed?: boolean;
   };
+  // Posting needs lines: corrected/approved lines on the package, or the AI suggestion's lines.
+  const hasPostingLines =
+    ((pkg?.approvedPosting as unknown[] | undefined)?.length ?? 0) > 0 ||
+    ((suggestion?.suggestedPosting as unknown[] | undefined)?.length ?? 0) > 0;
 
   return (
     <div className="space-y-6">
@@ -100,6 +136,31 @@ export default function ReviewDetailPage() {
         <Button variant="ghost" size="icon" onClick={() => router.push('/review')} aria-label="Назад"><ArrowLeft className="h-5 w-5" /></Button>
         <PageHeader title="Преглед на документ" description={`Документ ${id.slice(0, 8)}…`} />
       </div>
+
+      {docStatus === 'quarantined' ? (
+        <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{t('pipeline.quarantined')}</span>
+        </div>
+      ) : (docStatus === 'failed' || scanDelayed) ? (
+        <div className="flex items-start justify-between gap-3 rounded-lg border border-warning/30 bg-warning-soft p-3 text-sm">
+          <div className="flex items-start gap-2 text-warning">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <p className="font-medium">{docStatus === 'failed' ? t('pipeline.failed') : t('pipeline.delayed')}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{t('pipeline.delayedHint')}</p>
+            </div>
+          </div>
+          <Button size="sm" variant="outline" className="shrink-0" onClick={() => rescan.mutate()} disabled={rescan.isPending}>
+            {rescan.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCw className="h-4 w-4" />} {t('pipeline.retry')}
+          </Button>
+        </div>
+      ) : SCAN_ACTIVE(docStatus) ? (
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+          <span>{t('pipeline.scanning')}</span>
+        </div>
+      ) : null}
 
       {flagItems.length > 0 && (
         <div className="rounded-lg border border-warning/30 bg-warning-soft p-3 text-sm">
@@ -114,11 +175,19 @@ export default function ReviewDetailPage() {
         </div>
       )}
 
+      {diagnostics?.devFallbackUsed && (
+        <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span><strong>Демонстрационни данни</strong> — този документ е разчетен с демо-извадка, НЕ с реално OCR. Стойностите не са от вашия документ: проверете и въведете всички полета ръчно преди одобрение.</span>
+        </div>
+      )}
+
       {diagnostics && (
         <details className="rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
           <summary className="cursor-pointer font-medium text-foreground">Диагностика на извличането</summary>
           <div className="mt-2 space-y-1">
             <p>Източник: <span className="font-medium">{diagnostics.provider ?? '—'}</span>{diagnostics.model ? ` (${diagnostics.model})` : ''} · метод: {diagnostics.method ?? '—'} · слоеве: {(diagnostics.layersRun ?? []).join(' → ')}</p>
+            <p>Файл: {diagnostics.fileType ?? '—'} · вграден текст: {diagnostics.usedEmbeddedText ? 'да (без OCR)' : 'не'} · демо-извадка: {diagnostics.devFallbackUsed ? 'ДА' : 'не'}</p>
             {(diagnostics.derived?.length ?? 0) > 0 && (
               <p>Изведени (от други полета): {(diagnostics.derived ?? []).map((k) => FIELD_LABELS[k] ?? k).join(', ')}</p>
             )}
@@ -238,9 +307,17 @@ export default function ReviewDetailPage() {
                   </>
                 )}
                 {status === 'approved' && !journalEntryId && (
-                  <Button variant="success" className="w-full" onClick={() => post.mutate()} disabled={post.isPending}>
-                    {post.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <BookOpenCheck className="h-4 w-4" />} Осчетоводи
-                  </Button>
+                  <>
+                    <Button variant="success" className="w-full" onClick={() => post.mutate()} disabled={post.isPending || !hasPostingLines}
+                      title={!hasPostingLines ? 'Няма осчетоводни редове' : undefined}>
+                      {post.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <BookOpenCheck className="h-4 w-4" />} Осчетоводи
+                    </Button>
+                    {!hasPostingLines && (
+                      <p className="text-xs text-muted-foreground">
+                        Няма осчетоводни редове — генерирайте „AI предложение“ или въведете сумите (данъчна основа, ДДС, обща сума) чрез „Редактирай“, после генерирайте отново.
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             </CardContent>

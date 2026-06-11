@@ -45,6 +45,7 @@ export const Endpoints = {
     api<Paginated<DocumentRow>>(`/documents${qs(p)}`),
   document: (id: string) => api<DocumentRow>(`/documents/${id}`),
   downloadUrl: (id: string) => api<{ url: string }>(`/documents/${id}/download-url`),
+  rescanDocument: (id: string) => api<DocumentRow>(`/documents/${id}/rescan`, { method: 'POST', body: {} }),
   trashDocument: (id: string) => api(`/documents/${id}/trash`, { method: 'POST', body: {} }),
   restoreDocument: (id: string) => api(`/documents/${id}/restore`, { method: 'POST', body: {} }),
   purgeDocument: (id: string) => api(`/documents/${id}`, { method: 'DELETE' }),
@@ -192,4 +193,10 @@ export const Endpoints = {
   saftDataset: (id: string) => api<SaftDataset>(`/saft/exports/${id}/dataset`),
   saftValidate: (year: number, month: number) => api<SaftValidationSummary>(`/saft/validate/${year}/${month}`),
   saftDownload: (id: string) => api<SaftDownloadInfo>(`/saft/exports/${id}/download`),
+
+  // --- health (pipeline status — lets the UI warn when scan/extract is down) ---
+  health: () => api<HealthReport>('/health', { company: false }),
 };
+
+export interface HealthComponent { status: 'up' | 'down' | 'degraded' | 'disabled'; detail?: string; latencyMs?: number; }
+export interface HealthReport { status: 'ok' | 'degraded' | 'down'; uptimeSec: number; checks: Record<string, HealthComponent>; }

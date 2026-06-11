@@ -1,4 +1,4 @@
-import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { DatabaseContextService, TenantContextService } from '../../../platform';
 import { AUDIT_SERVICE, type IAuditService } from '../../audit';
 import { EXTRACTION_SERVICE, type IExtractionService } from './extraction.service.interface';
@@ -10,7 +10,8 @@ import type { ReviewDetail, ReviewerDashboard, ReviewPackage, ReviewStatus } fro
 import type { EditInput, IReviewService, ListQueueQuery } from './review.service.interface';
 import { nextStatus } from '../domain/review/workflow';
 
-class ReviewError extends Error {}
+// 422 (not a bare Error): the user-safe reason must reach the UI, never a generic 500.
+export class ReviewError extends UnprocessableEntityException {}
 
 @Injectable()
 export class ReviewService implements IReviewService {

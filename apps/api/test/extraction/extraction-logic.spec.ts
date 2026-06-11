@@ -130,6 +130,64 @@ describe('heuristic accounting derivation (layer 4)', () => {
   });
 });
 
+// --- Upload extraction reliability (0038) ---
+
+describe('0038 fields — tax event date, VAT exemption reason/treatment, references, vehicle', () => {
+  it('extracts the tax event date (дата на дан.съб.) distinctly from the issue date', () => {
+    const fs = extractAllLayers('Фактура № 1000000041\nДата на издаване: 20.10.2025\nДата на дан.съб.: 21.10.2025').fields;
+    expect(get(fs, 'invoice_date')?.valueText).toBe('2025-10-20');
+    expect(get(fs, 'tax_event_date')?.valueText).toBe('2025-10-21');
+  });
+  it('extracts the legal basis for not charging VAT and derives reverse-charge treatment', () => {
+    const fs = extractAllLayers('Общо: 100,00\nОснование за неначисляване на ДДС: чл. 82, ал. 2 от ЗДДС — обратно начисляване').fields;
+    expect(get(fs, 'vat_exemption_reason')?.valueText).toContain('чл. 82');
+    expect(get(fs, 'vat_treatment')?.valueText).toBe('reverse_charge');
+    expect(get(fs, 'vat_treatment')?.source).toBe('derived');
+  });
+  it('derives standard treatment from a 20% rate; never guesses on bare 0%', () => {
+    const std = extractAllLayers('Данъчна основа: 100,00\nДДС 20%: 20,00\nОбщо: 120,00').fields;
+    expect(get(std, 'vat_treatment')?.valueText).toBe('standard');
+    const zero = extractAllLayers('Данъчна основа: 100,00\nДДС: 0,00\nОбщо: 100,00').fields;
+    expect(get(zero, 'vat_treatment')).toBeUndefined(); // no stated reason → no asserted tax fact
+  });
+  it('does NOT mistake "Основание за неначисляване" for a payment reference', () => {
+    const fs = extractAllLayers('Основание за неначисляване на ДДС: чл. 113\nОбщо: 10,00').fields;
+    expect(get(fs, 'payment_reference')).toBeUndefined();
+  });
+  it('extracts PO/contract/delivery-note references and a vehicle plate', () => {
+    const fs = extractAllLayers([
+      'Поръчка №: PO-2026-17', 'Договор № Д-55/2026', 'Стокова разписка № 4411',
+      'МПС: СВ1234АВ', 'Общо: 10,00',
+    ].join('\n')).fields;
+    expect(get(fs, 'po_number')?.valueText).toBe('PO-2026-17');
+    expect(get(fs, 'contract_number')?.valueText).toBe('Д-55/2026');
+    expect(get(fs, 'delivery_note_number')?.valueText).toBe('4411');
+    expect(get(fs, 'vehicle_reg_number')?.valueText).toBe('СВ1234АВ');
+  });
+  it('normalizes the payment method (банков превод → bank_transfer)', () => {
+    const fs = extractAllLayers('Начин на плащане: Банков превод\nОбщо: 10,00').fields;
+    expect(get(fs, 'payment_method')?.valueText).toBe('Банков превод');
+    expect(get(fs, 'payment_method')?.valueNormalized).toBe('bank_transfer');
+  });
+});
+
+describe('supplier vs customer separation — never cross-copied', () => {
+  it('customer-only labels yield NO supplier fields (and vice versa)', () => {
+    const c = extractAllLayers('Получател: Клиент ЕООД\nЕИК на получателя: 3333333333\nОбщо: 10,00').fields;
+    expect(get(c, 'customer_name')?.valueText).toBe('Клиент ЕООД');
+    expect(get(c, 'supplier_name')).toBeUndefined();
+    expect(get(c, 'supplier_eik')).toBeUndefined();
+    const s = extractAllLayers('Доставчик: Продавач ООД\nЕИК: 203150714\nОбщо: 10,00').fields;
+    expect(get(s, 'supplier_name')?.valueText).toBe('Продавач ООД');
+    expect(get(s, 'customer_name')).toBeUndefined();
+  });
+  it('extracts explicit customer address/country labels only', () => {
+    const fs = extractAllLayers('Адрес на получателя: гр. София, ул. Тест 1\nДържава на получателя: България\nОбщо: 10,00').fields;
+    expect(get(fs, 'customer_address')?.valueText).toBe('гр. София, ул. Тест 1');
+    expect(get(fs, 'customer_country')?.valueText).toBe('България');
+  });
+});
+
 describe('diagnostics — misses are explainable, nothing silently dropped', () => {
   it('records provider/layers/derived/missingRequired and keeps low-confidence values', () => {
     const { fields, diagnostics } = extractAllLayers(BG_JOINED);

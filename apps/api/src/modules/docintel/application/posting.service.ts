@@ -1,4 +1,4 @@
-import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { ConflictException, ForbiddenException, HttpException, Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { DatabaseContextService, TenantContextService } from '../../../platform';
 import { AUDIT_SERVICE, type IAuditService } from '../../audit';
 import { LEDGER_SERVICE, type ILedgerService, type PostEntryInput } from '../../ledger';
@@ -9,8 +9,25 @@ import { validatePosting, PostingValidationError } from '../domain/posting/valid
 import type { PostedPurchaseDetail, PostingLineInput, PostingOutcome, PostingRequest } from '../domain/posting/models';
 import type { IPostingService } from './posting.service.interface';
 
-class PostingError extends Error {}
+/**
+ * Application-boundary error mapping (fixes the "Осчетоводи → Internal server error" dead end):
+ * a bare Error becomes a generic 500 and the UI shows nothing useful. These carry the exact
+ * user-safe reason as 422 (cannot post as-is) / 409 (already posted), so the review screen can
+ * show WHY and the reviewer can fix it. PeriodLockedError is already a 409 (periods module).
+ */
+export class PostingError extends UnprocessableEntityException {}
+export class DuplicatePostingError extends ConflictException {}
 interface ApprovedLine { accountCode: string; side: 'debit' | 'credit'; amount: string; narrative?: string; }
+
+/** Map domain/ledger validation failures (framework-free Errors) to user-visible HTTP errors. */
+function toHttpError(e: unknown): unknown {
+  if (e instanceof HttpException) return e;
+  const name = (e as Error)?.name ?? '';
+  if (name === 'PostingValidationError' || name === 'UnbalancedEntryError') {
+    return new UnprocessableEntityException((e as Error).message);
+  }
+  return e; // genuine unexpected failures stay 500
+}
 
 @Injectable()
 export class PostingService implements IPostingService {
@@ -43,11 +60,11 @@ export class PostingService implements IPostingService {
     await this.periods.assertOpen(new Date().toISOString().slice(0, 10), 'Posting');
 
     // 1) Load the approved review + resolve lines + create the posting_request (own txn; no nesting with the ledger).
-    const prep = await this.db.run(async (db) => {
+    const prep = await this.db.run<{ requestId: string; documentId: string | null | undefined; lines: PostingLineInput[] }>(async (db) => {
       const detail = await this.reviews.getDetail((await this.reviewDocId(db, reviewPackageId)));
       if (detail.package.id !== reviewPackageId) throw new PostingError('Review package mismatch.');
       if (detail.package.status !== 'approved') throw new PostingError(`Review package ${reviewPackageId} is not approved (status ${detail.package.status}).`);
-      if (await this.repo.hasPostedForReview(db, reviewPackageId)) throw new PostingError('This review has already been posted.');
+      if (await this.repo.hasPostedForReview(db, reviewPackageId)) throw new DuplicatePostingError('This review has already been posted.');
 
       const approvedLines = (detail.package.approvedPosting as ApprovedLine[] | undefined)
         ?? ((detail.suggestion as { suggestedPosting?: ApprovedLine[] } | null)?.suggestedPosting);
@@ -63,7 +80,7 @@ export class PostingService implements IPostingService {
       validatePosting(lines); // friendly pre-check; the ledger re-validates authoritatively
       const requestId = await this.repo.createRequest(db, tenantId, companyId, { reviewPackageId, documentId: detail.package.documentId ?? undefined, requestedBy: userId, kind: 'post', lines });
       return { requestId, documentId: detail.package.documentId, lines };
-    });
+    }).catch((e) => { throw toHttpError(e) as Error; });
 
     // 2) Post through the ledger (its OWN transaction: balance + immutability + audit enforced there).
     try {
@@ -78,8 +95,10 @@ export class PostingService implements IPostingService {
         return { request, journalEntryId: entry.id, entryNo: entry.entryNo, lines: prep.lines, status: 'posted' };
       });
     } catch (e) {
+      // Record the failure on the request (never silent / never inconsistent), then surface
+      // the exact reason: ledger validation errors → 422 with message; unknown faults stay 500.
       await this.db.run((db) => this.repo.setRequestStatus(db, prep.requestId, 'failed', (e as Error).message));
-      throw e;
+      throw toHttpError(e) as Error;
     }
   }
 

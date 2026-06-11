@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { DatabaseContextService, TenantContextService } from '../../../platform';
 import { AUDIT_SERVICE, type IAuditService } from '../../audit';
 import { MASTERDATA_SERVICE, type IMasterDataService } from '../../masterdata';
@@ -11,7 +11,8 @@ import { DocIntelEvents } from '../events';
 import type { AccountingSuggestion, CounterpartyRef, PostingLine } from '../domain/rules/models';
 import type { CreateRuleInput, IRulesEngineService } from './rules-engine.service.interface';
 
-class RulesError extends Error {}
+// 422 (not a bare Error): the user-safe reason must reach the UI, never a generic 500.
+class RulesError extends UnprocessableEntityException {}
 
 @Injectable()
 export class RulesEngineService implements IRulesEngineService {

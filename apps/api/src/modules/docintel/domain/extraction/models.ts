@@ -9,10 +9,13 @@ export const FIELD_KEYS = [
   'supplier_name', 'supplier_vat', 'supplier_eik', 'supplier_city',
   'supplier_address', 'supplier_country',
   'customer_name', 'customer_eik', 'customer_vat',
+  'customer_address', 'customer_country',
   'invoice_number', 'document_number', 'document_type',
-  'invoice_date', 'due_date', 'currency',
+  'invoice_date', 'tax_event_date', 'due_date', 'currency',
   'net_amount', 'vat_amount', 'total_amount', 'vat_rate', 'vat_code',
+  'vat_treatment', 'vat_exemption_reason',
   'iban', 'bank_name', 'bank_bic', 'payment_method', 'payment_reference',
+  'po_number', 'contract_number', 'delivery_note_number', 'vehicle_reg_number',
   'description', 'notes', 'line_items',
 ] as const;
 export type FieldKey = (typeof FIELD_KEYS)[number];
@@ -42,6 +45,11 @@ export interface ExtractionDiagnostics {
   rejected: RejectedCandidate[];
   missingRequired: FieldKey[];
   provenance: FieldProvenance[];
+  // Honesty flags (0038): how the text was obtained, so a result is never mistaken
+  // for something it isn't (dev sample is NOT a real extraction).
+  fileType?: string;            // source mime type
+  usedEmbeddedText?: boolean;   // born-digital PDF text layer (no OCR)
+  devFallbackUsed?: boolean;    // deterministic dev sample produced this run
 }
 export interface ExtractionResult {
   method: RunMethod; engine: string; docType: DocType;

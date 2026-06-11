@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
 import { DatabaseContextService, TenantContextService } from '../../../platform';
 import { AUDIT_SERVICE, type IAuditService } from '../../audit';
 import { DOCUMENT_SERVICE, type IDocumentService } from './document.service.interface';
@@ -13,7 +13,8 @@ import { applyValidation, overallConfidence, reviewFlags } from '../domain/extra
 import { DocIntelEvents } from '../events';
 import type { DocumentExtraction, ExtractedField, ExtractionDiagnostics, ReviewPackage, RunMethod } from '../domain/extraction/models';
 
-class ExtractionError extends Error {}
+// 422 (not a bare Error): the user-safe reason must reach the UI, never a generic 500.
+export class ExtractionError extends UnprocessableEntityException {}
 
 @Injectable()
 export class ExtractionService implements IExtractionService {
@@ -53,9 +54,23 @@ export class ExtractionService implements IExtractionService {
         provider, model, engine, method, layersRun: ['xml', 'validation'],
         found: fields.map((f) => f.key), derived: [], rejected: [],
         missingRequired: reviewFlags(fields).missingRequired, provenance: [],
+        fileType: doc.mimeType, usedEmbeddedText: false, devFallbackUsed: false,
       };
     } else {
-      const ocr = await this.ocr.recognize(bytes, doc.mimeType);
+      let ocr;
+      try {
+        ocr = await this.ocr.recognize(bytes, doc.mimeType);
+      } catch (e) {
+        // OCR unavailable / vendor failure: record a FAILED run (auditable, explainable in
+        // diagnostics history) and surface the exact reason as a 422 — never a silent stop.
+        const reason = (e as Error).message;
+        await this.db.run(async (db) => {
+          const runId = await this.repo.createRun(db, tenantId, companyId, documentId, 'ocr', 'none', 'none', undefined);
+          await this.repo.finishRun(db, runId, 'failed', null, reason);
+        });
+        this.log.warn(`extraction ${documentId}: OCR failed/unavailable — ${reason}`);
+        throw new UnprocessableEntityException(reason);
+      }
       engine = ocr.engine; provider = ocr.provider; model = ocr.model;
       // Layered pipeline (build-on-top): provider structured fields (if any) → OCR-text
       // regex backfill → heuristic accounting derivation → deterministic validation.
@@ -65,6 +80,10 @@ export class ExtractionService implements IExtractionService {
       const built = assemble({ primary, text: ocr.text, engine, method, provider, model });
       fields = built.fields;
       diagnostics = built.diagnostics;
+      // Honesty flags: how the text was obtained (embedded layer vs OCR vs dev sample).
+      diagnostics.fileType = doc.mimeType;
+      diagnostics.usedEmbeddedText = ocr.provider === 'pdfjs';
+      diagnostics.devFallbackUsed = ocr.engine === 'dev-ocr@sample';
     }
     const overall = overallConfidence(fields);
     this.log.log(`extraction ${documentId}: provider=${provider} method=${method} found=${diagnostics.found.length} derived=${diagnostics.derived.length} rejected=${diagnostics.rejected.length} missingRequired=[${diagnostics.missingRequired.join(',')}] conf=${overall}`);

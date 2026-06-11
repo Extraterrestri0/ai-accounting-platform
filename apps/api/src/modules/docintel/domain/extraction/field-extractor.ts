@@ -64,6 +64,8 @@ export function extractFromText(text: string): ExtractedField[] {
 
   // --- dates ---
   pushDate('invoice_date', m(new RegExp(`(?:invoice\\s*date|дата(?:\\s*на\\s*издаване)?)\\s*[:#]?\\s*${dateTok}`, 'i')), 0.93);
+  // "Дата на дан.съб." / "Дата на данъчно събитие" — only when explicitly labeled.
+  pushDate('tax_event_date', m(new RegExp(`(?:дата\\s*на\\s*дан(?:ъчно(?:то)?)?\\.?\\s*съб(?:итие)?\\.?|tax\\s*(?:point|event)\\s*date)\\s*[:#]?\\s*${dateTok}`, 'i')), 0.9);
   pushDate('due_date', m(new RegExp(`(?:due\\s*date|падеж|срок\\s*за\\s*плащане)\\s*[:#]?\\s*${dateTok}`, 'i')), 0.9);
   push('currency', (m(/(?:валута|currency)\s*[:#]?\s*(BGN|EUR|USD|GBP)/i) ?? m(/\b(BGN|EUR|USD|GBP)\b/) ?? '').toUpperCase(), 0.9);
 
@@ -80,10 +82,14 @@ export function extractFromText(text: string): ExtractedField[] {
   push('supplier_eik', m(/(?:ЕИК|EIK|БУЛСТАТ)\s*[:#]?\s*(\d{9,13})/i) ?? '', 0.9);
   push('supplier_vat', m(/(?:ДДС\s*№|VAT)\s*[:#]?\s*(BG\d{9,10}|[A-Z]{2}\d{8,12})/i) ?? m(/\b(BG\d{9,10})\b/) ?? '', 0.9);
 
-  // --- customer (получател) — distinct labels so it doesn't collide with the supplier ---
-  push('customer_name', clean(m(/(?:получател|купувач|клиент|bill\s*to|customer)\s*[:#]?\s*([^\n]{2,60}?)\s*(?:\n|ЕИК|EIK|ДДС|VAT|$)/i) ?? ''), 0.82);
-  push('customer_eik', m(/(?:ЕИК|EIK|БУЛСТАТ)\s*(?:на\s*получателя)\s*[:#]?\s*(\d{9,13})/i) ?? '', 0.8);
-  push('customer_vat', m(/(?:ДДС\s*№?)\s*(?:на\s*получателя)\s*[:#]?\s*(BG\d{9,10})/i) ?? '', 0.8);
+  // --- customer (получател) — distinct labels so it doesn't collide with the supplier.
+  // NEVER backfilled from supplier values (and vice versa) — wrong-party data is a
+  // hallucination, so each side only matches its own explicit labels.
+  push('customer_name', clean(m(/(?:получател|купувач|клиент|bill\s*to|customer)\s*[:#]?\s*([^\n]{2,60}?)\s*(?:\n|ЕИК|EIK|ДДС|VAT|Адрес|Address|$)/i) ?? ''), 0.82);
+  push('customer_eik', m(/(?:ЕИК|EIK|БУЛСТАТ)\s*(?:на\s*(?:получателя|клиента))\s*[:#]?\s*(\d{9,13})/i) ?? '', 0.8);
+  push('customer_vat', m(/(?:ДДС\s*№?)\s*(?:на\s*(?:получателя|клиента))\s*[:#]?\s*(BG\d{9,10})/i) ?? '', 0.8);
+  push('customer_address', clean(m(/адрес\s*на\s*(?:получателя|клиента)\s*[:#]?\s*([^\n]{4,80}?)\s*(?:\n|държава|country|тел|ЕИК|ДДС|$)/i) ?? ''), 0.74);
+  push('customer_country', clean(m(/държава\s*на\s*(?:получателя|клиента)\s*[:#]?\s*([A-Za-zЀ-ӿ]{2,30})/i) ?? ''), 0.78);
 
   // --- amounts (label-matched = high confidence; a currency-tagged token is kept as a low-conf alternative) ---
   push('net_amount', norm(m(/(?:данъчна\s*основа|облагаема\s*основа|net|subtotal)\s*[:#]?\s*([\d., ]+\d)/i) ?? ''), 0.9);
@@ -93,6 +99,12 @@ export function extractFromText(text: string): ExtractedField[] {
   if (taggedAmount) push('total_amount', norm(taggedAmount), 0.55); // alternative candidate for total
   push('vat_rate', m(/ддс\s*(\d{1,2})\s*%|(\d{1,2})\s*%\s*ддс|vat\s*\((\d{1,2})%\)/i) ?? '', 0.88);
   push('vat_code', m(/(?:ддс\s*код|данъчен\s*код|vat\s*code)\s*[:#]?\s*([A-Z0-9]{1,4})/i) ?? '', 0.8);
+  // Reason for NOT charging VAT — explicit label, a legal basis (чл. … ЗДДС / Directive),
+  // or the reverse-charge / intra-community phrases printed on the invoice.
+  push('vat_exemption_reason', clean(
+    m(/основание\s*за\s*неначисляване(?:\s*(?:на\s*)?ддс)?\s*[:#]?\s*([^\n]{3,120}?)\s*(?:\n|$)/i)
+    ?? m(/(чл\.?\s*\d+[а-я]?(?:,?\s*ал\.?\s*\d+)?[^\n]{0,60}?(?:ЗДДС|Директива\s*[\d/]+|VAT\s*Directive))/i)
+    ?? m(/(обратно\s*начисляване|reverse\s*charge|вътреобщностна\s*доставка|intra-?community\s*supply|освободена\s*доставка|exempt\s*supply)/i) ?? ''), 0.8);
 
   // --- payment ---
   push('iban', m(/(?:IBAN)\s*[:#]?\s*([A-Z]{2}\d{2}[A-Z0-9]{10,30})/i) ?? m(/\b([A-Z]{2}\d{2}[A-Z0-9]{10,30})\b/) ?? '', 0.9);
@@ -100,7 +112,21 @@ export function extractFromText(text: string): ExtractedField[] {
   push('bank_name', clean(m(/(?:банка|bank)\s*[:#]?\s*([^\n]{2,40}?)\s*(?:\n|IBAN|BIC|SWIFT|БИК|$)/i) ?? ''), 0.8);
   push('payment_method', clean(m(/(?:начин\s*на\s*плащане|payment\s*method)\s*[:#]?\s*([^\n]{2,30}?)\s*(?:\n|банка|bank|IBAN|$)/i) ?? ''), 0.8);
   // reference may be Cyrillic (e.g. "Основание: Абонамент Q1 2026") — not just [A-Z0-9].
-  push('payment_reference', clean(m(/(?:reference|основание|ref)\s*[:#]?\s*([A-Za-z0-9Ѐ-ӿ][A-Za-z0-9Ѐ-ӿ \-/]{2,60}?)\s*(?:\n|начин|payment|$)/i) ?? ''), 0.76);
+  // Lookahead excludes "Основание за неначисляване…" (that's the VAT exemption reason, not a payment ref).
+  push('payment_reference', clean(m(/(?:reference|основание(?!\s*за\s*неначисл)|ref)\s*[:#]?\s*([A-Za-z0-9Ѐ-ӿ][A-Za-z0-9Ѐ-ӿ \-/]{2,60}?)\s*(?:\n|начин|payment|$)/i) ?? ''), 0.76);
+
+  // --- order / contract / delivery references + vehicle (fuel & transport invoices) ---
+  // labels may combine punctuation ("Поръчка №: 17") — № group + optional colon, both optional spacing
+  const numSep = '\\s*(?:№|no\\.?|#)?\\s*:?\\s*';
+  push('po_number', m(new RegExp(`(?:поръчка|purchase\\s*order|p\\.?o\\.?)${numSep}${idTok}`, 'i')) ?? '', 0.8);
+  push('contract_number', m(new RegExp(`(?:договор|contract)${numSep}${idTok}`, 'i')) ?? '', 0.78);
+  push('delivery_note_number', m(new RegExp(`(?:стокова\\s*разписка|складова\\s*разписка|приемо-?предавателен\\s*протокол|delivery\\s*note)${numSep}${idTok}`, 'i')) ?? '', 0.78);
+  // BG plate (Cyrillic or Latin look-alike letters): labeled = confident; bare pattern = lower conf.
+  const plate = '([АВЕКМНОРСТУХABEKMHOPCTYX]{1,2}\\s?\\d{4}\\s?[АВЕКМНОРСТУХABEKMHOPCTYX]{2})';
+  const labeledPlate = m(new RegExp(`(?:рег\\.?\\s*№|мпс|автомобил|vehicle)\\s*[:#]?\\s*${plate}`, 'i'));
+  const barePlate = labeledPlate ? undefined : m(new RegExp(plate));
+  if (labeledPlate) push('vehicle_reg_number', labeledPlate.replace(/\s/g, ''), 0.85);
+  else if (barePlate) push('vehicle_reg_number', barePlate.replace(/\s/g, ''), 0.62);
 
   // --- description / notes ---
   push('description', clean(m(/(?:описание|основание\s*за\s*сделка|description)\s*[:#]?\s*([^\n]{2,120}?)\s*(?:\n|забележка|notes?|ддс|vat|$)/i) ?? ''), 0.72);

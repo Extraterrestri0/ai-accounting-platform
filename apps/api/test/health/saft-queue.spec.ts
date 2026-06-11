@@ -16,7 +16,7 @@ describe('SaftQueueMonitor — inert without REDIS_URL', () => {
 });
 
 describe('HealthService.saftQueueHealth — failure monitoring', () => {
-  const svc = (monitor: Partial<SaftQueueMonitor>) => new HealthService({} as any, {} as any, monitor as SaftQueueMonitor);
+  const svc = (monitor: Partial<SaftQueueMonitor>) => new HealthService({} as any, {} as any, monitor as SaftQueueMonitor, { available: () => false } as any);
 
   it("reports 'disabled' when the queue is not configured", async () => {
     const r = await svc({ available: () => false }).saftQueueHealth();

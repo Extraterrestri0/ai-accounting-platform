@@ -68,7 +68,16 @@ export const messages = {
       drop: 'Пуснете файлове тук или кликнете за избор', hint: 'PDF, PNG, JPG или XML · до 25 MB на файл',
       pickCompany: 'Изберете фирма преди качване.', toDocs: 'Към документите',
       stQueued: 'В опашка', stUploading: 'Качване {pct}%', stProcessing: 'Обработка', stDone: 'Готово', stError: 'Грешка',
-      view: 'Виж',
+      stStalled: 'Забавено', view: 'Виж',
+    },
+    pipeline: {
+      delayed: 'Обработката е забавена — опитайте отново',
+      delayedHint: 'Документът е качен, но обработката (проверка и извличане) се забавя. Това обикновено е временно.',
+      down: 'Обработката на документи в момента е недостъпна — качването може да се забави.',
+      retry: 'Опитай отново', rescan: 'Пусни обработката отново',
+      scanning: 'Документът се обработва…',
+      failed: 'Обработката е неуспешна. Опитайте отново.',
+      quarantined: 'Документът е блокиран — засечен е възможен зловреден код.',
     },
     review: {
       queueTitle: 'Преглед на документи', queueSubtitle: 'Извлечени документи, очакващи човешки преглед, одобрение и осчетоводяване.',
@@ -109,6 +118,7 @@ export const messages = {
       ready: 'Извлечен ✓', ready_for_review: 'Извлечен ✓', clean: 'Проверен ✓', infected: 'Заразен',
       extracting: 'Извличане', extracted: 'Извлечен ✓', reviewing: 'За преглед', reviewed: 'Прегледан ✓',
       posted: 'Осчетоводен', approved: 'Одобрен', rejected: 'Отхвърлен', draft: 'Чернова', issued: 'Издадена',
+      failed: 'Грешка', quarantined: 'Блокиран', trashed: 'В кошчето', deleted: 'Изтрит',
     },
     marketing: {
       nav: {
@@ -326,7 +336,16 @@ export const messages = {
       drop: 'Drop files here or click to choose', hint: 'PDF, PNG, JPG or XML · up to 25 MB per file',
       pickCompany: 'Select a company before uploading.', toDocs: 'Go to documents',
       stQueued: 'Queued', stUploading: 'Uploading {pct}%', stProcessing: 'Processing', stDone: 'Done', stError: 'Error',
-      view: 'View',
+      stStalled: 'Delayed', view: 'View',
+    },
+    pipeline: {
+      delayed: 'Processing is delayed — please try again',
+      delayedHint: 'The document was uploaded, but processing (scan and extraction) is delayed. This is usually temporary.',
+      down: 'Document processing is currently unavailable — uploads may be delayed.',
+      retry: 'Try again', rescan: 'Restart processing',
+      scanning: 'The document is being processed…',
+      failed: 'Processing failed. Please try again.',
+      quarantined: 'The document is blocked — possible malware detected.',
     },
     review: {
       queueTitle: 'Document review', queueSubtitle: 'Extracted documents awaiting human review, approval and posting.',
@@ -367,6 +386,7 @@ export const messages = {
       ready: 'Extracted ✓', ready_for_review: 'Extracted ✓', clean: 'Scanned ✓', infected: 'Infected',
       extracting: 'Extracting', extracted: 'Extracted ✓', reviewing: 'In review', reviewed: 'Reviewed ✓',
       posted: 'Posted', approved: 'Approved', rejected: 'Rejected', draft: 'Draft', issued: 'Issued',
+      failed: 'Error', quarantined: 'Blocked', trashed: 'In trash', deleted: 'Deleted',
     },
     marketing: {
       nav: {
