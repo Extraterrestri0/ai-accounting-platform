@@ -102,6 +102,11 @@ services:
       STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
       STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
       STORAGE_RETAIN_DAYS: ${STORAGE_RETAIN_DAYS:-3650}
+      # Single-host transport: the browser cannot reach MinIO presigned URLs (internal
+      # host minio:9000), so use the local-disk adapter — uploads/previews go through
+      # /api/dev-storage on the API. Bytes live on the doc_data volume (shared with worker).
+      STORAGE_DRIVER: local
+      DOC_STORAGE_DIR: /var/lib/doc-storage
       # Same-origin: SPA at https://APP_HOST, API at https://APP_HOST/api
       CORS_ORIGINS: https://${APP_HOST:?set in .env.deploy}
       WEB_APP_URL: https://${APP_HOST}
@@ -112,6 +117,7 @@ services:
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       RATE_LIMIT_TTL: ${RATE_LIMIT_TTL:-60000}
       RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-300}
+    volumes: [doc_data:/var/lib/doc-storage]               # uploaded document bytes (local storage driver)
     depends_on:
       db: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -135,6 +141,9 @@ services:
       STORAGE_REGION: ${STORAGE_REGION:-eu-central-1}
       STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
       STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
+      STORAGE_DRIVER: local                                 # read uploaded bytes from the shared doc_data volume
+      DOC_STORAGE_DIR: /var/lib/doc-storage
+    volumes: [doc_data:/var/lib/doc-storage]
     depends_on:
       db: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -168,3 +177,4 @@ volumes:
   minio_data:
   caddy_data:
   caddy_config:
+  doc_data:
