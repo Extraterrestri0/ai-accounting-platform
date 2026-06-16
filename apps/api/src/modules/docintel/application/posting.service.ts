@@ -22,8 +22,9 @@ interface ApprovedLine { accountCode: string; side: 'debit' | 'credit'; amount: 
 /** Map domain/ledger validation failures (framework-free Errors) to user-visible HTTP errors. */
 function toHttpError(e: unknown): unknown {
   if (e instanceof HttpException) return e;
-  const name = (e as Error)?.name ?? '';
-  if (name === 'PostingValidationError' || name === 'UnbalancedEntryError') {
+  // Check BOTH .name and the class name: bare `class X extends Error {}` keeps name === 'Error'.
+  const names = [(e as Error)?.name, (e as Error)?.constructor?.name];
+  if (names.includes('PostingValidationError') || names.includes('UnbalancedEntryError')) {
     return new UnprocessableEntityException((e as Error).message);
   }
   return e; // genuine unexpected failures stay 500
