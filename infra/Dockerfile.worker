@@ -11,6 +11,7 @@ WORKDIR /app
 RUN addgroup -S app && adduser -S app -G app
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
+RUN mkdir -p /var/lib/doc-storage RUN mkdir -p /var/lib/doc-storage && chown -R app:app /var/lib/doc-storageRUN mkdir -p /var/lib/doc-storage && chown -R app:app /var/lib/doc-storage touch /var/lib/doc-storage/.keep RUN mkdir -p /var/lib/doc-storage && chown -R app:app /var/lib/doc-storageRUN mkdir -p /var/lib/doc-storage && chown -R app:app /var/lib/doc-storage chown -R app:app /var/lib/doc-storage
 USER app
 # The worker binds the BullMQ consumers (OcrProvider/ExtractionQueue/MalwareScanQueue ports) against Redis.
 # Entrypoint is the dedicated worker bootstrap (queue consumers only — no HTTP port).
