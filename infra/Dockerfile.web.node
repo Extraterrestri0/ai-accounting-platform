@@ -20,6 +20,9 @@ COPY --from=build /app/package.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/.next ./.next
 COPY --from=build /app/next.config.mjs ./
+# Static marketing pages (public/landing/*.html) + robots/sitemap. Without this the
+# next.config rewrite `/` -> /landing/index.html resolves to a missing file (404).
+COPY --from=build /app/public ./public
 USER app
 EXPOSE 3001
 # `next start -p 3001` (see apps/web package.json "start").
