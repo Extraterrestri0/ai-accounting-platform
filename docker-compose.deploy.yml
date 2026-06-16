@@ -130,6 +130,10 @@ services:
     build: { context: ., dockerfile: infra/Dockerfile.worker }
     environment:
       NODE_ENV: production
+      PORT: 3000                                            # unused by the worker, but the shared env schema requires it
+      JWT_SECRET: ${JWT_SECRET:?set in .env.deploy}         # shared env validation requires it (the worker verifies tokens too)
+      AUTH_JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: https://${APP_HOST}
       PGHOST: db
       PGPORT: 5432
       PGUSER: ${PGUSER:-app_user}
