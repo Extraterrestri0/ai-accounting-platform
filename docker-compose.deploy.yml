@@ -107,6 +107,11 @@ services:
       # /api/dev-storage on the API. Bytes live on the doc_data volume (shared with worker).
       STORAGE_DRIVER: local
       DOC_STORAGE_DIR: /var/lib/doc-storage
+      # OCR for scanned/image docs (Azure Document Intelligence, EU). Unset → born-digital PDF only.
+      OCR_PROVIDER: ${OCR_PROVIDER:-default}
+      AZURE_DOCINTEL_ENDPOINT: ${AZURE_DOCINTEL_ENDPOINT:-}
+      AZURE_DOCINTEL_KEY: ${AZURE_DOCINTEL_KEY:-}
+      AZURE_DOCINTEL_REGION: ${AZURE_DOCINTEL_REGION:-}
       # Same-origin: SPA at https://APP_HOST, API at https://APP_HOST/api
       CORS_ORIGINS: https://${APP_HOST:?set in .env.deploy}
       WEB_APP_URL: https://${APP_HOST}
@@ -147,6 +152,10 @@ services:
       STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
       STORAGE_DRIVER: local                                 # read uploaded bytes from the shared doc_data volume
       DOC_STORAGE_DIR: /var/lib/doc-storage
+      OCR_PROVIDER: ${OCR_PROVIDER:-default}                # the worker runs extraction → needs the OCR provider too
+      AZURE_DOCINTEL_ENDPOINT: ${AZURE_DOCINTEL_ENDPOINT:-}
+      AZURE_DOCINTEL_KEY: ${AZURE_DOCINTEL_KEY:-}
+      AZURE_DOCINTEL_REGION: ${AZURE_DOCINTEL_REGION:-}
     volumes: [doc_data:/var/lib/doc-storage]
     depends_on:
       db: { condition: service_healthy }
