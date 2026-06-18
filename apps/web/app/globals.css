@@ -82,7 +82,7 @@
     --popover: 214 26% 12%;
     --popover-foreground: 213 28% 92%;
 
-    --primary: 214 80% 61%;
+    --primary: 214 80% 61%;             /* bright on dark: links/icons/focus/active states read well */
     --primary-foreground: 0 0% 100%;
     --primary-soft: 214 52% 18%;
 
@@ -96,7 +96,7 @@
 
     --destructive: 0 72% 60%;
     --destructive-foreground: 0 0% 100%;
-    --destructive-soft: 0 48% 16%;
+    --destructive-soft: 0 55% 10%;     /* darker so the destructive badge text clears AA (≥4.5) */
 
     --secondary: 214 22% 16%;
     --secondary-foreground: 213 28% 92%;
