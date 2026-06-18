@@ -20,8 +20,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="preconnect" href="https://unpkg.com" crossorigin />
-<link rel="stylesheet" href="/landing/assets/tokens.css?v=13" />
-<link rel="stylesheet" href="/landing/assets/site.css?v=13" />
+<script>(function(){try{var t=localStorage.getItem('mgi-theme');if(!t)t=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="/landing/assets/tokens.css?v=14" />
+<link rel="stylesheet" href="/landing/assets/site.css?v=14" />
 <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Начало","item":"https://mgi-delta.bg/"},{"@type":"ListItem","position":2,"name":"За нас","item":"https://mgi-delta.bg/about"}]}</script>
 </head>
@@ -39,7 +40,7 @@
         <div class="dd-panel dd-feat">
           <a class="dd-item" href="/features#dive-ai"><span class="ic"><i data-lucide="sparkles"></i></span><span><b>AI извличане</b><span>Разчита фактури и документи</span></span></a>
           <a class="dd-item" href="/features#dive-vat"><span class="ic"><i data-lucide="landmark"></i></span><span><b>ДДС и НАП</b><span>Регистри, декларация, подаване</span></span></a>
-          <a class="dd-item" href="/features#dive-invoice"><span class="ic"><i data-lucide="file-text"></i></span><span><b>Фактуриране</b><span>Издаване с две валути</span></span></a>
+          <a class="dd-item" href="/features#dive-invoice"><span class="ic"><i data-lucide="file-text"></i></span><span><b>Фактуриране</b><span>Издаване с номерация и PDF</span></span></a>
           <a class="dd-item" href="/features#dive-dash"><span class="ic"><i data-lucide="layout-dashboard"></i></span><span><b>Табло и отчети</b><span>ОВ, ОПР, баланс</span></span></a>
           <a class="dd-item" href="/features#security"><span class="ic ic-green"><i data-lucide="shield-check"></i></span><span><b>Сигурност</b><span>RLS, неизменяема книга, одит</span></span></a>
           <a class="dd-item" href="/features"><span class="ic"><i data-lucide="grid-2x2"></i></span><span><b>Всички функции</b><span>Пълен преглед</span></span></a>
@@ -72,6 +73,7 @@
       </div>
       <a class="btn btn-quiet btn-sm desk-only" href="/login">Вход</a>
       <a class="btn btn-primary btn-sm" href="/pricing">Започнете безплатно</a>
+      <button class="theme-toggle" type="button" aria-label="Смяна на тема" data-theme-toggle><i data-lucide="sun" class="t-sun"></i><i data-lucide="moon" class="t-moon"></i></button>
       <button class="nav-burger" aria-label="Меню" type="button"><i data-lucide="menu"></i></button>
     </div>
   </div>
@@ -79,7 +81,10 @@
 <div class="mobile-menu" id="mobileMenu">
   <div class="mm-top">
     <a class="brand" href="/"><img class="mark" src="/landing/assets/app-icon.svg" alt="" width="34" height="34" /><span class="wm"><b>Счетоводство</b></span></a>
-    <button class="nav-burger mm-close" aria-label="Затвори" type="button"><i data-lucide="x"></i></button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="theme-toggle" type="button" aria-label="Смяна на тема" data-theme-toggle><i data-lucide="sun" class="t-sun"></i><i data-lucide="moon" class="t-moon"></i></button>
+      <button class="nav-burger mm-close" aria-label="Затвори" type="button"><i data-lucide="x"></i></button>
+    </div>
   </div>
   <nav class="mm-links">
     <a href="/features">Функции <i data-lucide="chevron-right"></i></a>
@@ -96,7 +101,7 @@
 </div>
 <main id="top">
 <section class="section-pad" id="about" style="padding-top:130px"><div class="wrap"><div class="section-head reveal"><span class="eyebrow">За нас</span><h1 class="section-title">Защо създадохме<br />MGI-Delta</h1><p class="section-sub">Вярваме, че собственикът на малък бизнес не трябва да избира между това да върти бизнеса си и да се бори с фактури и ДДС.</p></div>
-  <div class="acc-grid" style="margin-top:20px"><div class="reveal"><h2 style="font-size:var(--mkt-h3);margin-bottom:10px">Нашата мисия</h2><p style="color:var(--color-text-secondary)">Да направим счетоводството разбираемо и автоматично за малките фирми, фрийлансърите и самонаетите в България — с AI, който върши рутината, и човек, който решава важното.</p><h2 style="font-size:var(--mkt-h3);margin:24px 0 10px">За кого е</h2><p style="color:var(--color-text-secondary)">За хора, които искат да управляват финансите си сами, и за счетоводители, които обслужват много клиенти. Платформата говори български, мисли в лева и евро и спазва изискванията на НАП.</p></div>
+  <div class="acc-grid" style="margin-top:20px"><div class="reveal"><h2 style="font-size:var(--mkt-h3);margin-bottom:10px">Нашата мисия</h2><p style="color:var(--color-text-secondary)">Да направим счетоводството разбираемо и автоматично за малките фирми, фрийлансърите и самонаетите в България — с AI, който върши рутината, и човек, който решава важното.</p><h2 style="font-size:var(--mkt-h3);margin:24px 0 10px">За кого е</h2><p style="color:var(--color-text-secondary)">За хора, които искат да управляват финансите си сами, и за счетоводители, които обслужват много клиенти. Платформата говори български, мисли в евро и спазва изискванията на НАП.</p></div>
   <div class="reveal" data-delay="1"><div class="card" style="padding:26px"><ul class="checklist" style="margin-top:0"><li><span class="tick"><i data-lucide="check"></i></span>Точност чрез детерминирани проверки, не само AI</li><li><span class="tick"><i data-lucide="check"></i></span>Прозрачност — всяко число е проследимо до документ</li><li><span class="tick"><i data-lucide="check"></i></span>Сигурност и поверителност на данните в ЕС</li><li><span class="tick"><i data-lucide="check"></i></span>Създадено и поддържано за българския пазар</li></ul></div></div></div>
 </div></section>
 <section class="section-pad" id="accountants" style="background:var(--neutral-0);border-top:1px solid var(--color-border-default)"><div class="wrap"><div class="acc-grid"><div class="reveal"><span class="eyebrow">За счетоводители</span><h2 class="section-title" style="text-align:left;margin-top:16px">Създадено и за<br />счетоводни кантори</h2><p class="section-sub" style="text-align:left;margin-left:0">Управлявайте много клиенти от едно място, със строга изолация на всеки.</p><ul class="checklist"><li><span class="tick"><i data-lucide="check"></i></span>Много фирми в един акаунт</li><li><span class="tick"><i data-lucide="check"></i></span>Отделно работно пространство за всеки клиент</li><li><span class="tick"><i data-lucide="check"></i></span>Гарантирана изолация на данните между клиентите</li><li><span class="tick"><i data-lucide="check"></i></span>Бързо превключване между фирми</li></ul><div style="margin-top:28px"><a class="btn btn-primary btn-lg" href="/pricing">Вижте плановете за кантори <i class="arrow" data-lucide="arrow-right"></i></a></div></div><div class="reveal" data-delay="1"><div class="card ws-card"><div class="ws-h">Отделно работно пространство за всеки клиент</div><div class="ws-item active"><span class="wl"><span class="wic"><i data-lucide="building-2"></i></span><span class="wname">ТЕХНО ПЛЮС ООД</span></span><span class="chip chip-blue" style="height:26px">ДДС</span></div><div class="ws-item"><span class="wl"><span class="wic"><i data-lucide="building-2"></i></span><span class="wname">АРКА ДИЗАЙН ЕООД</span></span><span class="chip chip-blue" style="height:26px">ДДС</span></div><div class="ws-item"><span class="wl"><span class="wic"><i data-lucide="building-2"></i></span><span class="wname">ГРИЙН ФУУДС АД</span></span><span style="color:var(--neutral-400)"><i data-lucide="minus" style="width:16px;height:16px"></i></span></div></div></div></div></div></section>
@@ -107,7 +112,7 @@
   <div class="tslide"><article class="card tcard"><div class="stars"><i data-lucide="star"></i><i data-lucide="star"></i><i data-lucide="star"></i><i data-lucide="star"></i><i data-lucide="star"></i></div><blockquote>„Управлявам над 20 клиента от едно място. Изолацията на данните ме спечели още в първата седмица.“</blockquote><div class="who"><span class="av">ИК</span><div><div class="wn">Ивана Колева</div><div class="wr">Управител · счетоводна къща</div></div></div></article></div>
   <div class="tslide"><article class="card tcard"><div class="stars"><i data-lucide="star"></i><i data-lucide="star"></i><i data-lucide="star"></i><i data-lucide="star"></i><i data-lucide="star"></i></div><blockquote>„Фрийлансър съм и нямам счетоводител. Издавам фактури и следя приходите за минути.“</blockquote><div class="who"><span class="av">СА</span><div><div class="wn">Стоян Ангелов</div><div class="wr">Самонает · ИТ</div></div></div></article></div>
   <div class="tslide"><article class="card tcard"><div class="stars"><i data-lucide="star"></i><i data-lucide="star"></i><i data-lucide="star"></i><i data-lucide="star"></i><i data-lucide="star"></i></div><blockquote>„Неизменяемата книга и одитната следа ми дават спокойствие при всяка проверка.“</blockquote><div class="who"><span class="av">ВТ</span><div><div class="wn">Веселин Тодоров</div><div class="wr">Финансов мениджър</div></div></div></article></div>
-  <div class="tslide"><article class="card tcard"><div class="stars"><i data-lucide="star"></i><i data-lucide="star"></i><i data-lucide="star"></i><i data-lucide="star"></i><i data-lucide="star"></i></div><blockquote>„Двете валути и коректната кирилица са дребни неща, които показват, че е правено за България.“</blockquote><div class="who"><span class="av">РН</span><div><div class="wn">Радостина Николова</div><div class="wr">Счетоводител · фирма</div></div></div></article></div>
+  <div class="tslide"><article class="card tcard"><div class="stars"><i data-lucide="star"></i><i data-lucide="star"></i><i data-lucide="star"></i><i data-lucide="star"></i><i data-lucide="star"></i></div><blockquote>„Коректната кирилица и българските формати са дребни неща, които показват, че е правено за България.“</blockquote><div class="who"><span class="av">РН</span><div><div class="wn">Радостина Николова</div><div class="wr">Счетоводител · фирма</div></div></div></article></div>
 </div><div class="tcar-nav"><button class="tcar-btn tcar-prev" aria-label="Предишен" type="button"><i data-lucide="arrow-left"></i></button><div class="tcar-dots"></div><button class="tcar-btn tcar-next" aria-label="Следващ" type="button"><i data-lucide="arrow-right"></i></button></div></div></div></section>
 <section class="dark section-pad final-cta"><div class="wrap wrap-narrow"><h2 class="reveal">Готови ли сте да автоматизирате счетоводството?</h2><p class="reveal" data-delay="1">Започнете безплатно днес, без банкова карта.</p><div class="hero-cta reveal" data-delay="2"><a class="btn btn-primary btn-lg" href="/pricing">Започни безплатно <i class="arrow" data-lucide="arrow-right"></i></a><a class="btn btn-light btn-lg" href="/contact">Заявете демо</a></div></div></section></main>
 <footer class="footer">
@@ -130,7 +135,7 @@
       <div class="foot-col"><h4>Правни</h4><ul><li><a href="/landing/legal/privacy.html">Политика за поверителност</a></li><li><a href="/landing/legal/terms.html">Общи условия</a></li><li><a href="/landing/legal/cookies.html">Политика за бисквитки</a></li><li><a href="/landing/legal/gdpr.html">GDPR</a></li></ul></div>
     </div>
     <div class="foot-bottom">
-      <span class="cp">© <span data-year>2026</span> MGI-Delta. Всички права запазени. · EUR · BGN · ЕС</span>
+      <span class="cp">© <span data-year>2026</span> MGI-Delta. Всички права запазени. · EUR · ЕС</span>
       <div class="foot-badges">
         <span class="chip"><span class="dot"></span>GDPR</span><span class="chip"><span class="dot"></span>Хостинг в ЕС</span><span class="chip"><span class="dot"></span>Платформата е в активна разработка</span>
       </div>
@@ -144,8 +149,8 @@
 </footer>
 <button class="to-top" aria-label="Нагоре" type="button"><i data-lucide="arrow-up"></i></button>
 <div class="mobile-cta"><a class="btn btn-primary" href="/pricing">Започнете безплатно <i class="arrow" data-lucide="arrow-right"></i></a></div>
-<script src="/landing/assets/i18n.js?v=13" defer></script>
-<script src="/landing/assets/site.js?v=13" defer></script>
+<script src="/landing/assets/i18n.js?v=14" defer></script>
+<script src="/landing/assets/site.js?v=14" defer></script>
 <script>document.addEventListener('DOMContentLoaded', function () { if (window.lucide) lucide.createIcons(); });</script>
 </body>
 </html>

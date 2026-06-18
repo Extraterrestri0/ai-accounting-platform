@@ -21,7 +21,7 @@ import { EmptyState, ErrorState, TableSkeleton } from '@/components/app/states';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { dateBG, eur, bgn } from '@/lib/format';
+import { dateBG, eur } from '@/lib/format';
 
 const NOW = { y: 2026, m: 6 };
 const PERIOD = '05/2026';
@@ -76,13 +76,13 @@ export default function DashboardPage() {
         <StatCard
           label={vatPayable < 0 ? t('dashboard.kpiVatRefundable') : t('dashboard.kpiVatPayable')}
           value={eur(Math.abs(vatPayable))}
-          sub={`≈ ${bgn(Math.abs(vatPayable))} · ${PERIOD}`}
+          sub={PERIOD}
           icon={ReceiptText}
           tone="primary"
           valueTone="primary"
         />
         <StatCard label={t('dashboard.kpiInvoicesIssued')} value={invQ.isLoading ? '…' : String(issuedCount)} sub={t('dashboard.kpiDrafts', { n: draftCount })} icon={FileSpreadsheet} tone="neutral" />
-        <StatCard label={t('dashboard.kpiNetProfit')} value={eur(netProfit)} sub={`≈ ${bgn(netProfit)}`} icon={TrendingUp} tone="success" valueTone={netProfit >= 0 ? 'success' : 'warning'} />
+        <StatCard label={t('dashboard.kpiNetProfit')} value={eur(netProfit)} icon={TrendingUp} tone="success" valueTone={netProfit >= 0 ? 'success' : 'warning'} />
         <StatCard label={t('dashboard.kpiReportsStatus')} value={netProfit !== 0 ? t('dashboard.kpiReady') : '—'} sub={t('dashboard.reportsSub')} icon={BarChart3} tone="success" valueTone={netProfit !== 0 ? 'success' : 'foreground'} />
         <CurrentPeriodWidget companyId={companyId} />
         <RevenueWidget companyId={companyId} year={NOW.y} />

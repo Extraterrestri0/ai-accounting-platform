@@ -85,11 +85,7 @@
     function applyPlan(period) {
       document.querySelectorAll('[data-m]').forEach(function (el) {
         el.textContent = el.getAttribute('data-' + (period === 'year' ? 'y' : 'm'));
-      });
-      document.querySelectorAll('[data-bgn-m]').forEach(function (el) {
-        el.textContent = el.getAttribute('data-bgn-' + (period === 'year' ? 'y' : 'm'));
-      });
-    }
+      });    }
     btns.forEach(function (b) {
       b.addEventListener('click', function () {
         btns.forEach(function (x) { x.classList.remove('on'); });
@@ -297,6 +293,20 @@
         btn.style.transform = 'translate(' + (mx * 0.18).toFixed(1) + 'px,' + (my * 0.28 - 3).toFixed(1) + 'px)';
       });
       btn.addEventListener('mouseleave', function () { btn.style.transform = ''; });
+    });
+  })();
+
+  /* ---- Light/dark theme toggle ------------------------------------------------
+     The initial theme is set before paint by the inline <head> script (reads
+     localStorage 'mgi-theme', else the OS preference). Here we just flip + persist. */
+  (function () {
+    function current() { return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'; }
+    document.querySelectorAll('[data-theme-toggle]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var next = current() === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem('mgi-theme', next); } catch (e) {}
+      });
     });
   })();
 })();

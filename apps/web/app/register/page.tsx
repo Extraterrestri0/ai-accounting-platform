@@ -13,6 +13,7 @@ import { ApiError } from '@/lib/api/client';
 import { useT } from '@/lib/i18n';
 import { GoogleButton } from '@/components/app/google-button';
 import { Brand } from '@/components/app/brand';
+import { ThemeToggle } from '@/components/app/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -69,6 +70,7 @@ export default function RegisterPage() {
       </div>
 
       <div className="relative flex items-center justify-center p-6 sm:p-12">
+        <ThemeToggle className="absolute right-4 top-4 z-10" />
         <div className="pointer-events-none absolute inset-0 -z-10 bg-aurora opacity-70" />
         <div className="w-full max-w-sm">
           <div className="mb-8 lg:hidden"><Brand tagline={t('auth.tagline')} /></div>

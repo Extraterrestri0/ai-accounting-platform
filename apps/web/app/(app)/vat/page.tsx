@@ -15,7 +15,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { eur, bgn, dateBG } from '@/lib/format';
+import { eur, dateBG } from '@/lib/format';
 
 const MONTHS = ['Януари', 'Февруари', 'Март', 'Април', 'Май', 'Юни', 'Юли', 'Август', 'Септември', 'Октомври', 'Ноември', 'Декември'];
 const NOW = { y: 2026, m: 6 };
@@ -67,12 +67,12 @@ export default function VatPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Изходящ ДДС (продажби)" value={eur(s?.outputVat ?? 0)} sub={`≈ ${bgn(s?.outputVat ?? 0)}`} icon={ArrowUpCircle} tone="primary" valueTone="primary" />
-        <StatCard label="Данъчен кредит (покупки)" value={eur(s?.deductibleVat ?? 0)} sub={`≈ ${bgn(s?.deductibleVat ?? 0)}`} icon={ArrowDownCircle} tone="neutral" />
+        <StatCard label="Изходящ ДДС (продажби)" value={eur(s?.outputVat ?? 0)} icon={ArrowUpCircle} tone="primary" valueTone="primary" />
+        <StatCard label="Данъчен кредит (покупки)" value={eur(s?.deductibleVat ?? 0)} icon={ArrowDownCircle} tone="neutral" />
         <StatCard
           label={refundable > 0 ? 'ДДС за възстановяване' : 'ДДС за внасяне'}
           value={eur(refundable > 0 ? refundable : payable)}
-          sub={`≈ ${bgn(refundable > 0 ? refundable : payable)} · ${MONTHS[month - 1]} ${year}`}
+          sub={`${MONTHS[month - 1]} ${year}`}
           icon={Scale}
           tone={refundable > 0 ? 'success' : payable > 0 ? 'warning' : 'success'}
           valueTone={refundable > 0 ? 'success' : payable > 0 ? 'warning' : 'success'}

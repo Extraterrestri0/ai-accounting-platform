@@ -21,7 +21,7 @@ export const messages = {
       posting: 'Осчетоводяване', vat: 'ДДС', invoices: 'Фактури', catalog: 'Каталог',
       receivables: 'Вземания', payables: 'Задължения', banking: 'Банка', reports: 'Отчети', saft: 'SAF-T', audit: 'Одит', settings: 'Настройки',
     },
-    topbar: { company: 'Фирма', searchPh: 'Търсене…', rate: 'EUR · 1 € = 1.95583 лв.' },
+    topbar: { company: 'Фирма', searchPh: 'Търсене…', rate: 'EUR' },
     auth: {
       loginTitle: 'Вход в платформата', loginSubtitle: 'Въведете вашите данни за достъп.',
       registerTitle: 'Създаване на акаунт', registerSubtitle: 'Регистрирайте се и създайте вашата фирма.',
@@ -141,7 +141,7 @@ export const messages = {
       },
       trust: {
         label: 'Създадено за България',
-        eik: 'ЕИК и VIES', vat: 'ДДС 20 / 9 / 0 %', currency: 'EUR + лв.',
+        eik: 'ЕИК и VIES', vat: 'ДДС 20 / 9 / 0 %', currency: 'EUR',
         eu: 'Хостинг в ЕС', ai: 'AI без задържане на данни',
       },
       problem: {
@@ -223,7 +223,7 @@ export const messages = {
         perMonth: '/мес.', billedYearly: 'таксува се {total} / год.',
         trialBadge: '{days}-дневен безплатен период', mostPopular: 'Най-популярен',
         ctaTrial: 'Започни безплатно', ctaContact: 'Свържете се с нас',
-        vatNote: 'Цените са без ДДС.', currencyNote: 'Основна валута EUR · сумите в лв. са справочни.',
+        vatNote: 'Цените са без ДДС.', currencyNote: 'Основна валута EUR.',
         betaNote: 'Цените са ориентировъчни по време на бета.',
         plans: {
           starter: { name: 'Starter', tagline: 'За самонаети и малки фирми.' },
@@ -254,7 +254,7 @@ export const messages = {
         trial: { q: 'Има ли безплатен период?', a: 'Да — {days} дни безплатно, без банкова карта при регистрация.' },
         cancel: { q: 'Мога ли да прекратя?', a: 'Да, по всяко време. Достъпът остава до края на платения период.' },
         security: { q: 'Сигурни ли са данните ми?', a: 'Данните са изолирани по наемател (Postgres RLS), пазят се в ЕС и AI услугите са без задържане на данни.' },
-        bgCompanies: { q: 'Поддържа ли български фирми?', a: 'Да — платформата е създадена за България: ЕИК, ДДС режими, лева и кирилица.' },
+        bgCompanies: { q: 'Поддържа ли български фирми?', a: 'Да — платформата е създадена за България: ЕИК, ДДС режими и кирилица.' },
         vatInvoices: { q: 'Поддържа ли фактури и ДДС?', a: 'Да — издаване на фактури, ДДС дневници и данни за справка-декларация за експорт.' },
         google: { q: 'Има ли вход с Google?', a: 'Да, поддържаме вход с Google освен с имейл и парола.' },
         accountants: { q: 'Подходящо ли е за счетоводители?', a: 'Да — управлявайте няколко фирми/клиенти от един акаунт със строга изолация.' },
@@ -269,7 +269,7 @@ export const messages = {
         product: 'Продукт', company: 'Компания',
         login: 'Вход', register: 'Регистрация',
         rights: '© {year} MGI-Delta. Всички права запазени.',
-        residency: 'EUR · BGN · ЕС',
+        residency: 'EUR · ЕС',
         beta: 'Платформата е в активна разработка.',
       },
     },
@@ -289,7 +289,7 @@ export const messages = {
       posting: 'Posting', vat: 'VAT', invoices: 'Invoices', catalog: 'Catalog',
       receivables: 'Receivables', payables: 'Payables', banking: 'Banking', reports: 'Reports', saft: 'SAF-T', audit: 'Audit', settings: 'Settings',
     },
-    topbar: { company: 'Company', searchPh: 'Search…', rate: 'EUR · 1 € = 1.95583 BGN' },
+    topbar: { company: 'Company', searchPh: 'Search…', rate: 'EUR' },
     auth: {
       loginTitle: 'Sign in', loginSubtitle: 'Enter your credentials to continue.',
       registerTitle: 'Create account', registerSubtitle: 'Sign up and create your company.',
@@ -409,7 +409,7 @@ export const messages = {
       },
       trust: {
         label: 'Built for Bulgaria',
-        eik: 'UIC & VIES', vat: 'VAT 20 / 9 / 0%', currency: 'EUR + BGN',
+        eik: 'UIC & VIES', vat: 'VAT 20 / 9 / 0%', currency: 'EUR',
         eu: 'EU hosting', ai: 'Zero-retention AI',
       },
       problem: {
@@ -491,7 +491,7 @@ export const messages = {
         perMonth: '/mo', billedYearly: 'billed {total} / yr',
         trialBadge: '{days}-day free trial', mostPopular: 'Most popular',
         ctaTrial: 'Start free trial', ctaContact: 'Talk to us',
-        vatNote: 'Prices exclude VAT.', currencyNote: 'Base currency EUR · BGN amounts are for reference.',
+        vatNote: 'Prices exclude VAT.', currencyNote: 'Base currency EUR.',
         betaNote: 'Prices are provisional during beta.',
         plans: {
           starter: { name: 'Starter', tagline: 'For freelancers and small businesses.' },
@@ -522,7 +522,7 @@ export const messages = {
         trial: { q: 'Is there a free trial?', a: 'Yes — {days} days free, with no card required at sign-up.' },
         cancel: { q: 'Can I cancel?', a: 'Yes, any time. Access remains until the end of the paid period.' },
         security: { q: 'Is my data secure?', a: 'Data is isolated per tenant (Postgres RLS), stored in the EU, and AI services are zero-retention.' },
-        bgCompanies: { q: 'Does it support Bulgarian companies?', a: 'Yes — the platform is built for Bulgaria: UIC, VAT regimes, leva and Cyrillic.' },
+        bgCompanies: { q: 'Does it support Bulgarian companies?', a: 'Yes — the platform is built for Bulgaria: UIC, VAT regimes and Cyrillic.' },
         vatInvoices: { q: 'Does it support invoices and VAT?', a: 'Yes — invoice issuing, VAT registers and VAT-return data for export.' },
         google: { q: 'Is Google login supported?', a: 'Yes, we support Google sign-in alongside email and password.' },
         accountants: { q: 'Can accountants use it for multiple clients?', a: 'Yes — manage several companies/clients from one account with strict isolation.' },
@@ -537,7 +537,7 @@ export const messages = {
         product: 'Product', company: 'Company',
         login: 'Login', register: 'Sign up',
         rights: '© {year} MGI-Delta. All rights reserved.',
-        residency: 'EUR · BGN · EU',
+        residency: 'EUR · EU',
         beta: 'The platform is under active development.',
       },
     },

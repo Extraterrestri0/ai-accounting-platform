@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Menu, Search } from 'lucide-react';
 import { CompanySwitcher } from './company-switcher';
 import { UserMenu } from './user-menu';
+import { ThemeToggle } from './theme-toggle';
 import { Button } from '@/components/ui/button';
 import { useT, useLang, type Lang } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -47,6 +48,7 @@ export function Topbar({ onOpenSidebar }: { onOpenSidebar: () => void }) {
             </button>
           ))}
         </div>
+        <ThemeToggle />
         <UserMenu />
       </div>
     </header>

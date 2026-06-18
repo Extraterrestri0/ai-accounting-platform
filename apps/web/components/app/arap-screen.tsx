@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DualMoney } from '@/components/app/money';
-import { dateBG, eur, bgn } from '@/lib/format';
+import { dateBG, eur } from '@/lib/format';
 import type { OpenItem } from '@/lib/api/types';
 
 interface ArApConfig {
@@ -68,9 +68,9 @@ export function ArApScreen({ kind }: { kind: 'ar' | 'ap' }) {
 
       {/* Summary KPIs */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Общо открито" value={sumQ.isLoading ? '…' : eur(s?.total ?? 0)} sub={s ? `≈ ${bgn(s.total)} · ${s.count} документа` : undefined} icon={cfg.icon} tone="primary" valueTone="primary" />
-        <StatCard label="Текущо" value={sumQ.isLoading ? '…' : eur(s?.current ?? 0)} sub={s ? `≈ ${bgn(s.current)}` : undefined} icon={Wallet} tone="neutral" />
-        <StatCard label="Просрочено" value={sumQ.isLoading ? '…' : eur(s?.overdue ?? 0)} sub={s ? `≈ ${bgn(s.overdue)} · ${s.overdueCount} документа` : undefined} icon={Inbox} tone="warning" valueTone={s && Number(s.overdue) > 0 ? 'warning' : 'foreground'} />
+        <StatCard label="Общо открито" value={sumQ.isLoading ? '…' : eur(s?.total ?? 0)} sub={s ? `${s.count} документа` : undefined} icon={cfg.icon} tone="primary" valueTone="primary" />
+        <StatCard label="Текущо" value={sumQ.isLoading ? '…' : eur(s?.current ?? 0)} icon={Wallet} tone="neutral" />
+        <StatCard label="Просрочено" value={sumQ.isLoading ? '…' : eur(s?.overdue ?? 0)} sub={s ? `${s.overdueCount} документа` : undefined} icon={Inbox} tone="warning" valueTone={s && Number(s.overdue) > 0 ? 'warning' : 'foreground'} />
       </div>
 
       {/* Aging report */}

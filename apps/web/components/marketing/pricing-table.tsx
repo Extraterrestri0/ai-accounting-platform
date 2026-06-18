@@ -7,7 +7,7 @@ import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
-  PLANS, TRIAL_DAYS, YEARLY_DISCOUNT_PCT, CONTACT_EMAIL, bgnReference, type Plan,
+  PLANS, TRIAL_DAYS, YEARLY_DISCOUNT_PCT, CONTACT_EMAIL, type Plan,
 } from '@/lib/marketing/content';
 import { Reveal } from './reveal';
 
@@ -91,10 +91,11 @@ function PlanCard({ plan, cycle }: { plan: Plan; cycle: Cycle }) {
           <span className="text-4xl font-semibold tracking-tight tabular-nums">€{eur}</span>
           <span className="text-sm text-muted-foreground">{t('marketing.pricing.perMonth')}</span>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {bgnReference(eur)}
-          {cycle === 'yearly' && <> · {t('marketing.pricing.billedYearly', { total: `€${yearlyTotal}` })}</>}
-        </p>
+        {cycle === 'yearly' && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            {t('marketing.pricing.billedYearly', { total: `€${yearlyTotal}` })}
+          </p>
+        )}
       </div>
 
       <span className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-full bg-success-soft px-2.5 py-1 text-xs font-medium text-success">

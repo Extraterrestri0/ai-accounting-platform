@@ -48,7 +48,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       <div className="border-t border-border p-4">
-        <p className="text-[11px] leading-relaxed text-muted-foreground">EUR функционална валута · BGN референция</p>
+        <p className="text-[11px] leading-relaxed text-muted-foreground">EUR функционална валута</p>
       </div>
     </aside>
   );

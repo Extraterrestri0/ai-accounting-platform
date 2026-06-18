@@ -69,6 +69,53 @@
     --sidebar-border: 214 20% 22%;
   }
 
+  /* ── Dark theme (Tailwind darkMode: 'class' → <html class="dark">) ──────────
+     Display-only token overrides; all components bind to these semantic vars, so
+     dark mode needs no per-component changes. Contrast tuned: light text on deep
+     blue-neutral surfaces, brighter primary/success, visible borders. */
+  .dark {
+    color-scheme: dark;
+    --background: 214 30% 8%;           /* page */
+    --foreground: 213 28% 92%;          /* primary text */
+    --card: 214 26% 11%;
+    --card-foreground: 213 28% 92%;
+    --popover: 214 26% 12%;
+    --popover-foreground: 213 28% 92%;
+
+    --primary: 214 80% 61%;
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 214 52% 18%;
+
+    --success: 153 56% 45%;
+    --success-foreground: 0 0% 100%;
+    --success-soft: 153 44% 14%;
+
+    --warning: 38 82% 52%;
+    --warning-foreground: 38 65% 9%;
+    --warning-soft: 40 52% 14%;
+
+    --destructive: 0 72% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-soft: 0 48% 16%;
+
+    --secondary: 214 22% 16%;
+    --secondary-foreground: 213 28% 92%;
+    --muted: 214 22% 16%;
+    --muted-foreground: 214 14% 65%;    /* readable muted on dark */
+    --accent: 214 40% 18%;
+    --accent-foreground: 214 70% 80%;
+
+    --border: 214 16% 22%;
+    --input: 214 16% 24%;
+    --ring: 214 80% 61%;
+
+    /* premium elevation reads better with darker, deeper shadows */
+    --shadow-lift: 0 1px 2px hsl(0 0% 0% / .45), 0 18px 42px -18px hsl(0 0% 0% / .6);
+    --shadow-pop2: 0 28px 70px -28px hsl(0 0% 0% / .72);
+  }
+  /* glass surface adapts to dark (was white-translucent) */
+  .dark .glass { background: hsl(214 26% 11% / .72); }
+
   * { @apply border-border; }
   body {
     @apply bg-background text-foreground;

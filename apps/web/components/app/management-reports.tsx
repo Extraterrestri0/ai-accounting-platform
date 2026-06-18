@@ -12,7 +12,7 @@ import { StatCard } from '@/components/app/stat-card';
 import { EmptyState, ErrorState, TableSkeleton } from '@/components/app/states';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { eur, bgn, toNumber } from '@/lib/format';
+import { eur, toNumber } from '@/lib/format';
 import type { CashFlowReport, MonthlySeries } from '@/lib/api/types';
 
 const MONTHS_BG = ['Януари', 'Февруари', 'Март', 'Април', 'Май', 'Юни', 'Юли', 'Август', 'Септември', 'Октомври', 'Ноември', 'Декември'];
@@ -84,7 +84,7 @@ export function MonthlyReportPanel({ kind, year }: { kind: 'revenue' | 'expenses
           </Table>
           <div className="flex items-center justify-between border-t px-4 py-3 text-sm">
             <span className="text-muted-foreground">Средно/месец: <span className="tabular-nums">{eur(s!.average)}</span></span>
-            <span className="text-muted-foreground">Общо {year}: <span className="font-semibold text-foreground tabular-nums">{eur(s!.total)}</span> · ≈ {bgn(s!.total)}</span>
+            <span className="text-muted-foreground">Общо {year}: <span className="font-semibold text-foreground tabular-nums">{eur(s!.total)}</span></span>
           </div>
         </>
       )}

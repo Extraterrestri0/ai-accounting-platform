@@ -15,7 +15,7 @@
     'Заявете демо': 'Book a demo', 'Меню': 'Menu', 'Затвори': 'Close',
     'AI извличане': 'AI extraction', 'Разчита фактури и документи': 'Reads invoices & documents',
     'ДДС и НАП': 'VAT & NRA', 'Регистри, декларация, подаване': 'Registers, return, filing',
-    'Фактуриране': 'Invoicing', 'Издаване с две валути': 'Issue in two currencies',
+    'Фактуриране': 'Invoicing', 'Издаване с номерация и PDF': 'Sequential numbering and PDF',
     'Табло и отчети': 'Dashboard & reports', 'ОВ, ОПР, баланс': 'TB · P&L · balance',
     'Преглед и одобрение': 'Review & approval', 'Човек решава всичко важно': 'A human decides everything important',
     'Сигурен архив': 'Secure archive', 'Защитено съхранение (WORM)': 'Tamper-proof storage (WORM)',
@@ -43,7 +43,7 @@
 
     // ---- Trust bar ----
     'Създадено за България': 'Built for Bulgaria', 'ЕИК и VIES': 'UIC & VIES',
-    'ДДС 20 / 9 / 0 %': 'VAT 20 / 9 / 0%', 'EUR + лв.': 'EUR + BGN', 'Хостинг в ЕС': 'EU hosting',
+    'ДДС 20 / 9 / 0 %': 'VAT 20 / 9 / 0%', 'Хостинг в ЕС': 'EU hosting',
     'AI без задържане на данни': 'Zero-retention AI',
 
     // ---- Stats ----
@@ -109,7 +109,7 @@
     'Опитайте безплатно': 'Try it free', 'Вижте как работи': 'See how it works',
     'Издайте първа фактура': 'Issue your first invoice', 'Отворете таблото': 'Open the dashboard',
     'ДДС и подаване': 'VAT and filing', 'към НАП без стрес': 'to the NRA without stress',
-    'Издавайте фактури': 'Issue invoices', 'с живи суми и две валути': 'with live totals in two currencies',
+    'Издавайте фактури': 'Issue invoices', 'с живи суми': 'with live totals',
     'Цялата картина': 'The whole picture', 'на бизнеса на едно табло': 'of your business on one dashboard',
 
     // ---- For accountants ----
@@ -211,7 +211,7 @@
     'Как се подава ДДС?': 'How is VAT filed?',
     'Дневниците покупки и продажби и справка-декларацията се попълват автоматично от осчетоводените документи. В MVP се експортират за подаване; директното подаване към НАП е в пътната карта.': 'The purchase/sales journals and the VAT return are filled in automatically from posted documents. In the MVP they are exported for filing; direct submission to the NRA is on the roadmap.',
     'Поддържа ли български фирми и формати?': 'Does it support Bulgarian companies and formats?',
-    'Да. Платформата е създадена за България: ЕИК и VIES проверки, ставки ДДС 20/9/0%, национален сметкоплан, коректна кирилица и EUR + лв.': 'Yes. The platform is built for Bulgaria: UIC and VIES checks, VAT rates 20/9/0%, the national chart of accounts, correct Cyrillic and EUR + BGN.',
+    'Да. Платформата е създадена за България: ЕИК и VIES проверки, ставки ДДС 20/9/0%, национален сметкоплан, коректна кирилица и EUR.': 'Yes. The platform is built for Bulgaria: UIC and VIES checks, VAT rates 20/9/0%, the national chart of accounts, correct Cyrillic and EUR.',
     'Поддържа ли фактури и ДДС?': 'Does it support invoices and VAT?',
     'Да, издаване на фактури, кредитни и дебитни известия и проформи с последователна номерация, живи суми нето/ДДС/бруто и ДДС дневници.': 'Yes — issuing invoices, credit and debit notes and proformas with gapless numbering, live net/VAT/gross totals and VAT journals.',
     'Има ли вход с Google?': 'Is there Google sign-in?',

@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { eur, bgn, dateBG } from '@/lib/format';
+import { eur, dateBG } from '@/lib/format';
 import type { AgingReport, OpenItem } from '@/lib/api/types';
 
 export default function ReportsPage() {
@@ -50,9 +50,9 @@ export default function ReportsPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Приходи" value={eur(pnl?.revenue ?? 0)} sub={`≈ ${bgn(pnl?.revenue ?? 0)}`} icon={TrendingUp} tone="success" valueTone="success" />
-        <StatCard label="Разходи" value={eur(pnl?.expense ?? 0)} sub={`≈ ${bgn(pnl?.expense ?? 0)}`} icon={TrendingDown} tone="neutral" />
-        <StatCard label="Финансов резултат" value={eur(pnl?.netProfit ?? 0)} sub={`≈ ${bgn(pnl?.netProfit ?? 0)} · ${Number(pnl?.netProfit ?? 0) >= 0 ? 'Печалба' : 'Загуба'}`} icon={Scale} tone={Number(pnl?.netProfit ?? 0) >= 0 ? 'success' : 'warning'} valueTone={Number(pnl?.netProfit ?? 0) >= 0 ? 'success' : 'warning'} />
+        <StatCard label="Приходи" value={eur(pnl?.revenue ?? 0)} icon={TrendingUp} tone="success" valueTone="success" />
+        <StatCard label="Разходи" value={eur(pnl?.expense ?? 0)} icon={TrendingDown} tone="neutral" />
+        <StatCard label="Финансов резултат" value={eur(pnl?.netProfit ?? 0)} sub={Number(pnl?.netProfit ?? 0) >= 0 ? 'Печалба' : 'Загуба'} icon={Scale} tone={Number(pnl?.netProfit ?? 0) >= 0 ? 'success' : 'warning'} valueTone={Number(pnl?.netProfit ?? 0) >= 0 ? 'success' : 'warning'} />
       </div>
 
       {/* AI Accountant — read-only explanations for the month of the "from" date (ADR-001) */}
