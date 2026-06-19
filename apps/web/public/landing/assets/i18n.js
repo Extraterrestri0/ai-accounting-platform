@@ -19,7 +19,7 @@
     'Табло и отчети': 'Dashboard & reports', 'ОВ, ОПР, баланс': 'TB · P&L · balance',
     'Преглед и одобрение': 'Review & approval', 'Човек решава всичко важно': 'A human decides everything important',
     'Сигурен архив': 'Secure archive', 'Защитено съхранение (WORM)': 'Tamper-proof storage (WORM)',
-    'Счетоводни кантори': 'Accounting firms', 'Много клиенти от едно място': 'Many clients in one place',
+    'Без счетоводител': 'No accountant needed', 'Водете си сметките сами': 'Do your own books', 'Малки фирми и ЕООД': 'Small businesses and sole traders',
     'Малки фирми': 'Small businesses', 'Самостоятелно счетоводство': 'Self-serve accounting',
     'Самонаети и фрийлансъри': 'Self-employed & freelancers', 'Фактури, ДДС и отчети': 'Invoices, VAT & reports',
     'Ръководства': 'Guides', 'Стъпка по стъпка': 'Step by step', 'Данъчен календар': 'Tax calendar',
@@ -50,7 +50,7 @@
     'спестено време на месец': 'time saved per month', 'за типична фирма': 'for a typical company',
     'точност при извличане': 'extraction accuracy', 'на данни от документи': 'of document data',
     'обработени документа': 'documents processed', 'през платформата': 'through the platform',
-    'средна оценка': 'average rating', 'от счетоводители': 'from accountants',
+    'средна оценка': 'average rating', 'от потребители': 'from users',
 
     // ---- Problem ----
     'Проблемът': 'The problem',
@@ -77,7 +77,7 @@
     // ---- Features ----
     'Възможности': 'Capabilities',
     'Всичко за обработката': 'Everything for processing', 'на документи': 'your documents',
-    'Функции, създадени за счетоводната практика в България.': 'Features built for accounting practice in Bulgaria.',
+    'Всичко, за да водите счетоводството на бизнеса си сами — създадено за България.': 'Everything to do your own books — built for Bulgaria.',
     'AI извличане от документи': 'AI document extraction',
     'Автоматично разчитане на фактури с извличане на ключови полета.': 'Automatic reading of invoices with key-field extraction.',
     'Управление на фактури': 'Invoice management',
@@ -152,7 +152,7 @@
 
     // ---- Testimonials ----
     'Отзиви': 'Testimonials',
-    'Счетоводители и фирми,': 'Accountants and businesses', 'които спестяват часове': 'that save hours',
+    'Малки фирми и самонаети,': 'Small businesses and the self-employed', 'които си водят сметките сами': 'who keep their own books',
     'Истории от практиката с MGI-Delta.': 'Real stories from working with MGI-Delta.',
 
     // ---- Pricing ----
@@ -161,8 +161,8 @@
     'За самонаети и малки фирми.': 'For the self-employed and small businesses.',
     'За растящи фирми с повече документи.': 'For growing companies with more documents.',
     'За екипи с няколко дружества.': 'For teams with several companies.',
-    'За кантори с много клиенти.': 'For firms with many clients.',
-    'Счетоводна къща': 'Accounting Firm', 'Най-популярен': 'Most popular',
+    'За специфични нужди или по-голям обем.': 'For specific needs or higher volume.', 'По договаряне': 'Custom pricing', 'Оферта по мярка за вашия бизнес': 'A tailored offer for your business',
+    'Индивидуален': 'Custom', 'Най-популярен': 'Most popular',
     '7-дневен безплатен период': '7-day free trial', 'Започни безплатно': 'Start free',
     'Свържете се с нас': 'Contact us', '/ мес.': '/ mo',
     '1 фирма': '1 company', 'До 3 фирми': 'Up to 3 companies', 'До 10 фирми': 'Up to 10 companies',
@@ -216,8 +216,8 @@
     'Да, издаване на фактури, кредитни и дебитни известия и проформи с последователна номерация, живи суми нето/ДДС/бруто и ДДС дневници.': 'Yes — issuing invoices, credit and debit notes and proformas with gapless numbering, live net/VAT/gross totals and VAT journals.',
     'Има ли вход с Google?': 'Is there Google sign-in?',
     'Да, можете да влизате с Google или с имейл и парола. Всеки достъп се записва в одитната следа.': 'Yes, you can sign in with Google or with email and password. Every sign-in is recorded in the audit trail.',
-    'Подходящо ли е за счетоводители?': 'Is it suitable for accountants?',
-    'Да. Управлявате много клиенти от един акаунт с отделно работно пространство и строга изолация на данните за всеки, плюс бързо превключване между фирми.': 'Yes. Manage many clients from one account with a separate workspace and strict data isolation for each, plus fast switching between companies.',
+    'Трябва ли ми счетоводител, за да я ползвам?': 'Do I need an accountant to use it?',
+    'Не. Платформата е създадена да си водите счетоводството сами — AI разчита документите и предлага осчетоводяване, а вие само одобрявате. Подходяща е за самонаети, фрийлансъри и малки фирми, без нужда от счетоводител.': 'No. The platform is built for you to keep your own books — AI reads documents and proposes the posting, you just approve. Made for the self-employed, freelancers and small businesses, no accountant needed.',
 
     // ---- Final CTA ----
     'Готови ли сте да автоматизирате счетоводството?': 'Ready to automate your accounting?',
