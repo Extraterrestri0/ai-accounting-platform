@@ -37,7 +37,11 @@ export class CompanyRepository {
         [tenantId, c.organizationId ?? null, c.name, c.eik ?? null, c.vatStatus,
          c.baseCurrency, c.fiscalYearStartMonth],
       );
-      return map(res.rows[0]);
+      const company = map(res.rows[0]);
+      // Seed the default BG chart of accounts (+ VAT code) so the company can post
+      // immediately. SECURITY DEFINER helper; refuses cross-tenant calls (migration 0040).
+      await db.query('SELECT app.seed_chart_of_accounts($1, $2)', [company.tenantId, company.id]);
+      return company;
     });
   }
 
