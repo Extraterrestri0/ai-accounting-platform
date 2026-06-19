@@ -39,9 +39,8 @@ const head = (p) => `<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="preconnect" href="https://unpkg.com" crossorigin />
-<script>(function(){try{var t=localStorage.getItem('mgi-theme');if(!t)t=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
-<link rel="stylesheet" href="/landing/assets/tokens.css?v=14" />
-<link rel="stylesheet" href="/landing/assets/site.css?v=14" />
+<link rel="stylesheet" href="/landing/assets/tokens.css?v=15" />
+<link rel="stylesheet" href="/landing/assets/site.css?v=15" />
 <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js" defer></script>
 <script type="application/ld+json">${JSON.stringify(p.jsonld)}</script>
 </head>
@@ -97,7 +96,6 @@ const nav = (active) => {
       </div>
       <a class="btn btn-quiet btn-sm desk-only" href="/login">Вход</a>
       <a class="btn btn-primary btn-sm" href="/pricing">Започнете безплатно</a>
-      <button class="theme-toggle" type="button" aria-label="Смяна на тема" data-theme-toggle><i data-lucide="sun" class="t-sun"></i><i data-lucide="moon" class="t-moon"></i></button>
       <button class="nav-burger" aria-label="Меню" type="button"><i data-lucide="menu"></i></button>
     </div>
   </div>
@@ -105,10 +103,7 @@ const nav = (active) => {
 <div class="mobile-menu" id="mobileMenu">
   <div class="mm-top">
     <a class="brand" href="/"><img class="mark" src="/landing/assets/app-icon.svg" alt="" width="34" height="34" /><span class="wm"><b>Счетоводство</b></span></a>
-    <div style="display:flex;gap:8px;align-items:center">
-      <button class="theme-toggle" type="button" aria-label="Смяна на тема" data-theme-toggle><i data-lucide="sun" class="t-sun"></i><i data-lucide="moon" class="t-moon"></i></button>
-      <button class="nav-burger mm-close" aria-label="Затвори" type="button"><i data-lucide="x"></i></button>
-    </div>
+    <button class="nav-burger mm-close" aria-label="Затвори" type="button"><i data-lucide="x"></i></button>
   </div>
   <nav class="mm-links">
     <a href="/features">Функции <i data-lucide="chevron-right"></i></a>
@@ -161,8 +156,8 @@ const footer = () => `</main>
 </footer>
 <button class="to-top" aria-label="Нагоре" type="button"><i data-lucide="arrow-up"></i></button>
 <div class="mobile-cta"><a class="btn btn-primary" href="/pricing">Започнете безплатно <i class="arrow" data-lucide="arrow-right"></i></a></div>
-<script src="/landing/assets/i18n.js?v=14" defer></script>
-<script src="/landing/assets/site.js?v=14" defer></script>
+<script src="/landing/assets/i18n.js?v=15" defer></script>
+<script src="/landing/assets/site.js?v=15" defer></script>
 <script>document.addEventListener('DOMContentLoaded', function () { if (window.lucide) lucide.createIcons(); });</script>
 </body>
 </html>`;
