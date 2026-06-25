@@ -39,7 +39,7 @@ img, svg { display: block; max-width: 100%; }
   --gutter: clamp(20px, 5vw, 64px);
   --shadow-card: 0 2px 8px rgba(18,22,28,.08);
   --shadow-lift: 0 18px 50px -20px rgba(18,22,28,.28);
-  --shadow-pop: 0 24px 70px -28px rgba(16,47,92,.45);
+  --shadow-pop: 0 24px 70px -28px rgba(120,70,30,.45);
   --brand-grad: linear-gradient(100deg, var(--blue-600) 0%, var(--blue-500) 38%, var(--green-500) 100%);
 }
 
@@ -203,7 +203,7 @@ section { position: relative; }
 .hero-bg::before {
   content: ""; position: absolute; top: -25%; left: 50%; transform: translateX(-50%);
   width: 1100px; height: 760px;
-  background: radial-gradient(60% 60% at 35% 35%, rgba(47,123,224,.16), transparent 70%),
+  background: radial-gradient(60% 60% at 35% 35%, rgba(236,100,70,.16), transparent 70%),
               radial-gradient(55% 55% at 72% 40%, rgba(22,164,99,.13), transparent 70%);
   filter: blur(8px);
 }
@@ -235,7 +235,7 @@ section { position: relative; }
 @media (max-width: 860px) { .float-card { display: none; } }
 
 /* browser-ish window frame */
-.win { background: var(--neutral-0); border: 1px solid var(--color-border-default); border-radius: 16px; box-shadow: 0 40px 90px -40px rgba(16,47,92,.5), 0 8px 24px -12px rgba(18,22,28,.18); overflow: hidden; }
+.win { background: var(--neutral-0); border: 1px solid var(--color-border-default); border-radius: 16px; box-shadow: 0 40px 90px -40px rgba(120,70,30,.5), 0 8px 24px -12px rgba(18,22,28,.18); overflow: hidden; }
 .win-bar { height: 46px; display: flex; align-items: center; gap: 14px; padding: 0 16px; border-bottom: 1px solid var(--color-border-default); background: linear-gradient(var(--neutral-50), var(--neutral-0)); }
 .win-dots { display: flex; gap: 7px; }
 .win-dots i { width: 11px; height: 11px; border-radius: 50%; display: block; }
@@ -396,7 +396,7 @@ section { position: relative; }
 .dark { background: var(--neutral-900); color: #fff; position: relative; overflow: hidden; }
 .dark::before {
   content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(70% 60% at 20% 0%, rgba(47,123,224,.22), transparent 60%),
+  background: radial-gradient(70% 60% at 20% 0%, rgba(236,100,70,.22), transparent 60%),
               radial-gradient(60% 70% at 90% 100%, rgba(22,164,99,.16), transparent 60%);
 }
 .dark .wrap { position: relative; z-index: 1; }
@@ -405,8 +405,8 @@ section { position: relative; }
 .dark .eyebrow { color: var(--blue-300); }
 .sec-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
 .sec-card { padding: 24px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); border-radius: var(--radius-lg); transition: background .25s, transform .25s, border-color .25s; }
-.sec-card:hover { background: rgba(255,255,255,.07); transform: translateY(-4px); border-color: rgba(47,123,224,.5); }
-.sec-card .ic { background: rgba(47,123,224,.16); color: var(--blue-300); margin-bottom: 18px; }
+.sec-card:hover { background: rgba(255,255,255,.07); transform: translateY(-4px); border-color: rgba(236,100,70,.5); }
+.sec-card .ic { background: rgba(236,100,70,.16); color: var(--blue-300); margin-bottom: 18px; }
 .sec-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #fff; }
 .sec-card p { font-size: 13.5px; color: rgba(255,255,255,.66); }
 .compliance { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 48px; }
@@ -720,7 +720,7 @@ body {
 }
 .eyebrow::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--grad-action); box-shadow: 0 0 0 3px var(--blue-50); }
 .dark .eyebrow { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.16); color: var(--blue-200); box-shadow: none; }
-.dark .eyebrow::before { box-shadow: 0 0 0 3px rgba(45,116,240,.18); }
+.dark .eyebrow::before { box-shadow: 0 0 0 3px rgba(236,100,70,.18); }
 .section-title { letter-spacing: -0.035em; font-weight: 800; }
 .section-head .eyebrow { margin-bottom: 20px; }
 
@@ -729,7 +729,7 @@ body {
 .btn-lg { border-radius: 14px; }
 .btn-sm { border-radius: 10px; }
 .btn-primary { background: var(--grad-action); box-shadow: var(--shadow-blue); }
-.btn-primary:hover { background: var(--grad-action); transform: translateY(-3px); box-shadow: 0 22px 44px -14px rgba(45,116,240,.62); }
+.btn-primary:hover { background: var(--grad-action); transform: translateY(-3px); box-shadow: 0 22px 44px -14px rgba(236,100,70,.62); }
 .btn-commit { background: var(--grad-commit); box-shadow: var(--shadow-green); }
 .btn-commit:hover { background: var(--grad-commit); transform: translateY(-3px); box-shadow: 0 22px 44px -14px rgba(14,134,80,.5); }
 .btn-ghost { background: var(--glass-bg); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); border-color: var(--neutral-200); box-shadow: var(--shadow-sm); }
@@ -744,7 +744,7 @@ body {
 /* ---- Cards: bigger radius, layered shadow, gradient-ring hover ------------ */
 .card { border-radius: var(--radius-xl); box-shadow: var(--shadow-soft); }
 .card-hover { transition: transform .3s var(--ease-out), box-shadow .3s var(--ease-out), border-color .3s; }
-.card-hover:hover { transform: translateY(-6px); border-color: transparent; box-shadow: var(--shadow-lift2), 0 0 0 1.5px rgba(45,116,240,.22); }
+.card-hover:hover { transform: translateY(-6px); border-color: transparent; box-shadow: var(--shadow-lift2), 0 0 0 1.5px rgba(236,100,70,.22); }
 .feat-card, .prob-card, .res-card { position: relative; overflow: hidden; }
 .feat-card::after, .res-card::after {   /* top hairline accent that grows on hover */
   content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
@@ -759,9 +759,9 @@ body {
 /* ============================================================================
    NAV — refined glass
    ============================================================================ */
-.nav.shrunk { background: rgba(255,255,255,.7); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: 0 1px 0 rgba(16,47,92,.05), 0 8px 30px -22px rgba(16,47,92,.3); }
-.brand .mark { border-radius: 12px; box-shadow: 0 6px 16px -5px rgba(45,116,240,.55); }
-.btn-primary.btn-sm { box-shadow: 0 8px 20px -8px rgba(45,116,240,.55); }
+.nav.shrunk { background: rgba(255,255,255,.7); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: 0 1px 0 rgba(120,70,30,.05), 0 8px 30px -22px rgba(120,70,30,.3); }
+.brand .mark { border-radius: 12px; box-shadow: 0 6px 16px -5px rgba(236,100,70,.55); }
+.btn-primary.btn-sm { box-shadow: 0 8px 20px -8px rgba(236,100,70,.55); }
 .dd-panel { border-radius: var(--radius-2xl); box-shadow: var(--shadow-pop2); }
 
 /* ============================================================================
@@ -771,9 +771,9 @@ body {
 .hero-sub { font-size: clamp(1.08rem, 1rem + .5vw, 1.34rem); }
 .hero-bg::before {
   background:
-    radial-gradient(46% 50% at 28% 30%, rgba(45,116,240,.22), transparent 70%),
+    radial-gradient(46% 50% at 28% 30%, rgba(236,100,70,.22), transparent 70%),
     radial-gradient(42% 48% at 74% 30%, rgba(22,164,99,.16), transparent 72%),
-    radial-gradient(40% 44% at 52% 72%, rgba(60,91,224,.12), transparent 72%);
+    radial-gradient(40% 44% at 52% 72%, rgba(242,169,59,.12), transparent 72%);
   filter: blur(6px);
 }
 .hero-bg::after {   /* soft top sheen */
@@ -809,7 +809,7 @@ body {
 /* ============================================================================
    FLOW — connected gradient rail
    ============================================================================ */
-.flow-step .sn { background: var(--grad-action); box-shadow: 0 8px 18px -6px rgba(45,116,240,.6); }
+.flow-step .sn { background: var(--grad-action); box-shadow: 0 8px 18px -6px rgba(236,100,70,.6); }
 .flow-step .conn { height: 2px; background: linear-gradient(90deg, var(--blue-300), var(--green-300)); }
 .flow-step { transition: transform .3s var(--ease-out), box-shadow .3s; }
 .flow-step:hover { transform: translateY(-5px); box-shadow: var(--shadow-lift2); }
@@ -831,11 +831,11 @@ body {
 .plan.pop:hover { transform: translateY(-10px); box-shadow: 0 0 0 2px var(--blue-500), var(--shadow-pop2); }
 .plan.pop::before {   /* soft glow behind the popular plan */
   content: ""; position: absolute; inset: -2px -2px auto -2px; height: 60%; border-radius: var(--radius-2xl);
-  background: radial-gradient(60% 80% at 50% 0%, rgba(45,116,240,.16), transparent 70%); z-index: -1; pointer-events: none;
+  background: radial-gradient(60% 80% at 50% 0%, rgba(236,100,70,.16), transparent 70%); z-index: -1; pointer-events: none;
 }
 .plan .pprice .amt { font-weight: 800; letter-spacing: -0.04em; }
-.plan-flag { box-shadow: 0 10px 22px -8px rgba(45,116,240,.7); }
-.toggle-pill .thumb { background: var(--grad-action); box-shadow: 0 6px 14px -5px rgba(45,116,240,.6); }
+.plan-flag { box-shadow: 0 10px 22px -8px rgba(236,100,70,.7); }
+.toggle-pill .thumb { background: var(--grad-action); box-shadow: 0 6px 14px -5px rgba(236,100,70,.6); }
 
 /* ============================================================================
    DARK sections — deeper mesh, glass cards, gradient compliance badges
@@ -843,13 +843,13 @@ body {
 .dark { background: radial-gradient(120% 120% at 50% 0%, #182233 0%, var(--neutral-900) 60%); }
 .dark::before {
   background:
-    radial-gradient(60% 55% at 16% 0%, rgba(45,116,240,.30), transparent 60%),
+    radial-gradient(60% 55% at 16% 0%, rgba(236,100,70,.30), transparent 60%),
     radial-gradient(55% 65% at 92% 100%, rgba(22,164,99,.22), transparent 60%),
-    radial-gradient(40% 40% at 60% 40%, rgba(60,91,224,.14), transparent 70%);
+    radial-gradient(40% 40% at 60% 40%, rgba(242,169,59,.14), transparent 70%);
 }
 .sec-card { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: var(--radius-xl); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
-.sec-card:hover { background: rgba(255,255,255,.09); border-color: rgba(45,116,240,.55); box-shadow: 0 24px 50px -24px rgba(0,0,0,.6); }
-.sec-card .ic { background: rgba(45,116,240,.16); border-color: rgba(45,116,240,.3); color: var(--blue-200); }
+.sec-card:hover { background: rgba(255,255,255,.09); border-color: rgba(236,100,70,.55); box-shadow: 0 24px 50px -24px rgba(0,0,0,.6); }
+.sec-card .ic { background: rgba(236,100,70,.16); border-color: rgba(236,100,70,.3); color: var(--blue-200); }
 .comp-badge { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14); }
 .final-cta h2 { font-weight: 800; letter-spacing: -0.035em; }
 
@@ -858,7 +858,7 @@ body {
    ============================================================================ */
 .tcard { border-radius: var(--radius-2xl); position: relative; }
 .tcard blockquote { position: relative; }
-.tcard .av { background: var(--grad-action); color: #fff; box-shadow: 0 8px 16px -6px rgba(45,116,240,.5); }
+.tcard .av { background: var(--grad-action); color: #fff; box-shadow: 0 8px 16px -6px rgba(236,100,70,.5); }
 .tcar-btn { box-shadow: var(--shadow-sm); }
 .tdot.on { background: var(--grad-action); }
 
@@ -935,14 +935,14 @@ html.reveal-on .reveal[data-delay="5"] { transition-delay: .35s; }
 .mini-head .mt::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--grad-action); flex: none; }
 
 /* current stage in the ДДС stepper → gradient + glow (was flat blue) */
-.stage-chain .st.now { background: var(--grad-action); box-shadow: 0 6px 14px -6px rgba(45,116,240,.6); }
+.stage-chain .st.now { background: var(--grad-action); box-shadow: 0 6px 14px -6px rgba(236,100,70,.6); }
 
 /* dashboard KPI tiles inside the deep-dive → soft gradient surface + hover lift */
 .dive-vis .card .card { background-image: linear-gradient(160deg, #fff, var(--neutral-50)); transition: transform .25s var(--ease-out), box-shadow .25s; }
 .dive-vis .card .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-soft); }
 
 /* accountants workspace: active client row gets a gradient hairline accent */
-.ws-item.active { box-shadow: 0 0 0 1.5px var(--blue-400), 0 8px 20px -12px rgba(45,116,240,.5); }
+.ws-item.active { box-shadow: 0 0 0 1.5px var(--blue-400), 0 8px 20px -12px rgba(236,100,70,.5); }
 .ws-item .wic { background-image: linear-gradient(150deg, var(--blue-50), #fff); }
 
 /* pricing: popular plan header pops with the brand gradient; CTA emphasis */

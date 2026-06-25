@@ -12,7 +12,7 @@
    Enable Bulgarian forms on text containers:  font-feature-settings: "locl" 1;
    with  lang="bg".  Money/numerics:  font-feature-settings: "tnum" 1;
 -------------------------------------------------------------------------------*/
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 :root {
   color-scheme: light;
@@ -23,28 +23,28 @@
 
   /* Neutral / Gray — text, surfaces, borders (the workhorse) */
   --neutral-0:   #FFFFFF;
-  --neutral-50:  #F6F8FB;
-  --neutral-100: #EDF1F6;
-  --neutral-200: #DDE3EC;
-  --neutral-300: #C5CEDA;
-  --neutral-400: #9AA6B6;
-  --neutral-500: #6B7787;
-  --neutral-600: #4B5563;
-  --neutral-700: #353D49;
-  --neutral-800: #232A33;
-  --neutral-900: #12161C;
+  --neutral-50:  #FFF7F0;
+  --neutral-100: #FBEFE4;
+  --neutral-200: #F0E2D4;
+  --neutral-300: #E2D2C0;
+  --neutral-400: #B6A693;
+  --neutral-500: #897B6B;
+  --neutral-600: #6B5E50;
+  --neutral-700: #4E4439;
+  --neutral-800: #332C24;
+  --neutral-900: #221C15;
 
   /* Blue / Primary — trust, primary actions, selection, links */
-  --blue-50:  #EEF5FE;
-  --blue-100: #D6E8FC;
-  --blue-200: #AFD0F8;
-  --blue-300: #82B4F2;
-  --blue-400: #5495E9;
-  --blue-500: #2F7BE0;   /* primary action base */
-  --blue-600: #1F63C4;
-  --blue-700: #184F9E;
-  --blue-800: #143F7D;
-  --blue-900: #102F5C;
+  --blue-50:  #FDEEE7;
+  --blue-100: #FAD8CA;
+  --blue-200: #F5B9A1;
+  --blue-300: #F09A7C;
+  --blue-400: #EE7B57;
+  --blue-500: #EC6446;   /* primary action base */
+  --blue-600: #D44E30;
+  --blue-700: #B03D24;
+  --blue-800: #882F1C;
+  --blue-900: #5C2013;
 
   /* Green / Success — confirmed, posted, reconciled, paid, filed */
   --green-50:  #ECFBF3;
@@ -106,9 +106,9 @@
   --color-text-link:       var(--blue-600);
 
   /* Actions */
-  --color-action-primary:        var(--blue-500);
-  --color-action-primary-hover:  var(--blue-600);
-  --color-action-primary-active: var(--blue-700);
+  --color-action-primary:        var(--green-600);
+  --color-action-primary-hover:  var(--green-700);
+  --color-action-primary-active: var(--green-800);
   --color-action-commit:         var(--green-600);  /* NAP/KEP file/sign */
   --color-action-danger:         var(--red-500);
 
@@ -128,7 +128,7 @@
   /* ======================================================================
      3 · TYPOGRAPHY
      ====================================================================== */
-  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Nunito', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
 
   /* feature sets */
@@ -228,8 +228,8 @@
    ============================================================================ */
 :root {
   /* Energized in-brand blue accents (used in gradients only — base --blue-500 unchanged) */
-  --blue-elec:  #2D74F0;   /* electric mid */
-  --blue-iris:  #3C5BE0;   /* slight indigo lean for depth */
+  --blue-elec:  #F2724B;   /* electric mid */
+  --blue-iris:  #F2A93B;   /* slight indigo lean for depth */
   --weight-extrabold: 800;
   --weight-black: 900;
 
@@ -239,20 +239,20 @@
   --radius-3xl: 32px;
 
   /* Layered, blue-tinted elevation — replaces flat gray shadows on marketing */
-  --shadow-xs:   0 1px 2px rgba(16,47,92,.06);
-  --shadow-sm:   0 2px 8px rgba(16,47,92,.07), 0 1px 2px rgba(16,47,92,.05);
-  --shadow-soft: 0 10px 30px -12px rgba(16,47,92,.18), 0 4px 10px -6px rgba(16,47,92,.10);
-  --shadow-lift2:0 24px 60px -26px rgba(16,47,92,.34), 0 8px 20px -12px rgba(16,47,92,.16);
-  --shadow-pop2: 0 36px 90px -36px rgba(16,47,92,.50), 0 10px 28px -16px rgba(16,47,92,.22);
-  --shadow-blue: 0 16px 40px -16px rgba(45,116,240,.55);
+  --shadow-xs:   0 1px 2px rgba(120,70,30,.06);
+  --shadow-sm:   0 2px 8px rgba(120,70,30,.07), 0 1px 2px rgba(120,70,30,.05);
+  --shadow-soft: 0 10px 30px -12px rgba(120,70,30,.18), 0 4px 10px -6px rgba(120,70,30,.10);
+  --shadow-lift2:0 24px 60px -26px rgba(120,70,30,.34), 0 8px 20px -12px rgba(120,70,30,.16);
+  --shadow-pop2: 0 36px 90px -36px rgba(120,70,30,.50), 0 10px 28px -16px rgba(120,70,30,.22);
+  --shadow-blue: 0 16px 40px -16px rgba(236,100,70,.55);
   --shadow-green:0 16px 40px -16px rgba(14,134,80,.45);
 
   /* Gradients */
-  --grad-brand:  linear-gradient(105deg, var(--blue-700) 0%, var(--blue-elec) 42%, var(--green-500) 108%);
+  --grad-brand:  linear-gradient(100deg, var(--blue-700) 0%, var(--blue-500) 42%, var(--amber-400) 110%);
   --grad-brand-soft: linear-gradient(135deg, var(--blue-500), var(--blue-iris));
-  --grad-action: linear-gradient(135deg, var(--blue-elec) 0%, var(--blue-600) 100%);
+  --grad-action: linear-gradient(135deg, var(--green-500) 0%, var(--green-700) 100%);
   --grad-commit: linear-gradient(135deg, var(--green-500) 0%, var(--green-700) 100%);
-  --grad-hairline: linear-gradient(135deg, rgba(45,116,240,.5), rgba(22,164,99,.35));
+  --grad-hairline: linear-gradient(135deg, rgba(236,100,70,.5), rgba(22,164,99,.35));
 
   /* Glassmorphism */
   --glass-bg:     rgba(255,255,255,.72);
@@ -261,9 +261,9 @@
 
   /* Mesh background washes (light surfaces) */
   --mesh-light:
-    radial-gradient(38% 50% at 12% 8%,  rgba(45,116,240,.10), transparent 70%),
+    radial-gradient(38% 50% at 12% 8%,  rgba(236,100,70,.10), transparent 70%),
     radial-gradient(34% 46% at 92% 12%, rgba(22,164,99,.09),  transparent 70%),
-    radial-gradient(40% 50% at 78% 92%, rgba(60,91,224,.07),  transparent 72%);
+    radial-gradient(40% 50% at 78% 92%, rgba(242,169,59,.07),  transparent 72%);
 
   /* Refined motion curves */
   --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
