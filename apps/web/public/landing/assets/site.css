@@ -233,3 +233,70 @@ h2{font-size:clamp(30px,3.4vw,42px)}
   .hcta .btn{flex:1}
 }
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+
+/* ============================================================================
+   PREMIUM LAYER — cream bg, organic shapes, animations, mega menu, lang toggle
+   ============================================================================ */
+:root{ --bg:#FBF9F4; --bg-sage:#ECF2EC; --bg-mint:#E7F0EC; --bg-peach:#FBF1EA; --bg-lav:#F1EEF7; }
+body{ background:var(--bg); }
+.nav{ background:rgba(251,249,244,.85); }
+
+/* organic decorative shapes (slow drift, reduced-motion safe) */
+.deco{ position:absolute; border-radius:46% 54% 58% 42%/52% 44% 56% 48%; filter:blur(2px); z-index:0; pointer-events:none; opacity:.7 }
+.deco-wrap{ position:relative; overflow:hidden }
+.deco-wrap>.wrap{ position:relative; z-index:1 }
+@keyframes drift{ 0%,100%{ transform:translate(0,0) rotate(0) } 50%{ transform:translate(14px,-18px) rotate(6deg) } }
+@keyframes floaty{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-10px) } }
+.float-anim{ animation:floaty 6s ease-in-out infinite }
+.float-anim.d1{ animation-delay:-2s } .float-anim.d2{ animation-delay:-4s }
+
+/* hero gets soft animated blobs behind the cards */
+.hero{ position:relative }
+.hero .deco{ animation:drift 18s ease-in-out infinite }
+
+/* hover-lift cards */
+.hcard,.svc,.bcard,.rcard,.plan{ transition:transform .22s var(--ease,ease), box-shadow .22s }
+.hcard:hover,.plan:hover{ transform:translateY(-4px); box-shadow:var(--shadow) }
+
+/* scroll reveal — only hides when JS is on (html.js); never hides without JS */
+.js .reveal{ opacity:0; transform:translateY(22px); transition:opacity .6s cubic-bezier(.22,.61,.36,1), transform .6s cubic-bezier(.22,.61,.36,1) }
+.js .reveal.in{ opacity:1; transform:none }
+.js .reveal.d1{ transition-delay:.08s } .js .reveal.d2{ transition-delay:.16s } .js .reveal.d3{ transition-delay:.24s }
+
+/* mega menu */
+.has-mega{ position:relative }
+.nlinks .mtrig{ display:inline-flex; align-items:center; gap:5px; cursor:pointer }
+.nlinks .mtrig svg{ width:14px; height:14px; transition:transform .2s }
+.has-mega:hover .mtrig svg, .has-mega.open .mtrig svg{ transform:rotate(180deg) }
+.mega{ position:absolute; top:calc(100% + 16px); left:50%; transform:translateX(-50%) translateY(8px); opacity:0; visibility:hidden; pointer-events:none;
+  background:#fff; border:1px solid var(--line-2); border-radius:var(--r-lg); box-shadow:var(--shadow); padding:12px; min-width:300px;
+  transition:opacity .2s ease, transform .2s ease, visibility .2s; z-index:120 }
+.has-mega:hover .mega, .has-mega:focus-within .mega, .has-mega.open .mega{ opacity:1; visibility:visible; pointer-events:auto; transform:translateX(-50%) translateY(0) }
+.mega.wide{ min-width:520px; display:grid; grid-template-columns:1fr 1fr; gap:4px }
+.mitem{ display:flex; gap:12px; padding:11px 12px; border-radius:12px; transition:background .15s }
+.mitem:hover{ background:var(--bg-sage) }
+.mitem .mic{ flex:none; width:38px; height:38px; border-radius:10px; background:var(--bg-sage); color:var(--teal); display:flex; align-items:center; justify-content:center }
+.mitem .mic svg{ width:19px; height:19px }
+.mitem b{ display:block; font-size:14.5px; font-weight:700; color:var(--ink) }
+.mitem span{ font-size:12.5px; color:var(--muted) }
+
+/* language toggle */
+.lang{ display:inline-flex; background:var(--bg-sage); border-radius:999px; padding:3px }
+.lang button{ border:none; background:transparent; font-family:inherit; font-size:12.5px; font-weight:700; color:var(--ink-2); padding:5px 11px; border-radius:999px; cursor:pointer }
+.lang button.on{ background:var(--teal); color:#fff }
+
+@media (prefers-reduced-motion:reduce){
+  .float-anim,.hero .deco{ animation:none !important }
+  .js .reveal{ opacity:1 !important; transform:none !important; transition:none !important }
+}
+@media (max-width:920px){ .has-mega .mega{ display:none !important } }
+
+/* scroll-reveal by component (no markup needed); hides only when JS on, before paint */
+.js .sec-head,.js .hcard,.js .svc,.js .bene,.js .ba-col,.js .metric,.js .plan,.js .bcard,.js .rcard,.js .quote,.js .logo-row{
+  opacity:0; transform:translateY(20px);
+  transition:opacity .6s cubic-bezier(.22,.61,.36,1), transform .6s cubic-bezier(.22,.61,.36,1);
+}
+.js .is-in{ opacity:1 !important; transform:none !important }
+@media (prefers-reduced-motion:reduce){
+  .js .sec-head,.js .hcard,.js .svc,.js .bene,.js .ba-col,.js .metric,.js .plan,.js .bcard,.js .rcard,.js .quote,.js .logo-row{ opacity:1 !important; transform:none !important }
+}

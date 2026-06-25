@@ -12,7 +12,7 @@ const __dir = dirname(fileURLToPath(import.meta.url));
 const OUT = join(__dir, '..', 'public', 'landing');
 const PUB = join(__dir, '..', 'public');
 const SITE = 'https://mgi-delta.bg';
-const V = 'v=18';
+const V = 'v=19';
 mkdirSync(OUT, { recursive: true });
 
 /* ---- inline SVG icons (stroke = currentColor) ---------------------------- */
@@ -42,6 +42,7 @@ const I = {
 const head = (p) => `<!DOCTYPE html>
 <html lang="bg">
 <head>
+<script>document.documentElement.classList.add('js')</script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>${p.title}</title>
@@ -68,12 +69,37 @@ const NAVITEMS = [
   ['/features', 'Функции'], ['/#how', 'Как работи'], ['/about', 'За кого'],
   ['/pricing', 'Цени'], ['/resources', 'Ресурси'], ['/faq', 'Въпроси'],
 ];
+const chev = s('<path d="M6 9l6 6 6-6"/>');
+const mitem = (href, ic, t, d) => `<a class="mitem" href="${href}"><span class="mic">${ic}</span><span><b>${t}</b><span>${d}</span></span></a>`;
 const nav = (active) => `
 <header class="nav">
   <div class="nav-inner">
     <a class="brand" href="/"><span class="mk">С</span>Счетоводство</a>
-    <nav class="nlinks">${NAVITEMS.map(([h, t]) => `<a href="${h}"${h === active ? ' class="on"' : ''}>${t}</a>`).join('')}</nav>
+    <nav class="nlinks">
+      <div class="has-mega">
+        <a class="mtrig${active === '/features' ? ' on' : ''}" href="/features">Функции <span class="chevwrap">${chev}</span></a>
+        <div class="mega wide">
+          ${mitem('/features', I.spark, 'AI извличане', 'Разчита фактури автоматично')}
+          ${mitem('/features', I.bank, 'ДДС и НАП', 'Дневници и декларация')}
+          ${mitem('/features', I.file, 'Фактуриране', 'Номерация и PDF')}
+          ${mitem('/features', I.chart, 'Отчети', 'ОПР, баланс, ОВ')}
+        </div>
+      </div>
+      <a href="/#how">Как работи</a>
+      <div class="has-mega">
+        <a class="mtrig${active === '/about' ? ' on' : ''}" href="/about">За кого <span class="chevwrap">${chev}</span></a>
+        <div class="mega">
+          ${mitem('/about', I.user, 'Самонаети', 'Фактури, ДДС и отчети')}
+          ${mitem('/about', I.store, 'Малки фирми и ЕООД', 'Самостоятелно счетоводство')}
+          ${mitem('/about', I.cart, 'Онлайн магазини', 'Много документи, бързо')}
+        </div>
+      </div>
+      <a href="/pricing"${active === '/pricing' ? ' class="on"' : ''}>Цени</a>
+      <a href="/resources"${active === '/resources' ? ' class="on"' : ''}>Ресурси</a>
+      <a href="/faq"${active === '/faq' ? ' class="on"' : ''}>Въпроси</a>
+    </nav>
     <div class="nact">
+      <div class="lang"><button type="button" data-lang="bg" class="on">BG</button><button type="button" data-lang="en">EN</button></div>
       <a class="btn btn-ghost btn-sm" href="/login">Вход</a>
       <a class="btn btn-dark btn-sm" href="/register">Започни</a>
     </div>
@@ -104,6 +130,8 @@ const footer = () => `</main>
     </div>
   </div>
 </footer>
+<script src="/landing/assets/i18n.js?${V}" defer></script>
+<script src="/landing/assets/site.js?${V}" defer></script>
 </body></html>`;
 
 /* ---- reusable sections --------------------------------------------------- */
@@ -165,10 +193,10 @@ const services = (head = true) => `
 
 const metrics = () => `
 <section><div class="wrap"><div class="block mint"><div class="wrap"><div class="metrics">
-  <div class="metric"><div class="n">98.7%</div><div class="l">точност при извличане</div></div>
-  <div class="metric"><div class="n">12 ч</div><div class="l">спестени на месец</div></div>
-  <div class="metric"><div class="n">30k+</div><div class="l">обработени документа</div></div>
-  <div class="metric"><div class="n">4.9</div><div class="l">средна оценка</div></div>
+  <div class="metric"><div class="n" data-count="98.7" data-dec="1" data-suffix="%">98.7%</div><div class="l">точност при извличане</div></div>
+  <div class="metric"><div class="n" data-count="12" data-suffix=" ч">12 ч</div><div class="l">спестени на месец</div></div>
+  <div class="metric"><div class="n" data-count="30000" data-suffix="+">30 000+</div><div class="l">обработени документа</div></div>
+  <div class="metric"><div class="n" data-count="4.9" data-dec="1">4.9</div><div class="l">средна оценка</div></div>
 </div></div></div></div></section>`;
 
 const benefits = () => `
@@ -232,11 +260,11 @@ const faqSec = (asH1) => `
 
 const heroIllustration = `
 <div class="ill">
-  <div class="blob" style="width:340px;height:340px;background:#DCEBE0;top:28px;right:14px"></div>
-  <div class="blob" style="width:180px;height:180px;background:#CFE6DF;bottom:6px;left:50px"></div>
-  <div class="card c1"><div class="doc-h">AI извлече данните</div><div class="rw"><span class="muted">Доставчик</span><span class="v">ТЕХНО ПЛЮС ООД</span></div><div class="rw"><span class="muted">Данъчна основа</span><span class="v">1 250,00 €</span></div><div class="rw"><span class="muted">ДДС 20%</span><span class="v">250,00 €</span></div></div>
-  <div class="card c2"><span class="mark ok">✓</span><div><div style="font-size:12px;color:var(--muted);font-weight:700">Осчетоводено</div><div style="font-weight:800;font-size:18px">1 500,00 €</div></div></div>
-  <div class="c3"><span class="pill-ok">ДДС за внасяне · 1 260 €</span></div>
+  <span class="deco" style="width:340px;height:340px;background:#DCEBE0;top:28px;right:14px"></span>
+  <span class="deco" style="width:180px;height:180px;background:#CFE6DF;bottom:6px;left:50px"></span>
+  <div class="card c1 float-anim"><div class="doc-h">AI извлече данните</div><div class="rw"><span class="muted">Доставчик</span><span class="v">ТЕХНО ПЛЮС ООД</span></div><div class="rw"><span class="muted">Данъчна основа</span><span class="v">1 250,00 €</span></div><div class="rw"><span class="muted">ДДС 20%</span><span class="v">250,00 €</span></div></div>
+  <div class="card c2 float-anim d2"><span class="mark ok">✓</span><div><div style="font-size:12px;color:var(--muted);font-weight:700">Осчетоводено</div><div style="font-weight:800;font-size:18px">1 500,00 €</div></div></div>
+  <div class="c3 float-anim d1"><span class="pill-ok">ДДС за внасяне · 1 260 €</span></div>
 </div>`;
 
 const hero = (eyebrow, h1, lead) => `
