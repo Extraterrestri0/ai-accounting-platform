@@ -23,28 +23,28 @@
 
   /* Neutral / Gray — text, surfaces, borders (the workhorse) */
   --neutral-0:   #FFFFFF;
-  --neutral-50:  #FFF7F0;
-  --neutral-100: #FBEFE4;
-  --neutral-200: #F0E2D4;
-  --neutral-300: #E2D2C0;
-  --neutral-400: #B6A693;
-  --neutral-500: #897B6B;
-  --neutral-600: #6B5E50;
-  --neutral-700: #4E4439;
-  --neutral-800: #332C24;
-  --neutral-900: #221C15;
+  --neutral-50:  #FBFAF7;
+  --neutral-100: #F4F1EA;
+  --neutral-200: #EAE5DC;
+  --neutral-300: #DAD3C7;
+  --neutral-400: #ADA597;
+  --neutral-500: #8A8378;
+  --neutral-600: #5A544C;
+  --neutral-700: #423C34;
+  --neutral-800: #2A2620;
+  --neutral-900: #1A1714;
 
   /* Blue / Primary — trust, primary actions, selection, links */
-  --blue-50:  #FDEEE7;
-  --blue-100: #FAD8CA;
-  --blue-200: #F5B9A1;
-  --blue-300: #F09A7C;
-  --blue-400: #EE7B57;
-  --blue-500: #EC6446;   /* primary action base */
-  --blue-600: #D44E30;
-  --blue-700: #B03D24;
-  --blue-800: #882F1C;
-  --blue-900: #5C2013;
+  --blue-50:  #EAF3EE;
+  --blue-100: #CFE6DC;
+  --blue-200: #A9D3C2;
+  --blue-300: #6FB79E;
+  --blue-400: #2E9A77;
+  --blue-500: #16785A;   /* primary action base */
+  --blue-600: #0F5C45;
+  --blue-700: #0C4A38;
+  --blue-800: #093A2C;
+  --blue-900: #06281E;
 
   /* Green / Success — confirmed, posted, reconciled, paid, filed */
   --green-50:  #ECFBF3;
@@ -106,9 +106,9 @@
   --color-text-link:       var(--blue-600);
 
   /* Actions */
-  --color-action-primary:        var(--green-600);
-  --color-action-primary-hover:  var(--green-700);
-  --color-action-primary-active: var(--green-800);
+  --color-action-primary:        var(--neutral-900);
+  --color-action-primary-hover:  var(--neutral-900);
+  --color-action-primary-active: var(--neutral-900);
   --color-action-commit:         var(--green-600);  /* NAP/KEP file/sign */
   --color-action-danger:         var(--red-500);
 
@@ -128,7 +128,7 @@
   /* ======================================================================
      3 · TYPOGRAPHY
      ====================================================================== */
-  --font-sans: 'Nunito', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
 
   /* feature sets */
@@ -228,8 +228,8 @@
    ============================================================================ */
 :root {
   /* Energized in-brand blue accents (used in gradients only — base --blue-500 unchanged) */
-  --blue-elec:  #F2724B;   /* electric mid */
-  --blue-iris:  #F2A93B;   /* slight indigo lean for depth */
+  --blue-elec:  #16785A;   /* electric mid */
+  --blue-iris:  #2E9A77;   /* slight indigo lean for depth */
   --weight-extrabold: 800;
   --weight-black: 900;
 
@@ -239,19 +239,19 @@
   --radius-3xl: 32px;
 
   /* Layered, blue-tinted elevation — replaces flat gray shadows on marketing */
-  --shadow-xs:   0 1px 2px rgba(120,70,30,.06);
-  --shadow-sm:   0 2px 8px rgba(120,70,30,.07), 0 1px 2px rgba(120,70,30,.05);
-  --shadow-soft: 0 10px 30px -12px rgba(120,70,30,.18), 0 4px 10px -6px rgba(120,70,30,.10);
-  --shadow-lift2:0 24px 60px -26px rgba(120,70,30,.34), 0 8px 20px -12px rgba(120,70,30,.16);
-  --shadow-pop2: 0 36px 90px -36px rgba(120,70,30,.50), 0 10px 28px -16px rgba(120,70,30,.22);
+  --shadow-xs:   0 1px 1px rgba(20,18,15,.03);
+  --shadow-sm:   0 1px 2px rgba(20,18,15,.04);
+  --shadow-soft: 0 1px 2px rgba(20,18,15,.04);
+  --shadow-lift2:0 2px 6px -2px rgba(20,18,15,.07);
+  --shadow-pop2: 0 10px 30px -14px rgba(20,18,15,.14);
   --shadow-blue: 0 16px 40px -16px rgba(236,100,70,.55);
   --shadow-green:0 16px 40px -16px rgba(14,134,80,.45);
 
   /* Gradients */
   --grad-brand:  linear-gradient(100deg, var(--blue-700) 0%, var(--blue-500) 42%, var(--amber-400) 110%);
   --grad-brand-soft: linear-gradient(135deg, var(--blue-500), var(--blue-iris));
-  --grad-action: linear-gradient(135deg, var(--green-500) 0%, var(--green-700) 100%);
-  --grad-commit: linear-gradient(135deg, var(--green-500) 0%, var(--green-700) 100%);
+  --grad-action: var(--neutral-900);
+  --grad-commit: var(--blue-600);
   --grad-hairline: linear-gradient(135deg, rgba(236,100,70,.5), rgba(22,164,99,.35));
 
   /* Glassmorphism */

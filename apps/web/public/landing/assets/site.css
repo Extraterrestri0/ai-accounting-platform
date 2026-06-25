@@ -961,3 +961,58 @@ html.reveal-on .reveal[data-delay="5"] { transition-delay: .35s; }
     transform: none !important;
   }
 }
+
+/* ============================================================================
+   MINIMAL / EDITORIAL SKIN (Olabero-inspired) — flat, typographic, one accent.
+   Appended last so it overrides the earlier "premium" gradient/shadow layer.
+   ============================================================================ */
+:root{ --radius-sm:10px; --radius-md:12px; --radius-lg:16px; --radius-xl:18px; --radius-2xl:20px; }
+body{ background-image:none !important; background:var(--color-bg-app); }
+/* remove ambient glows, dotted grid, floating chips, scroll cue, cursor fx */
+.hero-bg, .float-card, .scroll-cue, .cursor-dot, .cursor-ring{ display:none !important; }
+.hero{ overflow:visible; padding-top:118px; padding-bottom:64px; }
+.anim-float{ animation:none !important; }
+/* headings: solid ink, emphasis in teal (no gradient text) */
+.grad-text, .text-grad-anim{ -webkit-text-fill-color:initial !important; background:none !important; color:var(--blue-700) !important; animation:none !important; }
+.section-title,.hero h1,.dive-copy h2,.final-cta h2{ letter-spacing:-0.025em; font-weight:800; }
+/* eyebrow -> flat teal pill */
+.eyebrow{ background:var(--blue-50); border:none; color:var(--blue-700); box-shadow:none; }
+.eyebrow::before{ display:none; }
+/* buttons: flat; dark primary, outline ghost */
+.btn{ border-radius:10px; box-shadow:none !important; }
+.btn:hover{ transform:none !important; }
+.btn-primary{ background:var(--neutral-900) !important; color:#fff !important; border:1px solid var(--neutral-900); }
+.btn-primary:hover{ background:#000 !important; }
+.btn-primary::after{ display:none !important; }
+.btn-commit{ background:var(--blue-600) !important; color:#fff !important; }
+.btn-commit:hover{ background:var(--blue-700) !important; }
+.btn-ghost{ background:transparent; border:1px solid var(--color-border-strong); color:var(--color-text-primary); }
+.btn-ghost:hover{ background:transparent; border-color:var(--neutral-900); }
+.btn-light{ background:#fff; color:var(--neutral-900); border:none; }
+/* cards: hairline border, no shadow, no hover lift */
+.card,.feat-card,.prob-card,.res-card,.road-card,.plan,.tcard,.bcard,.faq-item,.sec-card{ box-shadow:none !important; border:1px solid var(--color-border-default); }
+.card-hover:hover,.plan:hover,.feat-card:hover,.res-card:hover,.road-card:hover,.flow-step:hover,.stat:hover,.mockrow:hover,.dive-vis .card .card:hover{ transform:none !important; box-shadow:none !important; }
+.feat-card::after,.res-card::after{ display:none !important; }
+/* icon tiles: flat teal-soft */
+.ic{ background:var(--blue-50) !important; border:none !important; color:var(--blue-700) !important; box-shadow:none !important; border-radius:10px; }
+.ic-green{ background:var(--green-50) !important; color:var(--green-700) !important; }
+.chip,.badge-pill{ box-shadow:none; }
+/* flow -> numbered editorial (no colored circle) */
+.flow{ gap:36px; }
+.flow-step{ border-top:1px solid var(--color-border-strong); padding:22px 14px 0 0; }
+.flow-step .sn{ background:none !important; color:var(--blue-700) !important; box-shadow:none !important; width:auto; height:auto; font-size:14px; font-weight:800; }
+.flow-step .conn{ display:none !important; }
+.flow-step .si{ color:var(--blue-700); }
+/* stats flat */
+.stat .sv{ color:var(--blue-700) !important; }
+/* product window frame: flat */
+.win{ box-shadow:none !important; border:1px solid var(--color-border-strong); }
+.win::before{ display:none !important; }
+/* dark sections + CTA band -> solid ink */
+.dark{ background:var(--neutral-900) !important; }
+.dark::before{ display:none !important; }
+/* nav: clean flat */
+.nav.shrunk{ box-shadow:none !important; border-bottom:1px solid var(--color-border-default); background:rgba(251,250,247,.92) !important; }
+.nav-link::before{ display:none !important; }
+/* reveal: no motion (avoids the "appearing" AI feel) */
+.reveal{ animation:none !important; opacity:1 !important; transform:none !important; }
