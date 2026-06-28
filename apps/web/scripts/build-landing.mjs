@@ -16,10 +16,16 @@ import { dirname, join } from 'node:path';
 const __dir = dirname(fileURLToPath(import.meta.url));
 const OUT = join(__dir, '..', 'public', 'landing');
 const PUB = join(__dir, '..', 'public');
-const SITE = 'https://mgi-delta.bg';
+const SITE = 'https://acco.bg';
 const BRAND = 'Acco';
-const V = 'v=20';
+const EMAIL = 'hello@acco.com';
+const V = 'v=21';
 mkdirSync(OUT, { recursive: true });
+
+/* escape a string for use inside a double-quoted HTML attribute (data-ten EN) */
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+/* heading with built-in BG/EN swap: site.js swaps innerHTML on language toggle */
+const TH = (en) => ` data-ten="${esc(en)}"`;
 
 /* ---- inline SVG icons (stroke = currentColor) ---------------------------- */
 const s = (p, w = 1.6) => `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
@@ -85,20 +91,20 @@ const head = (p) => `<!DOCTYPE html>
 
 /* ---- nav + mobile menu --------------------------------------------------- */
 const NAVLINKS = [
-  ['/features', 'Функции', 'FEATURES'],
-  ['/#how', 'Как работи', 'HOW IT WORKS'],
-  ['/pricing', 'Цени', 'PRICING'],
-  ['/faq', 'Въпроси', 'FAQ'],
+  ['/features', 'Функции'], ['/#how', 'Как работи'], ['/pricing', 'Цени'], ['/faq', 'Въпроси'],
 ];
-const nlink = (href, t, sub, on) => on
-  ? `<a href="${href}" style="display:flex; flex-direction:column; line-height:1;"><span style="font-size:14px; font-weight:600; color:#123A33; border-bottom:2px solid #A9854E; padding-bottom:2px;">${t}</span><span style="font-size:9px; letter-spacing:.09em; color:#A39B86; margin-top:3px;">${sub}</span></a>`
-  : `<a href="${href}" style="display:flex; flex-direction:column; line-height:1;"><span class="ul" style="font-size:14px; font-weight:500; color:#20302B;">${t}</span><span style="font-size:9px; letter-spacing:.09em; color:#A39B86; margin-top:3px;">${sub}</span></a>`;
+const nlink = (href, t, on) => on
+  ? `<a href="${href}" style="font-size:14.5px; font-weight:600; color:#123A33; border-bottom:2px solid #A9854E; padding-bottom:3px;">${t}</a>`
+  : `<a href="${href}" class="ul" style="font-size:14.5px; font-weight:500; color:#20302B;">${t}</a>`;
 
 const mobileMenu = () => `
 <div data-mobile-menu style="position:fixed; inset:0; z-index:90; background:rgba(244,239,228,.97); backdrop-filter:blur(8px); flex-direction:column; padding:28px clamp(20px,5vw,72px);">
   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:48px;">
     <div style="display:flex; align-items:center; gap:12px;">${LOGO}<span style="font-family:var(--serif); font-size:22px; font-weight:500; color:#123A33;">${BRAND}</span></div>
-    <button data-menu-close style="background:none; border:1px solid #D6CCB7; border-radius:999px; width:42px; height:42px; font-size:20px; color:#123A33; cursor:pointer;">✕</button>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div style="display:flex; align-items:center; border:1px solid #D6CCB7; border-radius:999px; overflow:hidden; font-size:12px; font-weight:600;"><button type="button" data-lang="bg" class="on" style="border:none; cursor:pointer; padding:7px 13px; background:#123A33; color:#F4EFE4;">BG</button><button type="button" data-lang="en" style="border:none; cursor:pointer; padding:7px 13px; background:transparent; color:#7c857f;">EN</button></div>
+      <button data-menu-close style="background:none; border:1px solid #D6CCB7; border-radius:999px; width:42px; height:42px; font-size:20px; color:#123A33; cursor:pointer;">✕</button>
+    </div>
   </div>
   <a href="/features" style="font-family:var(--serif); font-size:32px; color:#123A33; padding:14px 0; border-bottom:1px solid #E4DBC9;">Функции</a>
   <a href="/#how" style="font-family:var(--serif); font-size:32px; color:#123A33; padding:14px 0; border-bottom:1px solid #E4DBC9;">Как работи</a>
@@ -112,7 +118,7 @@ const nav = (active) => `${mobileMenu()}
 <nav id="nav" style="position:fixed; top:0; left:0; right:0; z-index:80; display:flex; align-items:center; justify-content:space-between; gap:40px; padding:20px clamp(20px,5vw,72px); border-bottom:1px solid rgba(228,219,201,.7);">
   <a href="/" style="display:flex; align-items:center; gap:12px;">${LOGO}<span style="font-family:var(--serif); font-size:22px; font-weight:500; letter-spacing:-.01em; color:#123A33;">${BRAND}</span></a>
   <div data-nav-links style="display:flex; align-items:center; justify-content:center; flex:1; gap:36px;">
-    ${NAVLINKS.map(([h, t, sub]) => nlink(h, t, sub, h === active)).join('')}
+    ${NAVLINKS.map(([h, t]) => nlink(h, t, h === active)).join('')}
   </div>
   <div data-nav-actions style="display:flex; align-items:center; gap:18px;">
     <div style="display:flex; align-items:center; border:1px solid #D6CCB7; border-radius:999px; overflow:hidden; font-size:11px; font-weight:600;"><button type="button" data-lang="bg" class="on" style="border:none; cursor:pointer; padding:5px 11px; background:#123A33; color:#F4EFE4;">BG</button><button type="button" data-lang="en" style="border:none; cursor:pointer; padding:5px 11px; background:transparent; color:#7c857f;">EN</button></div>
@@ -164,7 +170,7 @@ const homeHero = () => `
   <div data-hero-grid style="position:relative; max-width:1280px; margin:0 auto; display:grid; grid-template-columns:1.02fr .98fr; gap:56px; align-items:center;">
     <div>
       <div data-reveal style="display:inline-flex; align-items:center; gap:9px; padding:8px 15px; border:1px solid #D9CDB6; border-radius:999px; background:rgba(255,255,255,.55); margin-bottom:30px;"><span style="width:7px; height:7px; border-radius:50%; background:#16A463; animation:pulseDot 2.6s infinite;"></span><span style="font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#8a6f43;">AI счетоводство · България</span></div>
-      <h1 data-reveal data-reveal-delay="80" style="font-family:var(--serif); font-weight:400; font-size:clamp(46px,6.4vw,86px); line-height:1.0; letter-spacing:-.025em; color:#123A33; margin:0 0 28px;">От хаос с фактурите<br>към <span style="font-style:italic; color:#A9854E;">спокойни</span> финанси.</h1>
+      <h1 data-reveal data-reveal-delay="80"${TH('From invoice chaos<br>to <span style="font-style:italic; color:#A9854E;">calm</span> finances.')} style="font-family:var(--serif); font-weight:400; font-size:clamp(46px,6.4vw,86px); line-height:1.0; letter-spacing:-.025em; color:#123A33; margin:0 0 28px;">От хаос с фактурите<br>към <span style="font-style:italic; color:#A9854E;">спокойни</span> финанси.</h1>
       <p data-reveal data-reveal-delay="160" style="font-size:clamp(16px,1.4vw,19px); line-height:1.65; color:#4a5a53; max-width:480px; margin:0 0 38px;">Снимай документа, AI го разчита, ти одобряваш. Готови ДДС и отчети — води си счетоводството сам, без счетоводител.</p>
       <div data-reveal data-reveal-delay="240" style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:30px;">
         ${btnDark('/register', 'Започни безплатно')}
@@ -225,7 +231,7 @@ const beforeAfter = () => `
 <section style="position:relative; padding:clamp(72px,9vh,120px) clamp(20px,5vw,72px); background:#FBF8F1; border-top:1px solid #E4DBC9; overflow:hidden;">
   <div style="position:absolute; top:0; left:50%; transform:translateX(-50%); width:1px; height:100%; background:linear-gradient(#E4DBC9,transparent); pointer-events:none;"></div>
   <div style="max-width:1180px; margin:0 auto;">
-    <div data-reveal style="text-align:center; margin-bottom:54px;">${lab('Защо ' + BRAND)}<h2 style="font-family:var(--serif); font-weight:400; font-size:clamp(32px,4vw,52px); line-height:1.08; letter-spacing:-.02em; color:#123A33; margin:0;">Хаосът с документите<br>спира тук.</h2></div>
+    <div data-reveal style="text-align:center; margin-bottom:54px;">${lab('Защо ' + BRAND)}<h2${TH('Document chaos<br>stops here.')} style="font-family:var(--serif); font-weight:400; font-size:clamp(32px,4vw,52px); line-height:1.08; letter-spacing:-.02em; color:#123A33; margin:0;">Хаосът с документите<br>спира тук.</h2></div>
     <div data-split style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:stretch;">
       <div data-reveal="left" class="lift" style="position:relative; background:#FFFFFF; border:1px solid #EAE0CD; border-radius:20px; padding:36px;">
         <div style="display:inline-flex; align-items:center; gap:9px; margin-bottom:24px;"><span style="width:30px; height:30px; border-radius:9px; background:#FDECEC; color:#CB2A2A; display:flex; align-items:center; justify-content:center; font-size:15px;">✕</span><span style="font-size:13px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:#A88;">Без платформа</span></div>
@@ -309,7 +315,7 @@ const deepDive = () => `
 <section style="position:relative; padding:clamp(80px,11vh,140px) clamp(20px,5vw,72px); overflow:hidden;">
   <div style="position:absolute; top:10%; right:-10%; width:600px; height:600px; border-radius:50%; background:radial-gradient(circle,rgba(201,163,91,.1),transparent 65%); pointer-events:none; animation:glowPulse 11s ease-in-out infinite;"></div>
   <div data-deep-grid style="position:relative; max-width:1180px; margin:0 auto; display:grid; grid-template-columns:.92fr 1.08fr; gap:56px; align-items:center;">
-    <div data-reveal="left">${lab('Прегледай и одобри')}<h2 style="font-family:var(--serif); font-weight:400; font-size:clamp(32px,3.8vw,48px); line-height:1.08; letter-spacing:-.02em; color:#123A33; margin:0 0 22px;">Опашка за преглед, в която <span style="font-style:italic; color:#A9854E;">всичко е ясно.</span></h2><p style="font-size:16px; line-height:1.7; color:#4a5a53; margin:0 0 28px; max-width:440px;">AI предлага, ти решаваш. Високата увереност и чистите проверки се одобряват накуп — съмнителното изпъква само̀.</p>
+    <div data-reveal="left">${lab('Прегледай и одобри')}<h2${TH('A review queue where <span style="font-style:italic; color:#A9854E;">everything is clear.</span>')} style="font-family:var(--serif); font-weight:400; font-size:clamp(32px,3.8vw,48px); line-height:1.08; letter-spacing:-.02em; color:#123A33; margin:0 0 22px;">Опашка за преглед, в която <span style="font-style:italic; color:#A9854E;">всичко е ясно.</span></h2><p style="font-size:16px; line-height:1.7; color:#4a5a53; margin:0 0 28px; max-width:440px;">AI предлага, ти решаваш. Високата увереност и чистите проверки се одобряват накуп — съмнителното изпъква само̀.</p>
       <div style="display:flex; flex-direction:column; gap:18px; max-width:430px;">
         ${dvFeat(I.check, 'Детерминирани проверки, не само AI', 'ЕИК, VIES, IBAN и Основа + ДДС = Общо.', true)}
         ${dvFeat(s('<path d="M12 3v18M3 12h18"/>', 2), 'Всяко число — проследимо до документ', 'Пълна прозрачност и одитна следа.')}
@@ -361,19 +367,25 @@ const testimonials = () => `
 
 /* ---- FAQ ----------------------------------------------------------------- */
 const FAQS = [
-  ['Нужен ли ми е счетоводител, за да го ползвам?', `Не. ${BRAND} е създаден да водиш счетоводството си сам — AI разчита документите и предлага осчетоводяване, а ти само одобряваш. Ако работиш със счетоводител, можеш да го поканиш с роля.`],
-  ['Сигурни ли са данните ми?', 'Да. Хостингът и обработката са в ЕС, AI услугите са без задържане на данни, а архивът е защитен (WORM) с хеширана одитна следа за всяко действие.'],
-  ['Подава ли се ДДС декларацията автоматично?', 'Дневниците и справка-декларацията се попълват сами и са готови за подаване. Самото подаване към НАП винаги е твое решение — потвърждаваш и подписваш с КЕП. AI предлага, ти одобряваш.'],
-  ['Работи ли за моя тип бизнес?', 'Създадено е за самонаети, фрийлансъри, малки фирми и ЕООД, както и за онлайн магазини с много документи. Поддържа ЕИК, ДДС режими, националния сметкоплан, коректна кирилица и EUR.'],
-  ['Има ли безплатен период?', 'Да, 7 дни пълен достъп без банкова карта. Можеш да изпробваш качване, AI извличане, преглед и отчети с реални документи. Ако не продължиш, нищо не се таксува.'],
-  ['Мога ли да прекратя по всяко време?', 'Да. Сменяш плана или прекратяваш по всяко време от настройките, без срокове и неустойки.'],
+  ['Нужен ли ми е счетоводител, за да го ползвам?', `Не. ${BRAND} е създаден да водиш счетоводството си сам — AI разчита документите и предлага осчетоводяване, а ти само одобряваш. Ако работиш със счетоводител, можеш да го поканиш с роля.`,
+    'Do I need an accountant to use it?', `No. ${BRAND} is built so you can do your own books — AI reads the documents and proposes the posting, and you simply approve. If you work with an accountant, you can invite them with a role.`],
+  ['Сигурни ли са данните ми?', 'Да. Хостингът и обработката са в ЕС, AI услугите са без задържане на данни, а архивът е защитен (WORM) с хеширана одитна следа за всяко действие.',
+    'Is my data secure?', 'Yes. Hosting and processing are in the EU, AI services retain no data, and the archive is protected (WORM) with a hashed audit trail for every action.'],
+  ['Подава ли се ДДС декларацията автоматично?', 'Дневниците и справка-декларацията се попълват сами и са готови за подаване. Самото подаване към НАП винаги е твое решение — потвърждаваш и подписваш с КЕП. AI предлага, ти одобряваш.',
+    'Is the VAT return filed automatically?', 'The ledgers and the VAT return fill themselves and are ready to submit. The actual filing to the NRA is always your decision — you confirm and sign with your e-signature. AI proposes, you approve.'],
+  ['Работи ли за моя тип бизнес?', 'Създадено е за самонаети, фрийлансъри, малки фирми и ЕООД, както и за онлайн магазини с много документи. Поддържа ЕИК, ДДС режими, националния сметкоплан, коректна кирилица и EUR.',
+    'Does it work for my type of business?', 'It is built for the self-employed, freelancers, small businesses and Ltd. companies, as well as online stores with many documents. It supports company IDs, VAT regimes, the national chart of accounts, correct Cyrillic and EUR.'],
+  ['Има ли безплатен период?', 'Да, 7 дни пълен достъп без банкова карта. Можеш да изпробваш качване, AI извличане, преглед и отчети с реални документи. Ако не продължиш, нищо не се таксува.',
+    'Is there a free trial?', 'Yes, 7 days of full access without a card. You can try uploading, AI extraction, review and reports with real documents. If you do not continue, nothing is charged.'],
+  ['Мога ли да прекратя по всяко време?', 'Да. Сменяш плана или прекратяваш по всяко време от настройките, без срокове и неустойки.',
+    'Can I cancel anytime?', 'Yes. You can change your plan or cancel anytime from settings, with no lock-in and no penalties.'],
 ];
-const faqItem = (q, a, open) => `<div data-faq data-open="${open ? '1' : '0'}" style="border-bottom:1px solid #E4DBC9;"><div data-faq-q style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding:24px 0; cursor:pointer;"><span style="font-size:17px; font-weight:600; color:#123A33;">${q}</span><span data-faq-ic style="flex:none; color:#A9854E; font-size:22px;${open ? ' transform:rotate(45deg);' : ''}">+</span></div><div data-faq-a style="${open ? '' : 'max-height:0; opacity:0; '}overflow:hidden;"><p style="font-size:14.5px; line-height:1.7; color:#5a6a63; margin:0 0 24px;">${a}</p></div></div>`;
-const faqSplit = (items, title, asH1) => `
+const faqItem = (q, a, open, qEN, aEN) => `<div data-faq data-open="${open ? '1' : '0'}" style="border-bottom:1px solid #E4DBC9;"><div data-faq-q style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding:24px 0; cursor:pointer;"><span${qEN ? TH(qEN) : ''} style="font-size:17px; font-weight:600; color:#123A33;">${q}</span><span data-faq-ic style="flex:none; color:#A9854E; font-size:22px;${open ? ' transform:rotate(45deg);' : ''}">+</span></div><div data-faq-a style="${open ? '' : 'max-height:0; opacity:0; '}overflow:hidden;"><p${aEN ? TH(aEN) : ''} style="font-size:14.5px; line-height:1.7; color:#5a6a63; margin:0 0 24px;">${a}</p></div></div>`;
+const faqSplit = (items, title, asH1, enTitle) => `
 <section id="faq" style="position:relative; padding:clamp(80px,11vh,140px) clamp(20px,5vw,72px);">
   <div data-2col style="max-width:1100px; margin:0 auto; display:grid; grid-template-columns:.8fr 1.2fr; gap:48px; align-items:start;">
-    <div data-reveal="left" style="position:sticky; top:120px;">${lab('Въпроси')}${asH1 ? `<h1 style="font-family:var(--serif); font-weight:400; font-size:clamp(30px,3.6vw,44px); line-height:1.08; letter-spacing:-.02em; color:#123A33; margin:0 0 18px;">${title}</h1>` : `<h2 style="font-family:var(--serif); font-weight:400; font-size:clamp(30px,3.6vw,44px); line-height:1.08; letter-spacing:-.02em; color:#123A33; margin:0 0 18px;">${title}</h2>`}<p style="font-size:15px; line-height:1.65; color:#5a6a63; margin:0 0 22px;">Не намираш отговор? Пиши ни — отговаряме на български, бързо.</p><a href="/contact" class="j-out lift" style="display:inline-flex; align-items:center; gap:9px; padding:13px 22px; border:1px solid #C9BCA1; color:#123A33; border-radius:999px; font-size:14px; font-weight:500;">Свържи се с нас →</a></div>
-    <div data-reveal="right" style="display:flex; flex-direction:column;">${items.map(([q, a], i) => faqItem(q, a, i === 0)).join('')}</div>
+    <div data-reveal="left" style="position:sticky; top:120px;">${lab('Въпроси')}${asH1 ? `<h1${enTitle ? TH(enTitle) : ''} style="font-family:var(--serif); font-weight:400; font-size:clamp(30px,3.6vw,44px); line-height:1.08; letter-spacing:-.02em; color:#123A33; margin:0 0 18px;">${title}</h1>` : `<h2${enTitle ? TH(enTitle) : ''} style="font-family:var(--serif); font-weight:400; font-size:clamp(30px,3.6vw,44px); line-height:1.08; letter-spacing:-.02em; color:#123A33; margin:0 0 18px;">${title}</h2>`}<p style="font-size:15px; line-height:1.65; color:#5a6a63; margin:0 0 22px;">Не намираш отговор? Пиши ни — отговаряме на български, бързо.</p><a href="/contact" class="j-out lift" style="display:inline-flex; align-items:center; gap:9px; padding:13px 22px; border:1px solid #C9BCA1; color:#123A33; border-radius:999px; font-size:14px; font-weight:500;">Свържи се с нас →</a></div>
+    <div data-reveal="right" style="display:flex; flex-direction:column;">${items.map(([q, a, qEN, aEN], i) => faqItem(q, a, i === 0, qEN, aEN)).join('')}</div>
   </div>
 </section>`;
 
@@ -384,25 +396,25 @@ const finalCta = () => `
   <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:420px; height:420px; max-width:80vw; border:1px dashed rgba(169,133,78,.22); border-radius:50%; animation:spinSlow 70s linear infinite; pointer-events:none;"></div>
   <div data-reveal style="position:relative;">
     <div style="display:inline-flex; align-items:center; gap:8px; padding:7px 15px; border:1px solid #D9CDB6; border-radius:999px; background:rgba(255,255,255,.6); margin-bottom:26px;"><span style="width:6px; height:6px; border-radius:50%; background:#16A463;"></span><span style="font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#8a6f43;">7 дни безплатно</span></div>
-    <h2 style="font-family:var(--serif); font-weight:400; font-size:clamp(38px,5.4vw,68px); line-height:1.04; letter-spacing:-.025em; color:#123A33; margin:0 0 18px;">Започни да си водиш<br>сметките днес.</h2>
+    <h2${TH('Start keeping your<br>books today.')} style="font-family:var(--serif); font-weight:400; font-size:clamp(38px,5.4vw,68px); line-height:1.04; letter-spacing:-.025em; color:#123A33; margin:0 0 18px;">Започни да си водиш<br>сметките днес.</h2>
     <p style="font-size:18px; color:#5a6a63; margin:0 0 34px;">Без банкова карта. Без ангажимент. Спокойни финанси от първия документ.</p>
     <div style="display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;">${btnDark('/register', 'Започни безплатно', true)}${btnOut('/pricing', 'Виж цените', true)}</div>
   </div>
 </section>`;
 
 /* ---- generic page hero (centered) ---------------------------------------- */
-const pageHero = (eb, h1, lead, ctas) => `
+const pageHero = (eb, h1, lead, ctas, enH1, enLead) => `
 <section style="position:relative; padding:150px clamp(20px,5vw,72px) 70px; overflow:hidden; text-align:center;">
   <div style="position:absolute; top:-100px; left:50%; transform:translateX(-50%); width:680px; height:560px; max-width:95vw; background:radial-gradient(ellipse, rgba(201,163,91,.14), transparent 66%); pointer-events:none; animation:glowPulse 11s ease-in-out infinite;"></div>
   ${eyebrow(eb)}
-  <h1 data-reveal data-reveal-delay="80" style="position:relative; font-family:var(--serif); font-weight:400; font-size:clamp(40px,5.6vw,76px); line-height:1.04; letter-spacing:-.025em; color:#123A33; margin:0 auto 24px; max-width:880px;">${h1}</h1>
-  <p data-reveal data-reveal-delay="160" style="position:relative; font-size:clamp(16px,1.4vw,19px); line-height:1.65; color:#4a5a53; max-width:580px; margin:0 auto 34px;">${lead}</p>
+  <h1 data-reveal data-reveal-delay="80"${enH1 ? TH(enH1) : ''} style="position:relative; font-family:var(--serif); font-weight:400; font-size:clamp(40px,5.6vw,76px); line-height:1.04; letter-spacing:-.025em; color:#123A33; margin:0 auto 24px; max-width:880px;">${h1}</h1>
+  <p data-reveal data-reveal-delay="160"${enLead ? TH(enLead) : ''} style="position:relative; font-size:clamp(16px,1.4vw,19px); line-height:1.65; color:#4a5a53; max-width:580px; margin:0 auto 34px;">${lead}</p>
   ${ctas ? `<div data-reveal data-reveal-delay="240" style="position:relative; display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;">${ctas}</div>` : ''}
 </section>`;
 
 /* ---- FEATURES page: alternating feature rows ----------------------------- */
-const featChecks = (items) => `<div style="display:flex; flex-direction:column; gap:14px; max-width:430px;">${items.map(([b, r]) => `<div style="display:flex; gap:12px; align-items:flex-start;"><span style="color:#16A463; margin-top:2px;">✓</span><span style="font-size:14.5px; color:#3a4843;"><strong style="color:#20302B;">${b}</strong> — ${r}</span></div>`).join('')}</div>`;
-const featText = (num, h2, lead, checks) => `<div data-reveal="left"><div style="display:inline-flex; align-items:center; gap:8px; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#A9854E; margin-bottom:18px;"><span style="width:24px; height:1px; background:#A9854E;"></span>${num}</div><h2 style="font-family:var(--serif); font-weight:400; font-size:clamp(30px,3.6vw,46px); line-height:1.08; letter-spacing:-.02em; color:#123A33; margin:0 0 18px;">${h2}</h2><p style="font-size:16px; line-height:1.7; color:#4a5a53; margin:0 0 26px; max-width:440px;">${lead}</p>${featChecks(checks)}</div>`;
+const featChecks = (items) => `<div style="display:flex; flex-direction:column; gap:14px; max-width:430px;">${items.map(([b, r, bEN, rEN]) => `<div style="display:flex; gap:12px; align-items:flex-start;"><span style="color:#16A463; margin-top:2px;">✓</span><span${bEN ? TH(`<strong style="color:#20302B;">${bEN}</strong> — ${rEN}`) : ''} style="font-size:14.5px; color:#3a4843;"><strong style="color:#20302B;">${b}</strong> — ${r}</span></div>`).join('')}</div>`;
+const featText = (num, h2, lead, checks, h2EN, leadEN) => `<div data-reveal="left"><div style="display:inline-flex; align-items:center; gap:8px; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#A9854E; margin-bottom:18px;"><span style="width:24px; height:1px; background:#A9854E;"></span>${num}</div><h2${h2EN ? TH(h2EN) : ''} style="font-family:var(--serif); font-weight:400; font-size:clamp(30px,3.6vw,46px); line-height:1.08; letter-spacing:-.02em; color:#123A33; margin:0 0 18px;">${h2}</h2><p${leadEN ? TH(leadEN) : ''} style="font-size:16px; line-height:1.7; color:#4a5a53; margin:0 0 26px; max-width:440px;">${lead}</p>${featChecks(checks)}</div>`;
 const featRow = (textFirst, alt, anchor, text, media) => `
 <section${anchor ? ` id="${anchor}"` : ''} style="position:relative; padding:clamp(64px,8vh,110px) clamp(20px,5vw,72px); border-top:1px solid #E4DBC9;${alt ? ' background:#FBF8F1;' : ''}">
   <div data-feat style="max-width:1180px; margin:0 auto; display:grid; grid-template-columns:${textFirst ? '1fr 1.1fr' : '1.1fr 1fr'}; gap:64px; align-items:center;">
@@ -468,7 +480,7 @@ const securityBand = () => `
 <section id="security" style="position:relative; padding:clamp(72px,9vh,120px) clamp(20px,5vw,72px); background:#123A33; color:#F4EFE4; overflow:hidden; border-top:1px solid #E4DBC9;">
   <div style="position:absolute; top:-80px; right:6%; width:420px; height:420px; border-radius:50%; background:radial-gradient(circle, rgba(233,201,140,.12), transparent 70%); pointer-events:none; animation:glowPulse 12s ease-in-out infinite;"></div>
   <div style="position:relative; max-width:1180px; margin:0 auto;">
-    <div data-reveal style="max-width:640px; margin-bottom:48px;"><div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#E9C98C; margin-bottom:16px;">Сигурност по дизайн</div><h2 style="font-family:var(--serif); font-weight:400; font-size:clamp(30px,3.8vw,48px); line-height:1.08; letter-spacing:-.02em; color:#F4EFE4; margin:0;">Създадено да пази парите ти<br>и спокойствието ти.</h2></div>
+    <div data-reveal style="max-width:640px; margin-bottom:48px;"><div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#E9C98C; margin-bottom:16px;">Сигурност по дизайн</div><h2${TH('Built to protect your money<br>and your peace of mind.')} style="font-family:var(--serif); font-weight:400; font-size:clamp(30px,3.8vw,48px); line-height:1.08; letter-spacing:-.02em; color:#F4EFE4; margin:0;">Създадено да пази парите ти<br>и спокойствието ти.</h2></div>
     <div data-4col style="display:grid; grid-template-columns:repeat(4,1fr); gap:18px;">
       ${secCard(I.shieldP, 'Неизменен ledger', 'Само сторниращи записи. Нищо не се изтрива тихо.')}
       ${secCard(I.ledger, 'Хеширан одит', 'Append-only следа за всяко действие.', 80)}
@@ -501,14 +513,14 @@ const capabilities = () => `
 const featuresCta = () => `
 <section style="position:relative; padding:clamp(90px,12vh,150px) clamp(20px,5vw,72px); overflow:hidden; text-align:center; background:#FBF8F1; border-top:1px solid #E4DBC9;">
   <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:760px; height:420px; max-width:90vw; background:radial-gradient(ellipse, rgba(201,163,91,.16), transparent 70%); pointer-events:none; animation:glowPulse 9s ease-in-out infinite;"></div>
-  <div data-reveal style="position:relative;"><h2 style="font-family:var(--serif); font-weight:400; font-size:clamp(36px,5vw,64px); line-height:1.05; letter-spacing:-.025em; color:#123A33; margin:0 0 18px;">Опитай всяка функция,<br>безплатно.</h2><p style="font-size:18px; color:#5a6a63; margin:0 0 34px;">7 дни. Без банкова карта. Без ангажимент.</p><div style="display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;">${btnDark('/register', 'Започни безплатно', true)}${btnOut('/pricing', 'Виж цените', true)}</div></div>
+  <div data-reveal style="position:relative;"><h2${TH('Try every feature,<br>free.')} style="font-family:var(--serif); font-weight:400; font-size:clamp(36px,5vw,64px); line-height:1.05; letter-spacing:-.025em; color:#123A33; margin:0 0 18px;">Опитай всяка функция,<br>безплатно.</h2><p style="font-size:18px; color:#5a6a63; margin:0 0 34px;">7 дни. Без банкова карта. Без ангажимент.</p><div style="display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;">${btnDark('/register', 'Започни безплатно', true)}${btnOut('/pricing', 'Виж цените', true)}</div></div>
 </section>`;
 
-const featuresBody = () => pageHero('Функции · Features', 'Всичко за финансите ти,<br>на едно <span style="font-style:italic; color:#A9854E;">спокойно</span> място.', 'От заснет документ до подадена декларация — всяка стъпка е автоматизирана от AI и потвърдена от теб. Ето какво можеш.', btnDark('/register', 'Започни безплатно') + btnOut('/pricing', 'Виж цените'))
-  + featRow(true, false, 'extract', featText('01 · Capture', 'AI извличане, на което<br>можеш да стъпиш.', 'Снимка, PDF или XML — AI разчита всяко поле и предлага осчетоводяване срещу националния сметкоплан. Всяка стойност носи оценка на увереност, а детерминираните проверки имат думата.', [['Увереност за всяко поле', '🟢 високо, 🟠 средно, 🔴 ниско, винаги с процент.'], ['Детерминирани проверки', 'ЕИК, VIES, IBAN и Основа + ДДС = Общо.'], ['Винаги „защо?“', 'всяко предложение обяснява себе си и сочи източник.']]), mediaExtract())
-  + featRow(false, true, 'invoicing', featText('02 · Invoicing', 'Фактури, които изглеждат професионално.', 'Издавай фактури, проформи и кредитни известия с последователна номерация и чист PDF. Нето, ДДС и общо се смятат на живо — в EUR, с BGN като отправна стойност.', [['Последователна номерация', 'без пропуски, без дубли.'], ['Двувалутно', 'EUR функционална, BGN до 8 август 2026.'], ['Кредитни и дебитни известия', 'свързани с оригинала.']]), mediaInvoice())
-  + featRow(true, false, 'vat', featText('03 · VAT &amp; НАП', 'ДДС, готово за подаване.', 'Дневниците за покупки и продажби и справка-декларацията се попълват сами от осчетоводените документи. Преди да подадеш, виждаш точно какво ще се случи — и подписваш с КЕП.', [['Дневници покупки и продажби', 'автоматично от ledger-а.'], ['Клетки на НАП', 'съпоставени и проверени.'], ['Ти подаваш, не AI', 'потвърждение и подпис с КЕП.']]), mediaVat())
-  + featRow(false, true, 'reports', featText('04 · Reports', 'Отчети, които разбираш.', 'ОПР, баланс и оборотна ведомост — на живо, винаги актуални и проследими до документа. Виж как стои бизнесът ти, без да чакаш края на месеца.', [['ОПР, баланс, оборотна ведомост', 'на живо.'], ['Проследимост', 'всяко число води до документа зад него.'], ['Експорт', 'за теб или за счетоводителя ти.']]), mediaReports())
+const featuresBody = () => pageHero('Функции · Features', 'Всичко за финансите ти,<br>на едно <span style="font-style:italic; color:#A9854E;">спокойно</span> място.', 'От заснет документ до подадена декларация — всяка стъпка е автоматизирана от AI и потвърдена от теб. Ето какво можеш.', btnDark('/register', 'Започни безплатно') + btnOut('/pricing', 'Виж цените'), 'Everything for your finances,<br>in one <span style="font-style:italic; color:#A9854E;">calm</span> place.', 'From a snapped document to a filed return — every step automated by AI and confirmed by you. Here is what you can do.')
+  + featRow(true, false, 'extract', featText('01 · Capture', 'AI извличане, на което<br>можеш да стъпиш.', 'Снимка, PDF или XML — AI разчита всяко поле и предлага осчетоводяване срещу националния сметкоплан. Всяка стойност носи оценка на увереност, а детерминираните проверки имат думата.', [['Увереност за всяко поле', '🟢 високо, 🟠 средно, 🔴 ниско, винаги с процент.', 'Confidence per field', '🟢 high, 🟠 medium, 🔴 low, always with a percentage.'], ['Детерминирани проверки', 'ЕИК, VIES, IBAN и Основа + ДДС = Общо.', 'Deterministic checks', 'company ID, VIES, IBAN and Base + VAT = Total.'], ['Винаги „защо?“', 'всяко предложение обяснява себе си и сочи източник.', 'Always “why?”', 'every suggestion explains itself and cites a source.']], 'AI extraction you<br>can rely on.', 'A photo, PDF or XML — AI reads every field and proposes the posting against the national chart of accounts. Every value carries a confidence score, and deterministic checks have the final say.'), mediaExtract())
+  + featRow(false, true, 'invoicing', featText('02 · Invoicing', 'Фактури, които изглеждат професионално.', 'Издавай фактури, проформи и кредитни известия с последователна номерация и чист PDF. Нето, ДДС и общо се смятат на живо — в EUR, с BGN като отправна стойност.', [['Последователна номерация', 'без пропуски, без дубли.', 'Sequential numbering', 'no gaps, no duplicates.'], ['Двувалутно', 'EUR функционална, BGN до 8 август 2026.', 'Dual-currency', 'EUR functional, BGN until 8 August 2026.'], ['Кредитни и дебитни известия', 'свързани с оригинала.', 'Credit and debit notes', 'linked to the original.']], 'Invoices that look professional.', 'Issue invoices, proformas and credit notes with sequential numbering and a clean PDF. Net, VAT and total are calculated live — in EUR, with BGN as the reference value.'), mediaInvoice())
+  + featRow(true, false, 'vat', featText('03 · VAT &amp; НАП', 'ДДС, готово за подаване.', 'Дневниците за покупки и продажби и справка-декларацията се попълват сами от осчетоводените документи. Преди да подадеш, виждаш точно какво ще се случи — и подписваш с КЕП.', [['Дневници покупки и продажби', 'автоматично от ledger-а.', 'Purchase & sales ledgers', 'automatically from the ledger.'], ['Клетки на НАП', 'съпоставени и проверени.', 'NRA cells', 'mapped and checked.'], ['Ти подаваш, не AI', 'потвърждение и подпис с КЕП.', 'You file, not AI', 'confirmation and e-signature.']], 'VAT, ready to file.', 'The purchase and sales ledgers and the VAT return fill themselves from posted documents. Before you submit, you see exactly what will happen — and sign with your e-signature.'), mediaVat())
+  + featRow(false, true, 'reports', featText('04 · Reports', 'Отчети, които разбираш.', 'ОПР, баланс и оборотна ведомост — на живо, винаги актуални и проследими до документа. Виж как стои бизнесът ти, без да чакаш края на месеца.', [['ОПР, баланс, оборотна ведомост', 'на живо.', 'P&L, balance sheet, trial balance', 'live.'], ['Проследимост', 'всяко число води до документа зад него.', 'Traceability', 'every number leads to the document behind it.'], ['Експорт', 'за теб или за счетоводителя ти.', 'Export', 'for you or your accountant.']], 'Reports you understand.', 'P&L, balance sheet, trial balance — live, always current and traceable to the document. See how your business stands without waiting for month-end.'), mediaReports())
   + securityBand() + capabilities() + featuresCta();
 
 /* ---- PRICING page -------------------------------------------------------- */
@@ -517,7 +529,7 @@ const pricingTiers = () => `
 <section style="position:relative; padding:150px clamp(20px,5vw,72px) 50px; overflow:hidden; text-align:center;">
   <div style="position:absolute; top:-100px; left:50%; transform:translateX(-50%); width:680px; height:540px; max-width:95vw; background:radial-gradient(ellipse, rgba(201,163,91,.14), transparent 66%); pointer-events:none; animation:glowPulse 11s ease-in-out infinite;"></div>
   ${eyebrow('Цени · Pricing')}
-  <h1 data-reveal data-reveal-delay="80" style="position:relative; font-family:var(--serif); font-weight:400; font-size:clamp(40px,5.6vw,76px); line-height:1.04; letter-spacing:-.025em; color:#123A33; margin:0 auto 22px; max-width:820px;">Прозрачни цени,<br>без <span style="font-style:italic; color:#A9854E;">изненади.</span></h1>
+  <h1 data-reveal data-reveal-delay="80"${TH('Transparent pricing,<br>no <span style="font-style:italic; color:#A9854E;">surprises.</span>')} style="position:relative; font-family:var(--serif); font-weight:400; font-size:clamp(40px,5.6vw,76px); line-height:1.04; letter-spacing:-.025em; color:#123A33; margin:0 auto 22px; max-width:820px;">Прозрачни цени,<br>без <span style="font-style:italic; color:#A9854E;">изненади.</span></h1>
   <p data-reveal data-reveal-delay="160" style="position:relative; font-size:clamp(16px,1.4vw,19px); line-height:1.65; color:#4a5a53; max-width:540px; margin:0 auto 34px;">Една ясна абонаментна цена. Без такси за документ, без скрити условия. Започни безплатно за 7 дни.</p>
   <div data-reveal data-reveal-delay="220" style="position:relative; display:inline-flex; align-items:center; gap:12px;"><div style="display:flex; align-items:center; background:#fff; border:1px solid #E4DBC9; border-radius:999px; padding:5px; box-shadow:0 6px 18px rgba(18,30,26,.06);"><button data-bill="month" style="padding:9px 20px; border:none; background:#123A33; color:#F4EFE4; border-radius:999px; font-size:13.5px; font-weight:600; cursor:pointer;">Месечно</button><button data-bill="year" style="padding:9px 20px; border:none; background:transparent; color:#5a6a63; border-radius:999px; font-size:13.5px; font-weight:600; cursor:pointer;">Годишно</button></div><span style="font-size:12px; font-weight:600; color:#0E8650; background:#ECFBF3; padding:6px 12px; border-radius:999px;">− 20% годишно</span></div>
 </section>
@@ -558,7 +570,7 @@ const customPlan = () => `
     <div data-2col style="position:relative; display:grid; grid-template-columns:1.25fr .75fr; gap:40px; align-items:center; padding:clamp(32px,4vw,52px);">
       <div>
         <div style="display:inline-flex; align-items:center; gap:9px; padding:7px 14px; border:1px solid rgba(233,201,140,.4); border-radius:999px; background:rgba(233,201,140,.08); margin-bottom:22px;"><span style="width:6px; height:6px; border-radius:50%; background:#E9C98C;"></span><span style="font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#E9C98C;">Индивидуален · Custom</span></div>
-        <h2 style="font-family:var(--serif); font-weight:400; font-size:clamp(28px,3.4vw,42px); line-height:1.08; letter-spacing:-.02em; color:#F4EFE4; margin:0 0 14px;">За по-големи екипи и<br>специфични изисквания.</h2>
+        <h2${TH('For larger teams and<br>specific requirements.')} style="font-family:var(--serif); font-weight:400; font-size:clamp(28px,3.4vw,42px); line-height:1.08; letter-spacing:-.02em; color:#F4EFE4; margin:0 0 14px;">За по-големи екипи и<br>специфични изисквания.</h2>
         <p style="font-size:15.5px; line-height:1.65; color:#bcd0c9; margin:0 0 24px; max-width:480px;">Голям обем документи, много дружества, собствени роли и интеграции. Изграждаме план, който пасва точно на счетоводството ти.</p>
         <div style="display:flex; flex-wrap:wrap; gap:10px;">${['Неограничени дружества', 'SSO и собствени роли', 'Миграция на данни', 'Посветен мениджър & SLA'].map((t) => `<span style="display:inline-flex; align-items:center; gap:7px; font-size:12.5px; color:#dceae4; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); padding:8px 13px; border-radius:999px;"><span style="color:#86f0bd;">✓</span> ${t}</span>`).join('')}</div>
       </div>
@@ -589,12 +601,16 @@ const comparison = () => `
 </section>`;
 
 const PRICE_FAQ = [
-  ['Има ли такса за документ?', `Не. Плащаш една ясна месечна цена според плана. Всеки план включва месечен обем документи — без скрити такси на брой.`],
-  ['Мога ли да сменя плана?', 'По всяко време — нагоре или надолу. Промяната влиза веднага, а разликата се изравнява пропорционално.'],
-  ['Какво включва безплатният период?', '7 дни пълен достъп до плана Бизнес, без банкова карта. Ако не продължиш, нищо не се таксува.'],
-  ['Мога ли да фактурирам в евро?', `Да. ${BRAND} е изцяло в евро — фактури, отчети и декларации са в една валута, без обърквания.`],
+  ['Има ли такса за документ?', `Не. Плащаш една ясна месечна цена според плана. Всеки план включва месечен обем документи — без скрити такси на брой.`,
+    'Is there a per-document fee?', 'No. You pay one clear monthly price by plan. Each plan includes a monthly document volume — no hidden per-item fees.'],
+  ['Мога ли да сменя плана?', 'По всяко време — нагоре или надолу. Промяната влиза веднага, а разликата се изравнява пропорционално.',
+    'Can I change my plan?', 'Anytime — up or down. The change takes effect immediately and the difference is prorated.'],
+  ['Какво включва безплатният период?', '7 дни пълен достъп до плана Бизнес, без банкова карта. Ако не продължиш, нищо не се таксува.',
+    'What does the free trial include?', '7 days of full access to the Business plan, no card required. If you do not continue, nothing is charged.'],
+  ['Мога ли да фактурирам в евро?', `Да. ${BRAND} е изцяло в евро — фактури, отчети и декларации са в една валута, без обърквания.`,
+    'Can I invoice in euro?', `Yes. ${BRAND} is fully in euro — invoices, reports and returns are in a single currency, no confusion.`],
 ];
-const pricingBody = () => pricingTiers() + customPlan() + comparison() + faqSplit(PRICE_FAQ, 'Ясно и предвидимо.', false) + finalCta();
+const pricingBody = () => pricingTiers() + customPlan() + comparison() + faqSplit(PRICE_FAQ, 'Ясно и предвидимо.', false, 'Clear and predictable.') + finalCta();
 
 /* ---- CONTACT page -------------------------------------------------------- */
 const contactInfo = (ic, label, value, green) => `<div style="display:flex; gap:14px; align-items:center;"><span style="flex:none; width:42px; height:42px; border-radius:12px; background:#FBF8F1; border:1px solid #EAE0CD; color:${green ? '#16A463' : '#A9854E'}; display:flex; align-items:center; justify-content:center;">${ic}</span><div><div style="font-size:11px; color:#8a948e;">${label}</div><div style="font-size:15px; font-weight:600; color:#20302B;">${value}</div></div></div>`;
@@ -605,9 +621,9 @@ const contactBody = () => `
   <div data-2col style="position:relative; max-width:1120px; margin:0 auto; display:grid; grid-template-columns:.85fr 1.15fr; gap:56px; align-items:start;">
     <div data-reveal="left">
       <div style="font-size:11px; letter-spacing:.13em; text-transform:uppercase; color:#A9854E; margin-bottom:16px;">Контакти · Get in touch</div>
-      <h1 style="font-family:var(--serif); font-weight:400; font-size:clamp(30px,3.8vw,50px); line-height:1.06; letter-spacing:-.02em; color:#123A33; margin:0 0 18px;">Да поговорим за<br>твоя бизнес.</h1>
+      <h1${TH("Let's talk about<br>your business.")} style="font-family:var(--serif); font-weight:400; font-size:clamp(30px,3.8vw,50px); line-height:1.06; letter-spacing:-.02em; color:#123A33; margin:0 0 18px;">Да поговорим за<br>твоя бизнес.</h1>
       <p style="font-size:16px; line-height:1.7; color:#4a5a53; margin:0 0 34px; max-width:400px;">Кажи ни с какво се занимаваш и какво ти трябва. Връщаме се с ясен отговор — обикновено до един работен ден.</p>
-      <div style="display:flex; flex-direction:column; gap:20px;">${contactInfo(I.mail, 'Имейл', '<a href="mailto:hello@mgi-delta.bg" style="color:inherit">hello@mgi-delta.bg</a>')}${contactInfo(I.phone, 'Телефон', '+359 2 555 0100')}${contactInfo(I.clock, 'Отговор', 'До 1 работен ден', true)}</div>
+      <div style="display:flex; flex-direction:column; gap:20px;">${contactInfo(I.mail, 'Имейл', `<a href="mailto:${EMAIL}" style="color:inherit">${EMAIL}</a>`)}${contactInfo(I.phone, 'Телефон', '+359 2 555 0100')}${contactInfo(I.clock, 'Отговор', 'До 1 работен ден', true)}</div>
     </div>
     <div data-reveal="right" data-reveal-delay="120" style="position:relative;">
       <form data-contact-form novalidate style="background:#fff; border:1px solid #EAE0CD; border-radius:22px; padding:clamp(26px,3vw,40px); box-shadow:0 30px 70px rgba(18,30,26,.1);">
@@ -625,7 +641,7 @@ const contactBody = () => `
 
 /* ---- ABOUT / AUDIENCE / BLOG / RESOURCES --------------------------------- */
 const audienceCard = (ic, t, d, delay) => `<div data-reveal${delay ? ` data-reveal-delay="${delay}"` : ''} class="lift" style="background:#FBF8F1; border:1px solid #EAE0CD; border-radius:16px; padding:28px;"><div style="width:46px; height:46px; border-radius:12px; background:#FAF3E4; color:#A9854E; display:flex; align-items:center; justify-content:center; margin-bottom:16px;">${ic}</div><h3 style="font-family:var(--serif); font-weight:500; font-size:20px; color:#123A33; margin:0 0 7px;">${t}</h3><p style="font-size:13.5px; line-height:1.6; color:#5a6a63; margin:0;">${d}</p></div>`;
-const aboutBody = () => pageHero('За нас · About', `Защо създадохме <span style="font-style:italic; color:#A9854E;">${BRAND}</span>.`, 'Вярваме, че собственикът на малък бизнес не трябва да избира между това да върти бизнеса си и да се бори с фактури и ДДС.', btnDark('/register', 'Започни безплатно') + btnOut('/pricing', 'Виж цените'))
+const aboutBody = () => pageHero('За нас · About', `Защо създадохме <span style="font-style:italic; color:#A9854E;">${BRAND}</span>.`, 'Вярваме, че собственикът на малък бизнес не трябва да избира между това да върти бизнеса си и да се бори с фактури и ДДС.', btnDark('/register', 'Започни безплатно') + btnOut('/pricing', 'Виж цените'), `Why we built <span style="font-style:italic; color:#A9854E;">${BRAND}</span>.`, 'We believe a small-business owner should not have to choose between running the business and fighting invoices and VAT.')
   + `<section style="position:relative; padding:clamp(40px,5vh,70px) clamp(20px,5vw,72px) clamp(64px,8vh,110px);"><div data-deep-grid style="max-width:1180px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:48px;">
       <div data-reveal="left" class="lift" style="background:#123A33; color:#F4EFE4; border-radius:20px; padding:36px; overflow:hidden; position:relative; transition:transform .5s var(--ease), box-shadow .5s;"><div style="position:absolute; top:-50px; right:-40px; width:240px; height:240px; border-radius:50%; background:radial-gradient(circle,rgba(233,201,140,.16),transparent 70%);"></div><div style="position:relative;"><div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#E9C98C; margin-bottom:14px;">Нашата мисия</div><h2 style="font-family:var(--serif); font-weight:400; font-size:28px; line-height:1.15; color:#F4EFE4; margin:0 0 14px;">Счетоводство, което всеки разбира.</h2><p style="font-size:15px; line-height:1.7; color:#bcd0c9; margin:0;">Да направим счетоводството разбираемо и автоматично за малките фирми, фрийлансърите и самонаетите в България — с AI, който върши рутината, и човек, който решава важното.</p></div></div>
       <div data-reveal="right" data-reveal-delay="120" class="lift" style="background:#fff; border:1px solid #EAE0CD; border-radius:20px; padding:36px;"><div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#A9854E; margin-bottom:14px;">За кого е</div><h2 style="font-family:var(--serif); font-weight:400; font-size:28px; line-height:1.15; color:#123A33; margin:0 0 14px;">За хора, които искат контрол.</h2><p style="font-size:15px; line-height:1.7; color:#4a5a53; margin:0;">За самонаети, фрийлансъри и малки фирми, които искат да управляват финансите на бизнеса си сами, без да плащат на счетоводител. Платформата говори български, мисли в евро и спазва изискванията на НАП.</p></div>
@@ -640,7 +656,7 @@ const BLOG = [
   ['blog-4.jpg', 'Данъци', 'Данъчен календар 2026: ключовите срокове за всеки собственик'],
   ['blog-5.jpg', 'Съответствие', 'Преходът към евро: какво да очаквате'],
 ];
-const blogBody = () => pageHero('Блог · Blog', 'От блога.', 'Практични статии за счетоводство, ДДС и растеж на бизнеса.', '')
+const blogBody = () => pageHero('Блог · Blog', 'От блога.', 'Практични статии за счетоводство, ДДС и растеж на бизнеса.', '', 'From the blog.', 'Practical articles on accounting, VAT and business growth.')
   + `<section style="position:relative; padding:0 clamp(20px,5vw,72px) clamp(72px,9vh,120px);"><div style="max-width:1180px; margin:0 auto;"><div data-3col style="display:grid; grid-template-columns:repeat(3,1fr); gap:18px;">${BLOG.map(([img, cat, t], i) => `<a data-reveal${i ? ` data-reveal-delay="${(i % 3) * 80}"` : ''} class="lift" href="/contact" style="background:#fff; border:1px solid #EAE0CD; border-radius:18px; overflow:hidden; display:flex; flex-direction:column;"><div style="aspect-ratio:16/10; background:#EFE7D6; overflow:hidden;"><img src="/landing/assets/img/${img}" alt="" loading="lazy" width="640" height="400" style="width:100%; height:100%; object-fit:cover;"></div><div style="padding:24px;"><div style="font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#A9854E; margin-bottom:10px;">${cat}</div><h3 style="font-family:var(--serif); font-weight:500; font-size:19px; line-height:1.3; color:#123A33; margin:0;">${t}</h3></div></a>`).join('')}</div></div></section>`
   + finalCta();
 
@@ -653,14 +669,14 @@ const RES = [
   [I.spark, 'Видео уроци', 'Кратки видеа как да свършите всяка задача.'],
 ];
 const resCard = (ic, t, d, delay) => `<div data-reveal${delay ? ` data-reveal-delay="${delay}"` : ''} class="lift" style="background:#FBF8F1; border:1px solid #EAE0CD; border-radius:16px; padding:28px;"><div style="width:46px; height:46px; border-radius:12px; background:#FAF3E4; color:#A9854E; display:flex; align-items:center; justify-content:center; margin-bottom:16px;">${ic}</div><h3 style="font-family:var(--serif); font-weight:500; font-size:20px; color:#123A33; margin:0 0 7px;">${t}</h3><p style="font-size:13.5px; line-height:1.6; color:#5a6a63; margin:0;">${d}</p></div>`;
-const resourcesBody = () => pageHero('Ресурси · Resources', 'Ресурси, които работят за теб.', 'Ръководства, шаблони и инструменти за счетоводство, ДДС и данъци.', '')
+const resourcesBody = () => pageHero('Ресурси · Resources', 'Ресурси, които работят за теб.', 'Ръководства, шаблони и инструменти за счетоводство, ДДС и данъци.', '', 'Resources that work for you.', 'Guides, templates and tools for accounting, VAT and taxes.')
   + `<section style="position:relative; padding:0 clamp(20px,5vw,72px) clamp(72px,9vh,120px);"><div style="max-width:1180px; margin:0 auto;"><div data-3col style="display:grid; grid-template-columns:repeat(3,1fr); gap:18px;">${RES.map(([ic, t, d], i) => resCard(ic, t, d, (i % 3) * 80)).join('')}</div></div></section>`
   + finalCta();
 
-const faqBody = () => pageHero('Въпроси · FAQ', 'Често задавани въпроси.', 'Отговори за безплатния период, сигурността, ДДС, фактурите и работата без счетоводител.', '')
-  + faqSplit(FAQS, 'Често задавани въпроси.', false) + finalCta();
+const faqBody = () => pageHero('Въпроси · FAQ', 'Често задавани въпроси.', 'Отговори за безплатния период, сигурността, ДДС, фактурите и работата без счетоводител.', '', 'Frequently asked questions.', 'Answers about the free trial, security, VAT, invoices and working without an accountant.')
+  + faqSplit(FAQS, 'Често задавани въпроси.', false, 'Frequently asked questions.') + finalCta();
 
-const homeBody = () => homeHero() + integrations() + beforeAfter() + how() + bento() + deepDive() + stats() + testimonials() + faqSplit(FAQS, 'Често задавани въпроси.', false) + finalCta();
+const homeBody = () => homeHero() + integrations() + beforeAfter() + how() + bento() + deepDive() + stats() + testimonials() + faqSplit(FAQS, 'Често задавани въпроси.', false, 'Frequently asked questions.') + finalCta();
 
 /* ---- pages --------------------------------------------------------------- */
 const crumbs = (items) => ({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: items.map((it, i) => ({ '@type': 'ListItem', position: i + 1, name: it.n, item: SITE + it.u })) });

@@ -1,10 +1,6 @@
-
-<svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Счетоводство">
-  <rect width="96" height="96" rx="22" fill="#2F7BE0"></rect>
-  
-  <rect x="26" y="54" width="11" height="18" rx="3" fill="#FFFFFF"></rect>
-  <rect x="42.5" y="42" width="11" height="30" rx="3" fill="#FFFFFF"></rect>
-  <rect x="59" y="26" width="11" height="46" rx="3" fill="#FFFFFF" opacity="0.92"></rect>
-  
-  <path d="M30 35.5 L37 42 L52 24" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"></path>
+<svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Acco">
+  <rect width="96" height="96" rx="25" fill="#123A33"></rect>
+  <rect x="25" y="48" width="9.6" height="22.5" rx="4.8" fill="#D9B978"></rect>
+  <rect x="43.2" y="37" width="9.6" height="33.5" rx="4.8" fill="#D9B978"></rect>
+  <rect x="61.4" y="25.5" width="9.6" height="45" rx="4.8" fill="#E9C98C"></rect>
 </svg>

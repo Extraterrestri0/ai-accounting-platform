@@ -9,6 +9,10 @@
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var slice = function (n) { return [].slice.call(n); };
 
+  /* capture the Bulgarian innerHTML of rich (markup-bearing) translatable nodes
+     so the language toggle can swap whole headings, not just plain text nodes */
+  slice(d.querySelectorAll('[data-ten]')).forEach(function (el) { if (!el.hasAttribute('data-tbg')) el.setAttribute('data-tbg', el.innerHTML); });
+
   /* ---- scroll reveal ---- */
   var reveals = slice(d.querySelectorAll('[data-reveal]'));
   if (reduce || !('IntersectionObserver' in window)) {
@@ -171,15 +175,24 @@
     for (var i = 0; i < node.childNodes.length; i++) {
       var c = node.childNodes[i];
       if (c.nodeType === 3) { var t = c.nodeValue.trim(); if (t && map[t] !== undefined) c.nodeValue = c.nodeValue.replace(t, map[t]); }
-      else if (c.nodeType === 1 && c.tagName !== 'SCRIPT' && c.tagName !== 'STYLE') walk(c, map);
+      else if (c.nodeType === 1 && c.tagName !== 'SCRIPT' && c.tagName !== 'STYLE' && !c.hasAttribute('data-ten')) walk(c, map);
     }
   }
   function applyLang(lang) {
     dl.setAttribute('lang', lang);
-    slice(d.querySelectorAll('[data-lang]')).forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-lang') === lang); });
-    if (!window.I18N) return;
-    if (lang === 'en') walk(d.body, window.I18N);
-    else walk(d.body, invert(window.I18N));
+    slice(d.querySelectorAll('[data-lang]')).forEach(function (b) {
+      var on = b.getAttribute('data-lang') === lang;
+      b.classList.toggle('on', on);
+      b.style.background = on ? '#123A33' : 'transparent';
+      b.style.color = on ? '#F4EFE4' : '#7c857f';
+    });
+    // rich headings (markup-bearing): swap whole innerHTML
+    slice(d.querySelectorAll('[data-ten]')).forEach(function (el) {
+      var bg = el.getAttribute('data-tbg');
+      el.innerHTML = lang === 'en' ? (el.getAttribute('data-ten') || el.innerHTML) : (bg !== null ? bg : el.innerHTML);
+    });
+    // plain text nodes: swap via the dictionary
+    if (window.I18N) walk(d.body, lang === 'en' ? window.I18N : invert(window.I18N));
   }
   slice(d.querySelectorAll('[data-lang]')).forEach(function (b) {
     b.addEventListener('click', function () { var l = b.getAttribute('data-lang'); try { localStorage.setItem(KEY, l); } catch (e) {} applyLang(l); });

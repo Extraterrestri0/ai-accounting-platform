@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://mgi-delta.bg/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://mgi-delta.bg/features</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://mgi-delta.bg/pricing</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://mgi-delta.bg/about</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://mgi-delta.bg/blog</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://mgi-delta.bg/resources</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://mgi-delta.bg/faq</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://mgi-delta.bg/contact</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://acco.bg/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://acco.bg/features</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://acco.bg/pricing</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://acco.bg/about</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://acco.bg/blog</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://acco.bg/resources</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://acco.bg/faq</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://acco.bg/contact</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
 </urlset>

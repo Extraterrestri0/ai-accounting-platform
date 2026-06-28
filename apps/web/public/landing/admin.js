@@ -1,5 +1,5 @@
 /* ============================================================================
-   MGI-Delta — Admin panel (front-end prototype).
+   Acco — Admin panel (front-end prototype).
    Persists content in localStorage ('mgi.cms'). This is a demo/management UI;
    for production, replace the load/save functions with calls to the NestJS API
    and gate access behind real auth (tenant_admin role). The password check here
@@ -18,7 +18,7 @@
     return {
       hero: {
         title: 'Счетоводство, опростено. Без счетоводител.',
-        sub: 'MGI-Delta автоматизира фактурите, ДДС, разходите и отчетите. AI разчита документите, а вие само одобрявате.',
+        sub: 'Acco автоматизира фактурите, ДДС, разходите и отчетите. AI разчита документите, а вие само одобрявате.',
         cta: 'Започнете безплатно'
       },
       posts: [
