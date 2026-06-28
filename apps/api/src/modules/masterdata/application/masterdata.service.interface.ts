@@ -1,8 +1,25 @@
 import type { ApplicationService } from '../../../shared-kernel';
 import type {
-  Account, AccountNode, AccountType, CompanySettings, Counterparty, CounterpartyKind,
-  Country, Currency, NormalBalance, VatCode, VatDirection, VatKind,
+  Account, AccountNode, AccountType, CatalogItem, CatalogItemKind, CompanySettings, Counterparty, CounterpartyKind,
+  Country, Currency, ExpenseCategory, ExpenseVatTreatment, NormalBalance, VatCode, VatDirection, VatKind,
 } from '../domain/models';
+import type { AccountMapping, AccountRole } from '../domain/account-mapping';
+
+export interface AccountMappingUpdate { role: AccountRole; accountId: string; }
+export interface UpdateAccountMappingsInput { mappings: AccountMappingUpdate[]; }
+
+export interface CreateCatalogItemInput {
+  code: string; description: string; kind?: CatalogItemKind; unit?: string; vatRate?: string;
+  vatCodeId?: string | null; saftCode?: string | null; defaultAccountId?: string | null; isActive?: boolean;
+}
+export type UpdateCatalogItemInput = Partial<CreateCatalogItemInput>;
+export interface ListCatalogItemsQuery { search?: string; activeOnly?: boolean; kind?: CatalogItemKind; page?: number; pageSize?: number; }
+
+export interface CreateExpenseCategoryInput {
+  code: string; nameBg: string; nameEn: string; defaultAccountId?: string | null;
+  defaultVatTreatment?: ExpenseVatTreatment; saftCode?: string | null; isActive?: boolean;
+}
+export type UpdateExpenseCategoryInput = Partial<CreateExpenseCategoryInput>;
 
 export interface CreateCounterpartyInput {
   kind: CounterpartyKind; name: string; eik?: string; vatNumber?: string;
@@ -28,6 +45,23 @@ export interface IMasterDataService extends ApplicationService {
   // company settings
   getCompanySettings(): Promise<CompanySettings | null>;
   updateCompanySettings(input: Partial<CompanySettings>): Promise<CompanySettings>;
+  // account mappings (posting configuration)
+  /** All roles with their resolved account (mapped or canonical default) — for the config UI. */
+  getAccountMappings(): Promise<AccountMapping[]>;
+  /** role → account CODE, merging explicit mappings over the canonical defaults — for the posting engine. */
+  getPostingAccounts(): Promise<Record<AccountRole, string>>;
+  /** Validate + upsert the provided role mappings; returns the full refreshed set. */
+  updateAccountMappings(input: UpdateAccountMappingsInput): Promise<AccountMapping[]>;
+  // product / service catalog
+  createCatalogItem(input: CreateCatalogItemInput): Promise<CatalogItem>;
+  updateCatalogItem(id: string, input: UpdateCatalogItemInput): Promise<CatalogItem>;
+  listCatalogItems(q: ListCatalogItemsQuery): Promise<{ items: CatalogItem[]; total: number; page: number; pageSize: number }>;
+  getCatalogItem(id: string): Promise<CatalogItem>;
+  // expense categories (purchase classification)
+  listExpenseCategories(activeOnly?: boolean): Promise<ExpenseCategory[]>;
+  getExpenseCategory(id: string): Promise<ExpenseCategory>;
+  createExpenseCategory(input: CreateExpenseCategoryInput): Promise<ExpenseCategory>;
+  updateExpenseCategory(id: string, input: UpdateExpenseCategoryInput): Promise<ExpenseCategory>;
   // reference
   listCountries(): Promise<Country[]>;
   listCurrencies(): Promise<Currency[]>;

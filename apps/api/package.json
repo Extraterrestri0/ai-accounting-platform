@@ -6,9 +6,16 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\"",
     "build": "tsc -p tsconfig.build.json && node scripts/copy-fonts.js",
+    "build:debug": "tsc -p tsconfig.build.json --sourceMap && node scripts/copy-fonts.js",
     "start": "node dist/main.js",
+    "start:local": "node -r ./scripts/load-env.js dist/main.js",
+    "worker:local": "node -r ./scripts/load-env.js dist/worker.js",
     "migrate": "node scripts/migrate.js",
-    "test": "jest --config jest.config.cjs"
+    "migrate:local": "node -r ./scripts/load-env.js scripts/migrate.js",
+    "migrate:validate": "node scripts/validate-migrations.js",
+    "ocr:check": "node -r ./scripts/load-env.js scripts/ocr-provider-check.js",
+    "ocr:validate": "node -r ./scripts/load-env.js scripts/ocr-validation.js",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.cjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1059.0",
@@ -23,17 +30,22 @@
     "@types/pg": "^8.20.0",
     "argon2": "^0.44.0",
     "bullmq": "^5.78.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
     "cookie-parser": "^1.4.7",
     "helmet": "^7.2.0",
     "ioredis": "^5.11.0",
     "jsonwebtoken": "^9.0.3",
+    "libxml2-wasm": "^0.7.1",
     "nodemailer": "^6.10.1",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^4.10.38",
     "pg": "^8.21.0",
+    "prom-client": "^15.1.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
@@ -41,8 +53,10 @@
     "@types/nodemailer": "^6.4.23",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
+    "cross-env": "^10.1.0",
     "eslint": "^8.57.1",
     "jest": "^30.4.2",
-    "ts-jest": "^29.4.11"
+    "ts-jest": "^29.4.11",
+    "ts-node": "^10.9.2"
   }
 }

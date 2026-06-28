@@ -1,0 +1,125 @@
+/* ============================================================================
+   Acco — Marketing site · Editorial-finance design system
+   Warm cream + deep forest green + brass/gold. Newsreader display, Inter UI.
+   Ported from the Acco design export: sticky blurred nav, scroll-reveal,
+   magnetic buttons, parallax floating cards, FAQ accordion, billing toggle,
+   validated contact form. Hover/focus are real CSS (no DC runtime).
+   ============================================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink-2);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+::selection { background: var(--ink); color: var(--bg); }
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+h1, h2, h3, h4 { margin: 0; }
+.wrap { max-width: var(--wrap); margin: 0 auto; }
+
+/* ---- keyframes ----------------------------------------------------------- */
+@keyframes revUp    { from { opacity:0; transform:translateY(32px) }  to { opacity:1; transform:none } }
+@keyframes revLeft  { from { opacity:0; transform:translateX(-38px) } to { opacity:1; transform:none } }
+@keyframes revRight { from { opacity:0; transform:translateX(38px) }  to { opacity:1; transform:none } }
+@keyframes revScale { from { opacity:0; transform:scale(.95) }        to { opacity:1; transform:none } }
+@keyframes floatY   { 0%,100% { transform:translateY(0) }  50% { transform:translateY(-16px) } }
+@keyframes floatYsm { 0%,100% { transform:translateY(0) }  50% { transform:translateY(-9px) } }
+@keyframes floatYlg { 0%,100% { transform:translateY(0) }  50% { transform:translateY(-24px) } }
+@keyframes pulseDot { 0%,100% { box-shadow:0 0 0 0 rgba(22,164,99,.5) } 70% { box-shadow:0 0 0 9px rgba(22,164,99,0) } }
+@keyframes spinSlow { from { transform:rotate(0) } to { transform:rotate(360deg) } }
+@keyframes glowPulse{ 0%,100% { opacity:.5; transform:scale(1) } 50% { opacity:.85; transform:scale(1.06) } }
+
+/* ---- scroll reveal (JS toggles .in) -------------------------------------- */
+[data-reveal] { opacity: 0; transform: translateY(32px); transition: opacity .9s var(--ease), transform .9s var(--ease); will-change: opacity, transform; }
+[data-reveal="left"]  { transform: translateX(-38px); }
+[data-reveal="right"] { transform: translateX(38px); }
+[data-reveal="scale"] { transform: scale(.95); }
+[data-reveal].in { opacity: 1; transform: none; }
+html:not(.js) [data-reveal] { opacity: 1; transform: none; }
+
+/* ---- magnetic / lift / underline ----------------------------------------- */
+[data-magnetic] { transition: transform .35s var(--ease), box-shadow .35s, background .3s; }
+.lift   { transition: transform .5s var(--ease), box-shadow .5s, border-color .5s, background .3s; }
+.lift:hover    { transform: translateY(-6px); box-shadow: 0 28px 60px rgba(18,30,26,.12); border-color: #D9CDB6; }
+.lift-sm:hover { transform: translateY(-4px); box-shadow: 0 16px 36px rgba(18,30,26,.08); border-color: #D9CDB6; }
+.lift-5:hover  { transform: translateY(-5px); box-shadow: 0 20px 44px rgba(18,30,26,.1); }
+.lift-d:hover  { transform: translateY(-6px); box-shadow: 0 30px 60px rgba(18,58,51,.28); }
+.lift-g:hover  { transform: translateY(-5px); background: rgba(255,255,255,.07); }
+.ul { background-image: linear-gradient(currentColor,currentColor); background-size: 0% 1px; background-position: 0 100%; background-repeat: no-repeat; transition: background-size .4s var(--ease); }
+.ul:hover { background-size: 100% 1px; }
+
+/* ---- buttons (hover variants for the design's inline buttons) ------------- */
+.j-dark { transition: background .3s, box-shadow .3s, transform .35s var(--ease); }
+.j-dark:hover { background: var(--green-d); box-shadow: 0 20px 42px rgba(18,58,51,.32); }
+.j-out  { transition: background .3s, border-color .3s, transform .35s var(--ease); }
+.j-out:hover  { background: var(--bg-2); border-color: var(--gold); }
+.j-out-w:hover { background: #fff; border-color: var(--gold); }
+.j-gold { transition: background .3s, transform .35s var(--ease); }
+.j-gold:hover { background: #f0d6a3; }
+
+/* ---- nav ----------------------------------------------------------------- */
+#nav { transition: background .4s var(--ease), box-shadow .4s, padding .4s, border-color .4s; }
+#nav[data-stuck] {
+  background: rgba(244,239,228,.78);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  box-shadow: 0 8px 30px rgba(18,30,26,.07);
+  border-bottom-color: transparent !important;
+  padding-top: 12px !important; padding-bottom: 12px !important;
+}
+
+/* ---- billing toggle / faq icon transitions ------------------------------- */
+[data-bill]   { transition: all .3s var(--ease); }
+[data-faq-ic] { transition: transform .35s var(--ease); }
+[data-faq-a]  { transition: max-height .45s var(--ease), opacity .35s; }
+
+/* ---- form fields focus --------------------------------------------------- */
+.fld { transition: border-color .25s, box-shadow .25s, background .25s; }
+.fld:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(169,133,78,.16); background: #fff; }
+[data-checkbox] { transition: all .2s var(--ease); }
+
+/* ---- reduced motion ------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+  [data-reveal] { opacity: 1 !important; transform: none !important; transition: none !important; }
+}
+
+/* ---- responsive (mirrors the design's data-attribute breakpoints) -------- */
+[data-nav-menu] { display: none; }
+[data-mobile-menu] { display: none; }
+@media (max-width: 1024px) {
+  [data-hero-grid] { grid-template-columns: 1fr !important; gap: 48px !important; }
+  [data-hero-visual] { height: 480px !important; }
+  [data-feat] { grid-template-columns: 1fr !important; gap: 40px !important; }
+  [data-feat-media] { order: 2 !important; }
+  [data-2col] { grid-template-columns: 1fr !important; }
+  [data-split] { grid-template-columns: 1fr !important; }
+  [data-reasons] { grid-template-columns: 1fr !important; }
+  [data-deep-grid] { grid-template-columns: 1fr !important; }
+  [data-tiers] { grid-template-columns: 1fr !important; max-width: 460px; margin-left: auto; margin-right: auto; }
+  [data-nav-links] { display: none !important; }
+  [data-nav-actions] { display: none !important; }
+  [data-nav-menu] { display: inline-flex !important; }
+}
+@media (max-width: 900px) {
+  [data-3col] { grid-template-columns: 1fr !important; }
+  [data-4col] { grid-template-columns: repeat(2,1fr) !important; }
+  [data-bento] { grid-template-columns: 1fr !important; }
+  [data-bento] > * { grid-column: auto !important; }
+  [data-stats] { grid-template-columns: repeat(2,1fr) !important; gap: 36px 16px !important; }
+  [data-stat-div] { border-right: none !important; }
+  [data-foot] { grid-template-columns: 1fr 1fr !important; gap: 32px !important; }
+  [data-cmp] { font-size: 12px !important; }
+}
+@media (max-width: 560px) {
+  [data-4col] { grid-template-columns: 1fr !important; }
+  [data-stats] { grid-template-columns: 1fr !important; }
+  [data-foot] { grid-template-columns: 1fr !important; }
+  [data-hero-visual] { height: 420px !important; }
+}

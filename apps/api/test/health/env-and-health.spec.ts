@@ -25,23 +25,39 @@ describe('health service', () => {
   const downStorage: StorageHealthProbe = { ping: async () => ({ ok: false, detail: 'no bucket' }) };
   const poolOk = { query: async () => ({ rows: [{ '?column?': 1 }] }) } as any;
   const poolDown = { query: async () => { throw new Error('ECONNREFUSED'); } } as any;
+  // Queue monitor stubs — disabled (no Redis), so they never affect these checks.
+  const queue = { available: () => false } as any;
+  const docPipeline = { available: () => false } as any;
 
   it('liveness is always ok when the process runs', () => {
-    const h = new HealthService(poolOk, okStorage);
+    const h = new HealthService(poolOk, okStorage, queue, docPipeline);
     expect(h.liveness().status).toBe('ok');
   });
   it('readiness up when db + storage up', async () => {
     process.env.NODE_ENV = 'test';
-    const h = new HealthService(poolOk, okStorage);
+    const h = new HealthService(poolOk, okStorage, queue, docPipeline);
     const r = await h.readiness();
     expect(r.checks.database.status).toBe('up');
   });
   it('health is degraded when storage down but db up', async () => {
-    const h = new HealthService(poolOk, downStorage);
+    const h = new HealthService(poolOk, downStorage, queue, docPipeline);
     expect((await h.health()).status).toBe('degraded');
   });
   it('health is down when db down', async () => {
-    const h = new HealthService(poolDown, okStorage);
+    const h = new HealthService(poolDown, okStorage, queue, docPipeline);
     expect((await h.health()).status).toBe('down');
+  });
+  it('health reports the docPipeline check (disabled without Redis)', async () => {
+    const h = new HealthService(poolOk, okStorage, queue, docPipeline);
+    const r = await h.health();
+    expect(r.checks.docPipeline.status).toBe('disabled');
+    expect(r.status).toBe('ok');
+  });
+  it('health is degraded when the document pipeline is down', async () => {
+    const downPipe = { available: () => true, redisReachable: async () => false } as any;
+    const h = new HealthService(poolOk, okStorage, queue, downPipe);
+    const r = await h.health();
+    expect(r.checks.docPipeline.status).toBe('down');
+    expect(r.status).toBe('degraded');
   });
 });

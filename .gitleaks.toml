@@ -1,0 +1,21 @@
+title = "ai-accounting-platform gitleaks config"
+
+# Use gitleaks' built-in rule set (AWS keys, JWTs, private keys, generic high-entropy, etc.)
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Non-secret examples, templates, and test fixtures (no real credentials)."
+paths = [
+  '''\.env\.example$''',
+  '''infra/\.env\.[^/]*\.example$''',
+  '''infra/terraform/terraform\.tfvars\.example$''',
+  '''apps/api/test/.*''',          # test fixtures use throwaway/dummy values
+  '''.*\.md$''',                   # docs/runbooks reference placeholder values
+  '''package-lock\.json$''',
+]
+# Dummy/placeholder values that must not trip the scanner.
+regexes = [
+  '''change-?me''',
+  '''(?i)example|placeholder|dummy|test[_-]?secret''',
+]

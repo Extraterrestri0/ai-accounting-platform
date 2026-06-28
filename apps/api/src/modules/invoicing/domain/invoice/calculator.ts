@@ -1,4 +1,4 @@
-import type { InvoiceLineInput, InvoiceTotals } from './models';
+import type { DocumentKind, InvoiceLineInput, InvoiceTotals } from './models';
 
 class InvoiceValidationError extends Error {}
 const toCents = (s: string): number => {
@@ -21,6 +21,44 @@ export function computeTotals(lines: { netAmount: string; vatAmount: string }[])
 }
 export function formatInvoiceNumber(prefix: string, n: number, pad = 4): string {
   return `${prefix}${String(n).padStart(pad, '0')}`;
+}
+
+/** Numbering prefix per document kind (gapless counter is per kind/year). */
+export function numberPrefixFor(kind: DocumentKind, year: number): string {
+  switch (kind) {
+    case 'credit_note': return `КИ-${year}-`;   // кредитно известие
+    case 'debit_note': return `ДИ-${year}-`;    // дебитно известие
+    case 'proforma': return `ПФ-${year}-`;      // проформа
+    case 'invoice':
+    default: return `${year}-`;
+  }
+}
+
+export type PostingRole = 'receivable' | 'revenue' | 'vatOutput';
+export interface PostingLinePlan { role: PostingRole; direction: 'debit' | 'credit'; amount: string; }
+
+/**
+ * Double-entry posting plan per document kind (account ROLES; the service resolves
+ * them to the company's configured accounts — Task 0.1):
+ *   - invoice / debit_note: Dr receivable(gross) / Cr revenue(net) / Cr vatOutput(vat)  → increases
+ *   - credit_note:          Dr revenue(net) + Dr vatOutput(vat) / Cr receivable(gross)  → reverses
+ *   - proforma:             null (NO journal entry, NO VAT)
+ */
+export function buildPostingPlan(kind: DocumentKind, totals: { net: string; vat: string; gross: string }): PostingLinePlan[] | null {
+  if (kind === 'proforma') return null;
+  const hasVat = Number(totals.vat) > 0;
+  if (kind === 'credit_note') {
+    const lines: PostingLinePlan[] = [{ role: 'revenue', direction: 'debit', amount: totals.net }];
+    if (hasVat) lines.push({ role: 'vatOutput', direction: 'debit', amount: totals.vat });
+    lines.push({ role: 'receivable', direction: 'credit', amount: totals.gross });
+    return lines;
+  }
+  const lines: PostingLinePlan[] = [
+    { role: 'receivable', direction: 'debit', amount: totals.gross },
+    { role: 'revenue', direction: 'credit', amount: totals.net },
+  ];
+  if (hasVat) lines.push({ role: 'vatOutput', direction: 'credit', amount: totals.vat });
+  return lines;
 }
 
 export { InvoiceValidationError };

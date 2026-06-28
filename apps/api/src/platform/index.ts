@@ -1,6 +1,7 @@
 export * from './tenant-context/tenant-context';
 export * from './tenant-context/tenant-context.service';
 export * from './tenant-context/principal-resolver';
+export * from './tenant-context/company-access.port';
 export * from './tenant-context/errors';
 export * from './database/database-context.service';
 export * from './database/scoped-client';

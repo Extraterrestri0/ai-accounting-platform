@@ -1,0 +1,5 @@
+# DR drill evidence: keep logs/manifests (text), never the raw .dump (binary, contains data)
+*.dump
+*.dump.gz
+# the repo-root .gitignore excludes *.log; drill logs in THIS dir are committed evidence
+!*.log

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuditModule } from '../audit';
+import { PeriodsModule } from '../periods';
 import { TaxController } from './api/tax.controller';
 import { VatController } from './api/vat.controller';
 import { TAX_SERVICE } from './application/tax.service.interface';
@@ -14,7 +15,7 @@ import { VatRepository } from './infrastructure/vat.repository';
  * and writes only its own vat_* tables — it never writes the ledger.
  */
 @Module({
-  imports: [AuditModule],
+  imports: [AuditModule, PeriodsModule],
   controllers: [TaxController, VatController],
   providers: [
     { provide: TAX_SERVICE, useClass: TaxService },

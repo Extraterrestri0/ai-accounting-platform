@@ -33,6 +33,16 @@ export class ReviewRepository {
     const r = await db.query<PkgRow>(`SELECT * FROM review_packages WHERE id=$1`, [id]);
     return r.rows[0] ? mapPkg(r.rows[0]) : null;
   }
+  /** Human field corrections (key→value) overlaid on the immutable extraction. */
+  async getCorrectedFields(db: ScopedClient, documentId: string): Promise<Record<string, string>> {
+    const r = await db.query<{ corrected_fields: Record<string, string> | null }>(
+      `SELECT corrected_fields FROM review_packages WHERE document_id=$1`, [documentId]);
+    return r.rows[0]?.corrected_fields ?? {};
+  }
+  async setCorrectedFields(db: ScopedClient, packageId: string, fields: Record<string, string>): Promise<void> {
+    await db.query(`UPDATE review_packages SET corrected_fields = corrected_fields || $2::jsonb, updated_at=now() WHERE id=$1`,
+      [packageId, JSON.stringify(fields)]);
+  }
   async setDecision(db: ScopedClient, id: string, status: ReviewStatus, decidedBy: string, approved?: { accountId?: string; vatCodeId?: string; posting?: unknown }): Promise<void> {
     await db.query(
       `UPDATE review_packages SET status=$2, decided_by=$3, decided_at=now(),

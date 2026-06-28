@@ -18,22 +18,30 @@ if [ "${USE_DOCKER:-0}" = "1" ]; then
   echo "▶ starting Postgres via docker compose…"; ( cd ../.. && docker compose up -d db ); sleep 5
 fi
 
-echo "▶ 1/6 install + build api"; npm install --silent >/dev/null 2>&1 || true; npm run build
+TS_OPTS='{"module":"commonjs","moduleResolution":"node10","ignoreDeprecations":"6.0","experimentalDecorators":true,"emitDecoratorMetadata":true,"esModuleInterop":true,"skipLibCheck":true}'
 
-echo "▶ 2/6 (re)create database $PGDATABASE"
+echo "▶ 1/7 install + build api"; npm install --silent >/dev/null 2>&1 || true; npm run build
+
+echo "▶ 2/7 (re)create database $PGDATABASE"
 PGPASSWORD="$MIGRATION_PASSWORD" psql -h "$PGHOST" -p "$PGPORT" -U "$MIGRATION_USER" -d postgres \
   -c "DROP DATABASE IF EXISTS $PGDATABASE;" -c "CREATE DATABASE $PGDATABASE;"
 
-echo "▶ 3/6 apply migrations"; npm run migrate
+echo "▶ 3/7 apply migrations (incl. 0035/0036)"; npm run migrate
 
-echo "▶ 4/6 seed deterministic demo data"
+echo "▶ 4/7 seed deterministic demo data"
 PGPASSWORD="$MIGRATION_PASSWORD" psql -v ON_ERROR_STOP=1 -h "$PGHOST" -p "$PGPORT" -U "$MIGRATION_USER" -d "$PGDATABASE" -f scripts/seed-e2e.sql
 PGPASSWORD="$MIGRATION_PASSWORD" psql -h "$PGHOST" -p "$PGPORT" -U "$MIGRATION_USER" -d "$PGDATABASE" \
   -c "ALTER ROLE $PGUSER LOGIN PASSWORD '$PGPASSWORD';" || true
 
-echo "▶ 5/6 backend unit/integration suite (jest)"; npx jest --config jest.config.cjs
+# `npm test` carries NODE_OPTIONS=--experimental-vm-modules (needed for the ESM-only libxml2-wasm
+# in the XSD harness tests) + runs the *.e2e-spec.ts RLS/repository/migration suites that have PG env.
+echo "▶ 5/7 backend unit/integration suite (jest)"; npm test
 
-echo "▶ 6/6 end-to-end workflow (real services · live PostgreSQL)"
-npx ts-node --compiler-options '{"module":"commonjs","moduleResolution":"node10","ignoreDeprecations":"6.0","experimentalDecorators":true,"emitDecoratorMetadata":true,"esModuleInterop":true,"skipLibCheck":true}' test/e2e/e2e-workflow.ts
+echo "▶ 6/7 end-to-end MVP workflow (real services · live PostgreSQL)"
+npx ts-node --compiler-options "$TS_OPTS" test/e2e/e2e-workflow.ts
 
-echo "✅ E2E MVP validation complete."
+echo "▶ 7/7 SAF-T v2 pipeline e2e (build→render→XSD→storage→download→audit)"
+STORAGE_DRIVER=local DOC_STORAGE_DIR="${DOC_STORAGE_DIR:-/tmp/saft-e2e-storage}" \
+  npx ts-node --compiler-options "$TS_OPTS" test/e2e/saft-v2-e2e.ts
+
+echo "✅ E2E validation complete (MVP + SAF-T v2)."

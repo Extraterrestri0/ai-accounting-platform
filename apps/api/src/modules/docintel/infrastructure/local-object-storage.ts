@@ -27,6 +27,18 @@ export class LocalObjectStorage implements StorageService {
     await fs.mkdir(path.dirname(this.full(storageKey)), { recursive: true });
     await fs.writeFile(this.full(storageKey), data);
   }
+  /** Server-side write (optionally WORM-locked). Prod = S3 PutObject (+ Object-Lock). */
+  async putObject(storageKey: string, body: Buffer, _contentType: string, opts?: { worm?: boolean; retainDays?: number }): Promise<{ sizeBytes: number; retainUntil?: string }> {
+    if (this.locked.has(storageKey)) throw new Error('Object is immutable (WORM) — overwrite denied.');
+    await fs.mkdir(path.dirname(this.full(storageKey)), { recursive: true });
+    await fs.writeFile(this.full(storageKey), body);
+    let retainUntil: string | undefined;
+    if (opts?.worm) {
+      this.locked.add(storageKey);
+      retainUntil = new Date(Date.now() + (opts.retainDays ?? 3650) * 86_400_000).toISOString();
+    }
+    return { sizeBytes: body.length, retainUntil };
+  }
   async headObject(storageKey: string): Promise<{ exists: boolean; sizeBytes: number }> {
     try { const s = await fs.stat(this.full(storageKey)); return { exists: true, sizeBytes: s.size }; }
     catch { return { exists: false, sizeBytes: 0 }; }
@@ -38,6 +50,11 @@ export class LocalObjectStorage implements StorageService {
   }
   async readObject(storageKey: string): Promise<Buffer> { return fs.readFile(this.full(storageKey)); }
   async finalizeObject(storageKey: string): Promise<void> { this.locked.add(storageKey); } // WORM lock
+  /** Permanent delete (purge): clear the WORM lock and remove the file bytes. */
+  async deleteObject(storageKey: string): Promise<void> {
+    this.locked.delete(storageKey);
+    try { await fs.unlink(this.full(storageKey)); } catch { /* already gone */ }
+  }
   async getDownloadUrl(storageKey: string, ttlSeconds: number): Promise<string> {
     const exp = Date.now() + ttlSeconds * 1000;
     const sig = crypto.createHash('sha256').update(storageKey + exp).digest('hex').slice(0, 16);

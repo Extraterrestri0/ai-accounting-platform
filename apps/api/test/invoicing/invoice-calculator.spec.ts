@@ -1,4 +1,4 @@
-import { computeLine, computeTotals, formatInvoiceNumber, validateForIssue, InvoiceValidationError } from '../../src/modules/invoicing/domain/invoice/calculator';
+import { buildPostingPlan, computeLine, computeTotals, formatInvoiceNumber, numberPrefixFor, validateForIssue, InvoiceValidationError } from '../../src/modules/invoicing/domain/invoice/calculator';
 
 describe('invoice line math (exact cents)', () => {
   it('1 × 300.00 @20% → net 300.00, vat 60.00, gross 360.00', () => {
@@ -39,5 +39,44 @@ describe('validate before issue', () => {
   });
   it('rejects non-positive quantity', () => {
     expect(() => validateForIssue({ customerName: 'Beta', lines: [{ ...line, quantity: '0' }] })).toThrow(/quantity/);
+  });
+});
+
+// --- Task 2.2: per-kind numbering + kind-aware posting plan ---
+describe('document numbering prefixes per kind', () => {
+  it('uses a distinct prefix for each kind', () => {
+    expect(numberPrefixFor('invoice', 2026)).toBe('2026-');
+    expect(numberPrefixFor('credit_note', 2026)).toBe('КИ-2026-');
+    expect(numberPrefixFor('debit_note', 2026)).toBe('ДИ-2026-');
+    expect(numberPrefixFor('proforma', 2026)).toBe('ПФ-2026-');
+  });
+});
+
+describe('posting plan per document kind', () => {
+  const totals = { net: '300.00', vat: '60.00', gross: '360.00' };
+  it('invoice: Dr receivable(gross) / Cr revenue(net) / Cr vatOutput(vat)', () => {
+    expect(buildPostingPlan('invoice', totals)).toEqual([
+      { role: 'receivable', direction: 'debit', amount: '360.00' },
+      { role: 'revenue', direction: 'credit', amount: '300.00' },
+      { role: 'vatOutput', direction: 'credit', amount: '60.00' },
+    ]);
+  });
+  it('debit note posts like an invoice (increase)', () => {
+    expect(buildPostingPlan('debit_note', totals)).toEqual(buildPostingPlan('invoice', totals));
+  });
+  it('credit note reverses: Dr revenue + Dr vatOutput / Cr receivable', () => {
+    expect(buildPostingPlan('credit_note', totals)).toEqual([
+      { role: 'revenue', direction: 'debit', amount: '300.00' },
+      { role: 'vatOutput', direction: 'debit', amount: '60.00' },
+      { role: 'receivable', direction: 'credit', amount: '360.00' },
+    ]);
+  });
+  it('proforma posts NOTHING', () => {
+    expect(buildPostingPlan('proforma', totals)).toBeNull();
+  });
+  it('omits the VAT line when there is no VAT', () => {
+    const plan = buildPostingPlan('invoice', { net: '100.00', vat: '0.00', gross: '100.00' });
+    expect(plan).toHaveLength(2);
+    expect(plan!.some((l) => l.role === 'vatOutput')).toBe(false);
   });
 });

@@ -13,8 +13,13 @@ export interface IDocumentService extends ApplicationService {
   finalizeUpload(documentId: string, input: FinalizeUploadInput): Promise<Document>;
   /** Scan-worker callback: set ready (clean) or quarantined (infected). */
   recordScanResult(documentId: string, result: 'clean' | 'infected' | 'error', engine: string): Promise<void>;
+  /** Re-enqueue the scan for a document stuck in 'scanning'/'failed' (e.g. the queue was down). */
+  requeueScan(documentId: string): Promise<Document>;
   listDocuments(q: ListDocumentsQuery): Promise<{ items: DocumentWithMeta[]; total: number; page: number; pageSize: number }>;
   getDocument(documentId: string): Promise<DocumentWithMeta>;
   getDownloadUrl(documentId: string): Promise<string>;
+  trashDocument(documentId: string): Promise<Document>;
+  restoreDocument(documentId: string): Promise<Document>;
+  purgeDocument(documentId: string): Promise<void>;
 }
 export const DOCUMENT_SERVICE = Symbol('DocIntel.DocumentService');

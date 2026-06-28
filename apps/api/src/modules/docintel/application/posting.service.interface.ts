@@ -1,5 +1,5 @@
 import type { ApplicationService } from '../../../shared-kernel';
-import type { PostingOutcome, PostingRequest } from '../domain/posting/models';
+import type { PostedPurchaseDetail, PostingOutcome, PostingRequest } from '../domain/posting/models';
 
 /** PUBLIC posting service — turns an APPROVED review into an immutable journal entry. */
 export interface IPostingService extends ApplicationService {
@@ -9,5 +9,10 @@ export interface IPostingService extends ApplicationService {
   reverse(journalEntryId: string, reason: string): Promise<PostingOutcome>;
   getPostingForReview(reviewPackageId: string): Promise<{ request: PostingRequest; journalEntryId?: string } | null>;
   listPostings(page?: number, pageSize?: number): Promise<PostingRequest[]>;
+  /**
+   * Read-model: purchase enrichment for the given review packages, in ONE batched query.
+   * Exposed so read/aggregation contexts (SAF-T) never query docintel's private tables.
+   */
+  listPostedPurchaseDetails(reviewPackageIds: string[]): Promise<PostedPurchaseDetail[]>;
 }
 export const POSTING_SERVICE = Symbol('DocIntel.PostingService');

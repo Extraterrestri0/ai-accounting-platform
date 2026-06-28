@@ -1,3 +1,3 @@
-// Audit domain layer: entities, value objects, domain services.
-// Intentionally empty in the skeleton — added in the audit feature task. No entities yet.
-export {};
+// Audit domain layer: read-model types + pure query helpers.
+export * from './models';
+export * from './audit-query';

@@ -19,7 +19,7 @@ export interface ReviewActionLog { id: string; actionType: ReviewActionType; act
 export interface ReviewDetail {
   package: ReviewPackage;
   documentDownloadUrl?: string;
-  extraction: { overallConfidence: number; fields: { key: string; valueText?: string; confidence: number; validationStatus: string }[]; flags: unknown };
+  extraction: { overallConfidence: number; fields: { key: string; valueText?: string; confidence: number; validationStatus: string }[]; flags: unknown; diagnostics?: unknown };
   suggestion: unknown | null;     // AccountingSuggestion from the rules engine
   comments: ReviewComment[];
   actions: ReviewActionLog[];

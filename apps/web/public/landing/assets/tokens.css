@@ -1,0 +1,52 @@
+/* ============================================================================
+   Acco — Marketing site · Type & token foundation.
+   Editorial finance: warm cream + deep forest green + brass/gold.
+   Newsreader (serif display) · Inter (UI) · IBM Plex Mono (labels/figures).
+   Component styles live in site.css.
+   ============================================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  /* surfaces */
+  --bg: #F4EFE4;          /* cream page */
+  --bg-2: #FBF8F1;        /* warmer panel */
+  --bg-3: #FCFAF5;        /* card inner */
+  --card: #FFFFFF;
+  --line: #E4DBC9;        /* hairline */
+  --line-2: #F0EADC;      /* faint hairline */
+  --border: #EAE0CD;      /* card border */
+
+  /* ink */
+  --ink: #123A33;         /* deep forest — headings */
+  --ink-2: #20302B;       /* body strong */
+  --text: #4a5a53;        /* body */
+  --muted: #6c776f;       /* secondary */
+  --faint: #9aa49e;       /* tertiary */
+
+  /* brand accents */
+  --green: #123A33;       /* primary dark */
+  --green-d: #0F312C;     /* hover / footer */
+  --gold: #A9854E;        /* brass accent */
+  --gold-2: #E9C98C;      /* light gold */
+  --gold-3: #D9B978;
+  --ok: #16A463;          /* success green */
+  --ok-d: #0E8650;
+  --mint: #ECFBF3;
+
+  /* radii & shadow */
+  --r-sm: 10px;
+  --r: 16px;
+  --r-lg: 20px;
+  --r-pill: 999px;
+  --sh-card: 0 22px 50px rgba(18,30,26,.12);
+  --sh-hi: 0 34px 80px rgba(18,30,26,.16);
+  --sh-dark: 0 16px 36px rgba(18,58,51,.26);
+
+  --ease: cubic-bezier(.2,0,0,1);
+  --wrap: 1180px;
+  --pad: clamp(20px,5vw,72px);
+
+  --serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+}

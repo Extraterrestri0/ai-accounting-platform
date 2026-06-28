@@ -1,4 +1,4 @@
-import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { DatabaseContextService, TenantContextService } from '../../../platform';
 import { AUDIT_SERVICE, type IAuditService } from '../../audit';
 import { EXTRACTION_SERVICE, type IExtractionService } from './extraction.service.interface';
@@ -10,7 +10,8 @@ import type { ReviewDetail, ReviewerDashboard, ReviewPackage, ReviewStatus } fro
 import type { EditInput, IReviewService, ListQueueQuery } from './review.service.interface';
 import { nextStatus } from '../domain/review/workflow';
 
-class ReviewError extends Error {}
+// 422 (not a bare Error): the user-safe reason must reach the UI, never a generic 500.
+export class ReviewError extends UnprocessableEntityException {}
 
 @Injectable()
 export class ReviewService implements IReviewService {
@@ -62,15 +63,39 @@ export class ReviewService implements IReviewService {
     const review = await this.extraction.getReviewPackage(documentId);
     const suggestion = await this.engine.getSuggestion(documentId).catch(() => null);
     const downloadUrl = await this.documents.getDownloadUrl(documentId).catch(() => undefined);
-    const { comments, actions } = await this.db.run(async (db) => ({
+    const { comments, actions, corrected } = await this.db.run(async (db) => ({
       comments: await this.repo.listComments(db, pkg.id),
       actions: await this.repo.listActions(db, pkg.id),
+      corrected: await this.repo.getCorrectedFields(db, documentId),
     }));
+    // Overlay human corrections / added fields on the immutable extraction (display + downstream).
+    type DisplayField = { key: string; valueText?: string; confidence: number; validationStatus: string; source: string };
+    const byKey = new Map<string, DisplayField>(review.fields.map((f) => [f.key as string, { key: f.key, valueText: f.valueText, confidence: f.confidence, validationStatus: f.validationStatus, source: 'ocr' }]));
+    for (const [key, valueText] of Object.entries(corrected)) {
+      byKey.set(key, { key, valueText, confidence: 1, validationStatus: 'valid', source: 'human' });
+    }
     return {
       package: pkg, documentDownloadUrl: downloadUrl,
-      extraction: { overallConfidence: review.overallConfidence, fields: review.fields.map((f) => ({ key: f.key, valueText: f.valueText, confidence: f.confidence, validationStatus: f.validationStatus })), flags: review.flags },
+      extraction: { overallConfidence: review.overallConfidence, fields: Array.from(byKey.values()), flags: review.flags, diagnostics: review.diagnostics },
       suggestion, comments, actions,
     };
+  }
+
+  /** Save human field corrections / added fields onto the review package (audited). */
+  async editFields(packageId: string, fields: Record<string, string>): Promise<ReviewPackage> {
+    const { tenantId, companyId } = this.scope();
+    const userId = this.requireHuman();
+    return this.db.run(async (db) => {
+      const pkg = await this.repo.getById(db, packageId);
+      if (!pkg) throw new ReviewError(`Review package ${packageId} not found.`);
+      const cleaned: Record<string, string> = {};
+      for (const [k, v] of Object.entries(fields)) if (typeof v === 'string' && v.trim()) cleaned[k] = v.trim();
+      await this.repo.setCorrectedFields(db, packageId, cleaned);
+      await this.repo.addAction(db, tenantId, companyId, { packageId, actionType: 'edit', actorId: userId, payload: { fields: Object.keys(cleaned) } });
+      await this.audit.append(db, { companyId, actorType: 'user', actorId: userId, action: 'docintel.review_fields_edited', entityType: 'review_package', entityId: packageId, after: { fields: cleaned } });
+      const updated = await this.repo.getById(db, packageId);
+      return updated!;
+    });
   }
 
   private async decide(packageId: string, status: ReviewStatus, actionType: 'approve' | 'reject' | 'request_correction', payload: Record<string, unknown>, suggestionStatus?: 'accepted' | 'rejected'): Promise<ReviewPackage> {
@@ -79,14 +104,19 @@ export class ReviewService implements IReviewService {
     return this.db.run(async (db) => {
       const pkg = await this.repo.getById(db, packageId);
       if (!pkg) throw new ReviewError(`Review package ${packageId} not found.`);
-      const approved = status === 'approved' && pkg.accountingSuggestionId
-        ? await (async () => { const s = await this.suggestions.getCurrent(db, pkg.documentId); return s ? { accountId: undefined, posting: s.suggestedPosting } : undefined; })()
-        : undefined;
+      const currentSuggestion = status === 'approved' && pkg.accountingSuggestionId
+        ? await this.suggestions.getCurrent(db, pkg.documentId)
+        : null;
+      const approved = currentSuggestion ? { accountId: undefined, posting: currentSuggestion.suggestedPosting } : undefined;
       const resolved = nextStatus(actionType, pkg.status); void resolved;
       await this.repo.setDecision(db, packageId, status, userId, approved);
       await this.repo.addAction(db, tenantId, companyId, { packageId, actionType, actorId: userId, payload });
       if (suggestionStatus && pkg.accountingSuggestionId) await this.repo.markSuggestion(db, pkg.accountingSuggestionId, suggestionStatus);
       await this.audit.append(db, { companyId, actorType: 'user', actorId: userId, action: `docintel.review_${actionType}`, entityType: 'review_package', entityId: packageId, after: { status, ...payload } });
+      // Task 1.2: record approval of the (possibly reviewer-changed) expense category.
+      if (status === 'approved' && currentSuggestion?.expenseCategory) {
+        await this.audit.append(db, { companyId, actorType: 'user', actorId: userId, action: 'expense.category_approved', entityType: 'accounting_suggestion', entityId: currentSuggestion.id, after: { category: currentSuggestion.expenseCategory.code, confidence: currentSuggestion.classification?.confidence, source: currentSuggestion.classification?.source } });
+      }
       const updated = await this.repo.getById(db, packageId);
       return updated!;
     });

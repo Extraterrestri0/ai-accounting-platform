@@ -21,4 +21,4 @@ export function getRedis(): Redis {
   if (!conn) conn = new IORedis(getRedisConnection());
   return conn;
 }
-export const QUEUE_NAMES = { scan: 'doc-scan', extraction: 'doc-extraction' } as const;
+export const QUEUE_NAMES = { scan: 'doc-scan', extraction: 'doc-extraction', saftExport: 'saft-export' } as const;

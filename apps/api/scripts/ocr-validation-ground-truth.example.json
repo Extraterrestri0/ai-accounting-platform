@@ -1,0 +1,127 @@
+{
+  "_readme": "Ground-truth template for production-OCR extraction validation. Copy to ocr-validation-ground-truth.json (gitignored), put the matching invoice files under baseDir, and fill in the REAL expected values from each document. All values below are SAMPLE PLACEHOLDERS — not real businesses, EIKs, VAT numbers or IBANs. Field-name reference: expected uses the 10 report fields; gross_amount maps to the ledger total. Use null for a field genuinely ABSENT in the document (e.g. no IBAN, no VAT) — the runner then treats any extracted value for it as a false positive. Run: npm run ocr:validate -- --ground-truth scripts/ocr-validation-ground-truth.json",
+  "version": 1,
+  "baseDir": "../test/fixtures/ocr-samples",
+  "documents": [
+    {
+      "id": "bg-vat-with-iban",
+      "file": "bg-vat-with-iban.pdf",
+      "documentType": "invoice",
+      "country": "BG",
+      "isScanned": false,
+      "expected": {
+        "supplier_name": "Примерен Доставчик ЕООД",
+        "supplier_eik": "201234567",
+        "supplier_vat": "BG201234567",
+        "invoice_number": "1000000123",
+        "invoice_date": "2026-03-14",
+        "net_amount": "1250.00",
+        "vat_amount": "250.00",
+        "gross_amount": "1500.00",
+        "currency": "BGN",
+        "iban": "BG80UNCR70001234567890"
+      },
+      "notes": "BG supplier invoice WITH 20% VAT and an IBAN. Born-digital PDF. Placeholder values."
+    },
+    {
+      "id": "bg-novat-no-iban",
+      "file": "bg-novat-no-iban.pdf",
+      "documentType": "invoice",
+      "country": "BG",
+      "isScanned": false,
+      "expected": {
+        "supplier_name": "Свободна Професия ЕТ",
+        "supplier_eik": "207654321",
+        "supplier_vat": null,
+        "invoice_number": "0000000457",
+        "invoice_date": "2026-02-09",
+        "net_amount": "800.00",
+        "vat_amount": "0.00",
+        "gross_amount": "800.00",
+        "currency": "BGN",
+        "iban": null
+      },
+      "notes": "BG supplier NOT VAT-registered: no supplier_vat, VAT amount 0, no IBAN. null = field absent in the document."
+    },
+    {
+      "id": "eu-de-vat-with-iban",
+      "file": "eu-de-vat.pdf",
+      "documentType": "invoice",
+      "country": "DE",
+      "isScanned": false,
+      "expected": {
+        "supplier_name": "Globex GmbH",
+        "supplier_eik": null,
+        "supplier_vat": "DE811234567",
+        "invoice_number": "INV-2026-0455",
+        "invoice_date": "2026-01-22",
+        "net_amount": "2000.00",
+        "vat_amount": "380.00",
+        "gross_amount": "2380.00",
+        "currency": "EUR",
+        "iban": "DE89370400440532013000"
+      },
+      "notes": "EU (DE) supplier: no BG EIK (supplier_eik null), foreign VAT id, EUR, with IBAN."
+    },
+    {
+      "id": "bg-scanned-image",
+      "file": "bg-scanned-invoice.jpg",
+      "documentType": "invoice",
+      "country": "BG",
+      "isScanned": true,
+      "expected": {
+        "supplier_name": "Сканиран Доставчик ООД",
+        "supplier_eik": "203150714",
+        "supplier_vat": "BG203150714",
+        "invoice_number": "Ф-2026-0099",
+        "invoice_date": "2026-04-03",
+        "net_amount": "500.00",
+        "vat_amount": "100.00",
+        "gross_amount": "600.00",
+        "currency": "BGN",
+        "iban": "BG18RZBB91550123456789"
+      },
+      "notes": "SCANNED image invoice — exercises real OCR (not born-digital text). Requires the Document-AI provider; dev fallback cannot read this."
+    },
+    {
+      "id": "bg-vat-with-iban-2",
+      "file": "bg-services-vat.pdf",
+      "documentType": "invoice",
+      "country": "BG",
+      "isScanned": false,
+      "expected": {
+        "supplier_name": "Консулт Партнерс ООД",
+        "supplier_eik": "175200118",
+        "supplier_vat": "BG175200118",
+        "invoice_number": "2026-000321",
+        "invoice_date": "2026-03-01",
+        "net_amount": "600.00",
+        "vat_amount": "120.00",
+        "gross_amount": "720.00",
+        "currency": "EUR",
+        "iban": "BG18RZBB91550987654321"
+      },
+      "notes": "BG service invoice WITH VAT and IBAN, billed in EUR. Second 'with IBAN' case."
+    },
+    {
+      "id": "bg-vat-no-iban",
+      "file": "bg-goods-vat-noiban.pdf",
+      "documentType": "invoice",
+      "country": "BG",
+      "isScanned": false,
+      "expected": {
+        "supplier_name": "Търговия Голдстар АД",
+        "supplier_eik": "131289092",
+        "supplier_vat": "BG131289092",
+        "invoice_number": "FA-2026-7788",
+        "invoice_date": "2026-05-20",
+        "net_amount": "1000.00",
+        "vat_amount": "200.00",
+        "gross_amount": "1200.00",
+        "currency": "BGN",
+        "iban": null
+      },
+      "notes": "BG product invoice WITH VAT but NO IBAN printed (iban null) — explicit 'without IBAN' case."
+    }
+  ]
+}

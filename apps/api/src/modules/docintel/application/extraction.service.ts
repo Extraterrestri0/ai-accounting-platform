@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
 import { DatabaseContextService, TenantContextService } from '../../../platform';
 import { AUDIT_SERVICE, type IAuditService } from '../../audit';
 import { DOCUMENT_SERVICE, type IDocumentService } from './document.service.interface';
@@ -6,16 +6,19 @@ import type { IExtractionService } from './extraction.service.interface';
 import { STORAGE_SERVICE, type StorageService } from './storage.port';
 import { OCR_PROVIDER, type OcrProvider } from './ocr.port';
 import { ExtractionRepository } from '../infrastructure/extraction.repository';
-import { extractFromText } from '../domain/extraction/field-extractor';
 import { extractFromXml } from '../domain/extraction/xml-extractor';
+import { fromVendorFields } from '../domain/extraction/merge';
+import { assemble } from '../domain/extraction/pipeline';
 import { applyValidation, overallConfidence, reviewFlags } from '../domain/extraction/confidence';
 import { DocIntelEvents } from '../events';
-import type { DocumentExtraction, ExtractedField, ReviewPackage, RunMethod } from '../domain/extraction/models';
+import type { DocumentExtraction, ExtractedField, ExtractionDiagnostics, ReviewPackage, RunMethod } from '../domain/extraction/models';
 
-class ExtractionError extends Error {}
+// 422 (not a bare Error): the user-safe reason must reach the UI, never a generic 500.
+export class ExtractionError extends UnprocessableEntityException {}
 
 @Injectable()
 export class ExtractionService implements IExtractionService {
+  private readonly log = new Logger('Extraction');
   constructor(
     private readonly ctx: TenantContextService,
     private readonly db: DatabaseContextService,
@@ -42,25 +45,58 @@ export class ExtractionService implements IExtractionService {
     const bytes = await this.storage.readObject(doc.storageKey!);
     let fields: ExtractedField[];
     let method: RunMethod; let engine: string;
+    let provider: string | undefined; let model: string | undefined;
+    let diagnostics: ExtractionDiagnostics;
     if (isXml) {
-      method = 'xml'; engine = 'ubl-xml';
+      method = 'xml'; engine = 'ubl-xml'; provider = 'xml'; model = 'ubl-xml';
       fields = applyValidation(extractFromXml(bytes.toString('utf8')));
+      diagnostics = {
+        provider, model, engine, method, layersRun: ['xml', 'validation'],
+        found: fields.map((f) => f.key), derived: [], rejected: [],
+        missingRequired: reviewFlags(fields).missingRequired, provenance: [],
+        fileType: doc.mimeType, usedEmbeddedText: false, devFallbackUsed: false,
+      };
     } else {
-      method = 'ocr';
-      const ocr = await this.ocr.recognize(bytes, doc.mimeType); engine = ocr.engine;
-      fields = applyValidation(extractFromText(ocr.text));
+      let ocr;
+      try {
+        ocr = await this.ocr.recognize(bytes, doc.mimeType);
+      } catch (e) {
+        // OCR unavailable / vendor failure: record a FAILED run (auditable, explainable in
+        // diagnostics history) and surface the exact reason as a 422 — never a silent stop.
+        const reason = (e as Error).message;
+        await this.db.run(async (db) => {
+          const runId = await this.repo.createRun(db, tenantId, companyId, documentId, 'ocr', 'none', 'none', undefined);
+          await this.repo.finishRun(db, runId, 'failed', null, reason);
+        });
+        this.log.warn(`extraction ${documentId}: OCR failed/unavailable — ${reason}`);
+        throw new UnprocessableEntityException(reason);
+      }
+      engine = ocr.engine; provider = ocr.provider; model = ocr.model;
+      // Layered pipeline (build-on-top): provider structured fields (if any) → OCR-text
+      // regex backfill → heuristic accounting derivation → deterministic validation.
+      // Every layer only ADDS; rejected/derived/provenance are captured as diagnostics.
+      const primary = ocr.fields && ocr.fields.length > 0 ? fromVendorFields(ocr.fields) : [];
+      method = primary.length > 0 ? 'hybrid' : 'ocr';
+      const built = assemble({ primary, text: ocr.text, engine, method, provider, model });
+      fields = built.fields;
+      diagnostics = built.diagnostics;
+      // Honesty flags: how the text was obtained (embedded layer vs OCR vs dev sample).
+      diagnostics.fileType = doc.mimeType;
+      diagnostics.usedEmbeddedText = ocr.provider === 'pdfjs';
+      diagnostics.devFallbackUsed = ocr.engine === 'dev-ocr@sample';
     }
     const overall = overallConfidence(fields);
+    this.log.log(`extraction ${documentId}: provider=${provider} method=${method} found=${diagnostics.found.length} derived=${diagnostics.derived.length} rejected=${diagnostics.rejected.length} missingRequired=[${diagnostics.missingRequired.join(',')}] conf=${overall}`);
 
     return this.db.run(async (db) => {
       if (await this.repo.hasActiveRun(db, documentId)) throw new ExtractionError('An extraction is already in progress for this document.');
-      const runId = await this.repo.createRun(db, tenantId, companyId, documentId, method, engine);
+      const runId = await this.repo.createRun(db, tenantId, companyId, documentId, method, engine, provider, model);
       try {
         const extractionId = await this.repo.saveExtraction(db, tenantId, companyId, documentId, runId, 'invoice', overall, fields);
-        await this.repo.finishRun(db, runId, 'succeeded', overall);
+        await this.repo.finishRun(db, runId, 'succeeded', overall, undefined, diagnostics);
         // audit as the AI/automated actor (capability-limited identity) — proposes only
-        await this.audit.append(db, { companyId, actorType: 'ai', action: DocIntelEvents.ExtractionCompleted, entityType: 'document_extraction', entityId: extractionId, after: { method, engine, overallConfidence: overall, fieldCount: fields.length } });
-        return { id: extractionId, documentId, runId, docType: 'invoice', overallConfidence: overall, status: 'extracted', fields };
+        await this.audit.append(db, { companyId, actorType: 'ai', action: DocIntelEvents.ExtractionCompleted, entityType: 'document_extraction', entityId: extractionId, after: { method, engine, provider, model, overallConfidence: overall, fieldCount: fields.length, derived: diagnostics.derived.length, rejected: diagnostics.rejected.length } });
+        return { id: extractionId, documentId, runId, docType: 'invoice', overallConfidence: overall, status: 'extracted', fields, diagnostics };
       } catch (e) {
         await this.repo.finishRun(db, runId, 'failed', null, (e as Error).message);
         throw e;
@@ -77,6 +113,6 @@ export class ExtractionService implements IExtractionService {
     this.scope();
     const ex = await this.db.run((db) => this.repo.getCurrentExtraction(db, documentId));
     if (!ex) throw new ExtractionError(`No extraction found for document ${documentId}.`);
-    return { documentId, extractionId: ex.id, docType: ex.docType, overallConfidence: ex.overallConfidence, fields: ex.fields, flags: reviewFlags(ex.fields) };
+    return { documentId, extractionId: ex.id, docType: ex.docType, overallConfidence: ex.overallConfidence, fields: ex.fields, flags: reviewFlags(ex.fields), diagnostics: ex.diagnostics };
   }
 }

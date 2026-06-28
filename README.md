@@ -20,14 +20,30 @@ cp .env.example .env        # fill real values; PGUSER must be app_user (RLS sub
 docker compose up --build   # web :8080 · api :3000 (/health) · minio :9001
 ```
 
-## Quick start (local dev)
+## Quick start (local dev, real backend)
+Requires a reachable **PostgreSQL 16** + **Redis**. Four processes:
 ```bash
-# API
-cd apps/api && npm install && npm run build && npm run migrate && npm start   # :3000
-# Web (second terminal)
-cd apps/web && npm install && NEXT_PUBLIC_API_URL=http://localhost:3000 PORT=3001 npm run dev
+cd apps/api && npm install && npm run build
+npm run migrate                                   # applies db/migrations (as the owner/superuser)
+psql "$DATABASE_URL" -f scripts/seed-dev.sql      # demo company + login user demo@demo.bg / Demo1234!
+
+node -r ./scripts/load-env.js dist/main.js        # API  → :3000   (reads apps/api/.env)
+node -r ./scripts/load-env.js dist/worker.js      # WORKER (REQUIRED: scan→OCR→extraction consumers)
+
+# Web (separate terminal, from repo root)
+npm run dev --workspace apps/web                  # → http://localhost:3001  (uses .env.local → API :3000)
 ```
-Without `NEXT_PUBLIC_API_URL`, the web app runs on a bundled mock-data layer (backend-free preview).
+Open **http://localhost:3001**, register or log in with the demo account, then upload → review → post → VAT → invoice → reports.
+The web app always uses the real API in local dev; set `NEXT_PUBLIC_USE_MOCK=true` only for a backend-free preview.
+
+> **Document processing needs the worker running.** Without `dist/worker.js`, uploads stay in `scanning`.
+> With no `OCR_VENDOR_URL`, a deterministic dev OCR extracts sample invoice data so the workflow still completes.
+
+### Google login (optional)
+1. https://console.cloud.google.com/apis/credentials → **Create credentials → OAuth client ID** → **Web application**.
+2. **Authorized redirect URI:** `http://localhost:3000/auth/google/callback` · **Authorized JS origin:** `http://localhost:3001`.
+3. Put `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in `apps/api/.env`, restart the API.
+   Until set, the Google button shows a friendly "not configured" message and email/password login works normally.
 
 ## Validate the full workflow
 ```bash

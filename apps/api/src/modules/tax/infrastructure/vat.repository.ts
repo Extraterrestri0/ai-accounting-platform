@@ -19,8 +19,13 @@ export class VatRepository {
   /** Read POSTED journal entries (with lines + account codes) in the period. Read-only on the immutable ledger. */
   async postedEntries(db: ScopedClient, startsOn: string, endsOn: string): Promise<PostedEntry[]> {
     const e = await db.query<{ id: string; entry_no: number; posting_date: string; source_ref: string | null }>(
+      // Payment settlement entries (Dr 503/Cr 411, Dr 401/Cr 503) touch the AR/AP
+      // control + cash accounts but carry NO VAT; they must never reach the VAT
+      // register classifier (which keys on 4531/4532/401/411) or they would inflate
+      // the SD-return base cells. Exclude them at the source. (Task 3.1)
       `SELECT id, entry_no, posting_date, source_ref FROM journal_entries
-        WHERE posting_date BETWEEN $1 AND $2 AND reverses_entry_id IS NULL ORDER BY entry_no`, [startsOn, endsOn]);
+        WHERE posting_date BETWEEN $1 AND $2 AND reverses_entry_id IS NULL
+          AND source_type <> 'payment' ORDER BY entry_no`, [startsOn, endsOn]);
     const entries: PostedEntry[] = [];
     for (const row of e.rows) {
       const l = await db.query<{ code: string; direction: 'debit' | 'credit'; amount: string }>(
