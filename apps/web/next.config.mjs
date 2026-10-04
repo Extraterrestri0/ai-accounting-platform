@@ -7,11 +7,10 @@ const nextConfig = {
   // Clean marketing URLs → the generated static pages in public/landing/*.html.
   // App routes (/login, /register, /dashboard, …) are untouched.
   async rewrites() {
-    const pages = ['features', 'pricing', 'about', 'blog', 'resources', 'faq', 'contact'];
+    const pages = ['features', 'pricing', 'about', 'faq', 'contact'];
     return {
       beforeFiles: [
         { source: '/', destination: '/landing/index.html' },
-        { source: '/admin', destination: '/landing/admin.html' },
         ...pages.map((p) => ({ source: `/${p}`, destination: `/landing/${p}.html` })),
       ],
     };

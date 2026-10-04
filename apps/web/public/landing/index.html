@@ -1,270 +1,356 @@
 <!DOCTYPE html>
-<html lang="bg">
+<html lang="en">
 <head>
-<script>document.documentElement.classList.add('js')</script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Счетоводство без счетоводител · Acco · за малки фирми и самонаети</title>
-<meta name="description" content="Води си счетоводството сам. Acco автоматизира фактури, ДДС, разходи и отчети с AI — за самонаети, фрийлансъри и малки фирми в България." />
-<link rel="canonical" href="https://acco.bg/" />
+<title>Acco · Accounting that prepares the work. You approve it.</title>
+<meta name="description" content="Acco reads invoices, proposes the accounting treatment and VAT, and posts to an immutable ledger only after a person approves. EUR, Bulgarian VAT built in." />
+<link rel="canonical" href="https://app.185-52-207-143.sslip.io/" />
 <meta name="robots" content="index, follow" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="Acco" />
-<meta property="og:locale" content="bg_BG" />
-<meta property="og:title" content="Счетоводство без счетоводител · Acco · за малки фирми и самонаети" />
-<meta property="og:description" content="Води си счетоводството сам. Acco автоматизира фактури, ДДС, разходи и отчети с AI — за самонаети, фрийлансъри и малки фирми в България." />
-<meta property="og:url" content="https://acco.bg/" />
-<meta name="theme-color" content="#123A33" />
+<meta property="og:locale" content="en_GB" />
+<meta property="og:title" content="Acco · Accounting that prepares the work. You approve it." />
+<meta property="og:description" content="Acco reads invoices, proposes the accounting treatment and VAT, and posts to an immutable ledger only after a person approves. EUR, Bulgarian VAT built in." />
+<meta property="og:url" content="https://app.185-52-207-143.sslip.io/" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="Acco · Accounting that prepares the work. You approve it." />
+<meta name="twitter:description" content="Acco reads invoices, proposes the accounting treatment and VAT, and posts to an immutable ledger only after a person approves. EUR, Bulgarian VAT built in." />
+<meta name="theme-color" content="#FFFFFF" />
 <link rel="icon" href="/landing/assets/app-icon.svg" type="image/svg+xml" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="stylesheet" href="/landing/assets/tokens.css?v=21" />
-<link rel="stylesheet" href="/landing/assets/site.css?v=21" />
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Acco","url":"https://acco.bg"}</script>
+<link rel="preload" href="/landing/assets/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="stylesheet" href="/landing/assets/tokens.css?v=44" />
+<link rel="stylesheet" href="/landing/assets/site.css?v=44" />
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Acco","applicationCategory":"BusinessApplication","operatingSystem":"Web","url":"https://app.185-52-207-143.sslip.io","inLanguage":"en","description":"Accounting software for Bulgarian businesses: document extraction, human review, immutable ledger, VAT and reports."}</script>
 </head>
 <body>
-<div data-mobile-menu style="position:fixed; inset:0; z-index:90; background:rgba(244,239,228,.97); backdrop-filter:blur(8px); flex-direction:column; padding:28px clamp(20px,5vw,72px);">
-  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:48px;">
-    <div style="display:flex; align-items:center; gap:12px;"><svg width="34" height="34" viewBox="0 0 34 34" fill="none"><rect width="34" height="34" rx="9" fill="#123A33"/><rect x="9" y="17" width="3.4" height="8" rx="1.7" fill="#D9B978"/><rect x="15.3" y="13" width="3.4" height="12" rx="1.7" fill="#D9B978"/><rect x="21.6" y="9" width="3.4" height="16" rx="1.7" fill="#E9C98C"/></svg><span style="font-family:var(--serif); font-size:22px; font-weight:500; color:#123A33;">Acco</span></div>
-    <div style="display:flex; align-items:center; gap:12px;">
-      <div style="display:flex; align-items:center; border:1px solid #D6CCB7; border-radius:999px; overflow:hidden; font-size:12px; font-weight:600;"><button type="button" data-lang="bg" class="on" style="border:none; cursor:pointer; padding:7px 13px; background:#123A33; color:#F4EFE4;">BG</button><button type="button" data-lang="en" style="border:none; cursor:pointer; padding:7px 13px; background:transparent; color:#7c857f;">EN</button></div>
-      <button data-menu-close style="background:none; border:1px solid #D6CCB7; border-radius:999px; width:42px; height:42px; font-size:20px; color:#123A33; cursor:pointer;">✕</button>
+<a class="skip" href="#main">Skip to content</a>
+<header class="nav" id="nav">
+  <div class="wrap inner">
+    <a class="brand" href="/" aria-label="Acco"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#1C6B4E"/><path d="M9.5 16.5l4.2 4.2L22.5 11.5" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>acco</span></a>
+    <nav class="nav-links" aria-label="Main">
+      <a href="/features">Product</a><a href="/#how">How it works</a><a href="/#ai-accountant">AI Accountant</a><a href="/pricing">Pricing</a><a href="/about">About</a>
+    </nav>
+    <div class="nav-actions">
+      <a class="btn btn-out btn-sm" href="/login">Sign in</a>
+      <a class="btn btn-ink btn-sm" href="/register">Get started</a>
+      <button class="nav-burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="mobile-menu"><span class="ic-menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="ic-close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></span></button>
     </div>
   </div>
-  <a href="/features" style="font-family:var(--serif); font-size:32px; color:#123A33; padding:14px 0; border-bottom:1px solid #E4DBC9;">Функции</a>
-  <a href="/#how" style="font-family:var(--serif); font-size:32px; color:#123A33; padding:14px 0; border-bottom:1px solid #E4DBC9;">Как работи</a>
-  <a href="/pricing" style="font-family:var(--serif); font-size:32px; color:#123A33; padding:14px 0; border-bottom:1px solid #E4DBC9;">Цени</a>
-  <a href="/faq" style="font-family:var(--serif); font-size:32px; color:#123A33; padding:14px 0; border-bottom:1px solid #E4DBC9;">Въпроси</a>
-  <a href="/login" style="font-family:var(--serif); font-size:32px; color:#123A33; padding:14px 0; border-bottom:1px solid #E4DBC9;">Вход</a>
-  <a href="/register" style="margin-top:32px; text-align:center; padding:16px; background:#123A33; color:#F4EFE4; border-radius:999px; font-size:16px; font-weight:500;">Започни безплатно</a>
-</div>
-<nav id="nav" style="position:fixed; top:0; left:0; right:0; z-index:80; display:flex; align-items:center; justify-content:space-between; gap:40px; padding:20px clamp(20px,5vw,72px); border-bottom:1px solid rgba(228,219,201,.7);">
-  <a href="/" style="display:flex; align-items:center; gap:12px;"><svg width="34" height="34" viewBox="0 0 34 34" fill="none"><rect width="34" height="34" rx="9" fill="#123A33"/><rect x="9" y="17" width="3.4" height="8" rx="1.7" fill="#D9B978"/><rect x="15.3" y="13" width="3.4" height="12" rx="1.7" fill="#D9B978"/><rect x="21.6" y="9" width="3.4" height="16" rx="1.7" fill="#E9C98C"/></svg><span style="font-family:var(--serif); font-size:22px; font-weight:500; letter-spacing:-.01em; color:#123A33;">Acco</span></a>
-  <div data-nav-links style="display:flex; align-items:center; justify-content:center; flex:1; gap:36px;">
-    <a href="/features" class="ul" style="font-size:14.5px; font-weight:500; color:#20302B;">Функции</a><a href="/#how" class="ul" style="font-size:14.5px; font-weight:500; color:#20302B;">Как работи</a><a href="/pricing" class="ul" style="font-size:14.5px; font-weight:500; color:#20302B;">Цени</a><a href="/faq" class="ul" style="font-size:14.5px; font-weight:500; color:#20302B;">Въпроси</a>
-  </div>
-  <div data-nav-actions style="display:flex; align-items:center; gap:18px;">
-    <div style="display:flex; align-items:center; border:1px solid #D6CCB7; border-radius:999px; overflow:hidden; font-size:11px; font-weight:600;"><button type="button" data-lang="bg" class="on" style="border:none; cursor:pointer; padding:5px 11px; background:#123A33; color:#F4EFE4;">BG</button><button type="button" data-lang="en" style="border:none; cursor:pointer; padding:5px 11px; background:transparent; color:#7c857f;">EN</button></div>
-    <a href="/login" class="ul" style="font-size:14px; font-weight:500; color:#20302B;">Вход</a>
-    <a href="/register" data-magnetic class="j-dark" style="display:inline-flex; align-items:center; gap:8px; padding:11px 21px; background:#123A33; color:#F4EFE4; border-radius:999px; font-size:14px; font-weight:500; white-space:nowrap; box-shadow:0 8px 20px rgba(18,58,51,.18);">Започни безплатно</a>
-  </div>
-  <button data-nav-menu style="background:none; border:1px solid #D6CCB7; border-radius:999px; width:44px; height:44px; align-items:center; justify-content:center; cursor:pointer; color:#123A33;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 12h18M3 17h18"/></svg></button>
+</header>
+<nav class="mobile-menu" id="mobile-menu" aria-label="Mobile">
+  <a class="mm-link" href="/features">Product <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a><a class="mm-link" href="/#how">How it works <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a><a class="mm-link" href="/#ai-accountant">AI Accountant <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a><a class="mm-link" href="/pricing">Pricing <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a><a class="mm-link" href="/about">About <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a><a class="mm-link" href="/faq">FAQ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a><a class="mm-link" href="/contact">Contact <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+  <div class="mm-actions"><a class="btn btn-ink" href="/register">Get started</a><a class="btn btn-out" href="/login">Sign in</a></div>
+  <p class="mm-foot">Accounting that prepares the work. You approve it.</p>
 </nav>
-<main>
-<section id="hero" style="position:relative; padding:148px clamp(20px,5vw,72px) 80px; overflow:hidden;">
-  <div id="hero-spot" style="position:absolute; width:620px; height:620px; left:60%; top:30%; transform:translate(-50%,-50%); background:radial-gradient(circle, rgba(201,163,91,.16), transparent 62%); border-radius:50%; pointer-events:none; transition:left .5s var(--ease), top .5s var(--ease);"></div>
-  <div style="position:absolute; bottom:-120px; left:-140px; width:460px; height:460px; border-radius:50%; background:radial-gradient(circle, rgba(18,58,51,.06), transparent 70%); pointer-events:none;"></div>
-  <div data-hero-grid style="position:relative; max-width:1280px; margin:0 auto; display:grid; grid-template-columns:1.02fr .98fr; gap:56px; align-items:center;">
-    <div>
-      <div data-reveal style="display:inline-flex; align-items:center; gap:9px; padding:8px 15px; border:1px solid #D9CDB6; border-radius:999px; background:rgba(255,255,255,.55); margin-bottom:30px;"><span style="width:7px; height:7px; border-radius:50%; background:#16A463; animation:pulseDot 2.6s infinite;"></span><span style="font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#8a6f43;">AI счетоводство · България</span></div>
-      <h1 data-reveal data-reveal-delay="80" data-ten="From invoice chaos<br>to <span style=&quot;font-style:italic; color:#A9854E;&quot;>calm</span> finances." style="font-family:var(--serif); font-weight:400; font-size:clamp(46px,6.4vw,86px); line-height:1.0; letter-spacing:-.025em; color:#123A33; margin:0 0 28px;">От хаос с фактурите<br>към <span style="font-style:italic; color:#A9854E;">спокойни</span> финанси.</h1>
-      <p data-reveal data-reveal-delay="160" style="font-size:clamp(16px,1.4vw,19px); line-height:1.65; color:#4a5a53; max-width:480px; margin:0 0 38px;">Снимай документа, AI го разчита, ти одобряваш. Готови ДДС и отчети — води си счетоводството сам, без счетоводител.</p>
-      <div data-reveal data-reveal-delay="240" style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:30px;">
-        <a href="/register" data-magnetic class="j-dark" style="display:inline-flex; align-items:center; gap:10px; padding:16px 28px; background:#123A33; color:#F4EFE4; border-radius:999px; font-size:15px; font-weight:500; white-space:nowrap; box-shadow:0 12px 28px rgba(18,58,51,.22);">Започни безплатно <span style="font-size:16px;">→</span></a>
-        <a href="/#how" class="j-out lift" style="display:inline-flex; align-items:center; gap:10px; padding:16px 26px; border:1px solid #C9BCA1; color:#123A33; border-radius:999px; font-size:15px; font-weight:500; white-space:nowrap;"><span style="display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:#123A33; color:#E9C98C; font-size:9px;">▶</span> Виж как работи</a>
-      </div>
-      <div data-reveal data-reveal-delay="320" style="display:flex; align-items:center; gap:20px; font-size:13px; color:#6c776f; flex-wrap:wrap;">
-        <span style="display:inline-flex; align-items:center; gap:6px;"><span style="color:#16A463;">✓</span> Без банкова карта</span>
-        <span style="display:inline-flex; align-items:center; gap:6px;"><span style="color:#16A463;">✓</span> 7 дни безплатно</span>
-        <span style="display:inline-flex; align-items:center; gap:6px;"><span style="color:#16A463;">✓</span> Откажи по всяко време</span>
-      </div>
+<main id="main">
+<section class="hero">
+  <div class="wrap inner">
+    <span class="eyebrow"><span>Accounting software · Human approval<span class="hide-m"> · EUR</span></span></span>
+    <h1 class="display">Accounting that prepares the work. <span class="dim">You approve it.</span></h1>
+    <p class="lead">Acco reads your invoices, proposes the accounting treatment and VAT, and posts to an immutable ledger only when a person approves.<span class="hide-m"> Every number traces back to a document.</span></p>
+    <div class="hero-cta">
+      <a class="btn btn-ink btn-lg" href="/register">Get started <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <a class="btn btn-out btn-lg" href="#how">See how it works</a>
     </div>
-    <div data-hero-visual data-reveal="scale" data-reveal-delay="200" style="position:relative; height:560px;">
-      <div data-parallax="-0.03" style="position:absolute; top:54%; left:52%; width:520px; height:520px; transform:translate(-50%,-50%); border:1px dashed rgba(169,133,78,.28); border-radius:50%; animation:spinSlow 60s linear infinite; pointer-events:none;"></div>
-      <div style="position:absolute; top:54%; left:52%; width:360px; height:360px; transform:translate(-50%,-50%); border:1px solid rgba(18,58,51,.07); border-radius:50%; pointer-events:none;"></div>
-      <div data-parallax="0.04" style="position:absolute; top:18px; right:0; width:min(390px,92%); background:#FFFFFF; border:1px solid #EAE0CD; border-radius:18px; box-shadow:0 30px 70px rgba(18,30,26,.18); padding:24px; animation:floatY 8s ease-in-out infinite;">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;"><div style="display:flex; align-items:center; gap:9px;"><span style="width:9px; height:9px; border-radius:50%; background:#16A463; animation:pulseDot 2.4s infinite;"></span><span style="font-size:13px; font-weight:600; color:#123A33;">AI извлече данните</span></div><span style="font-size:11px; color:#9aa49e; font-family:var(--mono);">0.8s</span></div>
-        <div style="display:flex; align-items:center; justify-content:space-between; padding-bottom:14px; border-bottom:1px solid #F0EADC;"><div><div style="font-size:11px; color:#94a09a; margin-bottom:3px;">Доставчик</div><div style="font-size:14px; font-weight:600; color:#20302B;">ТЕХНО ПЛЮС ООД</div></div><div style="display:flex; gap:5px;"><span style="font-size:10px; font-weight:600; color:#0E8650; background:#ECFBF3; padding:4px 8px; border-radius:999px;">ЕИК ✓</span><span style="font-size:10px; font-weight:600; color:#0E8650; background:#ECFBF3; padding:4px 8px; border-radius:999px;">VIES ✓</span></div></div>
-        <div style="display:flex; justify-content:space-between; padding:13px 0 9px; font-size:13px;"><span style="color:#6c776f;">Данъчна основа</span><span style="font-weight:600; font-variant-numeric:tabular-nums; color:#20302B;">1 250,00 €</span></div>
-        <div style="display:flex; justify-content:space-between; padding-bottom:13px; font-size:13px; border-bottom:1px solid #F0EADC;"><span style="color:#6c776f;">ДДС 20%</span><span style="font-weight:600; font-variant-numeric:tabular-nums; color:#20302B;">250,00 €</span></div>
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 0 4px;"><span style="font-size:13px; font-weight:600; color:#123A33;">Общо</span><span style="font-family:var(--serif); font-size:25px; font-weight:500; font-variant-numeric:tabular-nums; color:#123A33;">1 500,00 €</span></div>
-        <div style="margin-top:8px; display:flex; align-items:center; gap:8px; padding:9px 12px; background:#FBF8F1; border-radius:9px; font-size:11px; color:#6c776f;"><span style="font-family:var(--mono); color:#A9854E;">Dr</span> 602 Външни услуги <span style="margin-left:auto; font-family:var(--mono); color:#A9854E;">Cr</span> 401 Доставчици</div>
-        <div style="margin-top:12px; display:flex; gap:9px;"><span style="flex:1; text-align:center; padding:11px; background:#16A463; color:#fff; border-radius:9px; font-size:13px; font-weight:600;">Одобри и осчетоводи</span><span style="padding:11px 14px; border:1px solid #E4DBC9; color:#6c776f; border-radius:9px; font-size:13px;">защо?</span></div>
-      </div>
-      <div data-parallax="0.09" style="position:absolute; bottom:30px; left:0; width:210px; background:#123A33; color:#F4EFE4; border-radius:16px; padding:18px 20px; box-shadow:0 22px 46px rgba(18,58,51,.3); animation:floatYlg 7s ease-in-out infinite .3s;"><div style="font-size:11px; color:#9fc3b8; letter-spacing:.04em; margin-bottom:7px;">ДДС за внасяне · май</div><div style="font-family:var(--serif); font-size:32px; font-weight:500; font-variant-numeric:tabular-nums;">1 260 €</div><div style="margin-top:10px; height:5px; border-radius:3px; background:rgba(255,255,255,.16); overflow:hidden;"><div style="width:72%; height:100%; background:#E9C98C; border-radius:3px;"></div></div><div style="margin-top:8px; font-size:10px; color:#86b0a4; font-family:var(--mono);">срок · 14 юни</div></div>
-      <div data-parallax="0.13" style="position:absolute; top:120px; left:-8px; display:flex; align-items:center; gap:8px; background:#fff; border:1px solid #EAE0CD; border-radius:999px; padding:8px 14px; box-shadow:0 14px 32px rgba(18,30,26,.13); animation:floatYsm 6.4s ease-in-out infinite .5s;"><span style="width:9px; height:9px; border-radius:50%; background:#16A463;"></span><span style="font-size:12px; font-weight:600; color:#20302B;">Точност 98%</span></div>
-      <div data-parallax="0.06" style="position:absolute; bottom:-6px; right:36px; width:172px; background:#FBF8F1; border:1px solid #EAE0CD; border-radius:14px; padding:15px; box-shadow:0 18px 40px rgba(18,30,26,.12); animation:floatYsm 7.6s ease-in-out infinite .9s;"><div style="font-size:11px; color:#94a09a; margin-bottom:10px;">Парично салдо</div><div style="display:flex; align-items:flex-end; gap:5px; height:42px;"><div style="flex:1; height:46%; background:#D9CDB6; border-radius:3px;"></div><div style="flex:1; height:64%; background:#C9B98F; border-radius:3px;"></div><div style="flex:1; height:38%; background:#D9CDB6; border-radius:3px;"></div><div style="flex:1; height:82%; background:#A9854E; border-radius:3px;"></div><div style="flex:1; height:70%; background:#C9B98F; border-radius:3px;"></div><div style="flex:1; height:100%; background:#123A33; border-radius:3px;"></div></div></div>
+    <p class="hero-note"><span>Immutable ledger</span><span>Hash-chained audit trail</span><span>Built for Bulgarian VAT</span></p>
+  </div>
+  <div class="wrap-wide">
+    <div class="scene" role="img" aria-label="The Acco review screen: extracted fields next to the source document, with the approval step and the posting result" data-reveal>
+      <div class="sc-doc" aria-hidden="true">
+<div class="paper ui-paper">
+  <p class="p-h5">Invoice</p><div class="no">No. 0000001180 · 30.09.2026</div>
+  <div class="grid"><div><b>Supplier</b><span>Softuer Prima EOOD</span><span class="mono" style="font-size:10.5px">UIC 204117823</span></div><div><b>Customer</b><span>Demo Firma EOOD</span><span class="mono" style="font-size:10.5px">UIC 123456789</span></div></div>
+  <div class="row"><span>Prima Cloud subscription · October</span><span class="num">190.00</span></div>
+  <div class="row"><span>Tax base</span><span class="num">190.00 €</span></div>
+  <div class="row"><span>VAT 20%</span><span class="num">38.00 €</span></div>
+  <div class="row total"><span>Total</span><span class="num hl">228.00 €</span></div>
+</div></div>
+      <div class="sc-main" aria-hidden="true">
+<div class="ui lift">
+  <div class="ui-bar"><span class="brand"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#1C6B4E"/><path d="M9.5 16.5l4.2 4.2L22.5 11.5" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>acco</span></span><span class="crumb"><span>Review</span><span>›</span><b>f-1180-softprima.pdf</b></span><span class="sp"><span class="av">AD</span></span></div>
+  <div class="ui-title"><p class="ui-h5">f-1180-softprima.pdf</p><div class="meta"><b>Softuer Prima EOOD</b><span>No. 0000001180</span><span>30.09.2026</span><b class="num">228.00 €</b></div></div>
+  <div class="ui-h" style="border-top:1px solid var(--line);margin-top:10px"><b>Extracted data</b><span class="conf ok">overall confidence 94%</span></div>
+  <div class="ui-fields">
+    <div class="ui-group">Document</div>
+    <div class="ui-field"><div><b>Invoice No.</b><strong>0000001180</strong></div><span class="conf ok">98%</span></div>
+    <div class="ui-field"><div><b>Tax event date</b><strong>30.09.2026</strong></div><span class="conf ok">96%</span></div>
+    <div class="ui-group">Amounts &amp; VAT</div>
+    <div class="ui-field flag"><div><b>Tax base</b><strong>190.00 €</strong></div><span class="conf warn">71%</span></div>
+    <div class="ui-field"><div><b>VAT 20%</b><strong>38.00 €</strong></div><span class="conf ok">checked</span></div>
+    <div class="ui-field"><div><b>Total</b><strong>228.00 €</strong></div><span class="conf ok">checked</span></div>
+    <div class="ui-field"><div><b>Treatment</b><strong>standard · 20%</strong></div><span class="conf ok">rule</span></div>
+    <div class="ui-group">Supplier</div>
+    <div class="ui-field"><div><b>Name</b><strong>Softuer Prima EOOD</strong></div><span class="conf ok">94%</span></div>
+    <div class="ui-field"><div><b>UIC</b><strong>204117823</strong></div><span class="conf ok">checked</span></div>
+  </div>
+</div></div>
+      <div class="sc-sugg" aria-hidden="true">
+<div class="ui">
+  <div class="ui-h"><b>Decision</b><span class="pill warn">awaiting review</span></div>
+  <ul class="ui-steps">
+    <li class="done"><i>✓</i>Extraction</li>
+    <li class="cur"><i></i>Review fields</li>
+    <li class=""><i></i>Approval</li>
+    <li class=""><i></i>Posting</li>
+  </ul>
+  <div class="ui-actions"><span class="ui-btn brand block">Approve</span><span class="ui-btn block">Reject</span></div>
+</div></div>
+      <div class="sc-ticket" aria-hidden="true">
+<div class="ticket">
+  <div class="t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg> Posted to the ledger</div>
+  <div class="m">JE-2026-00417 · 03.10.2026</div>
+  <div class="by">Approved by <b>Ana Dimitrova</b> · recorded in the audit trail</div>
+</div></div>
     </div>
   </div>
 </section>
-<section style="position:relative; padding:clamp(56px,7vh,90px) clamp(20px,5vw,72px) clamp(40px,5vh,64px);">
-  <div style="max-width:1180px; margin:0 auto;">
-    <div data-reveal style="display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap; margin-bottom:34px;">
-      <div><div style="font-size:11px; letter-spacing:.13em; text-transform:uppercase; color:#A9854E; margin-bottom:16px;">Интеграции</div><h2 style="font-family:var(--serif); font-weight:400; font-size:clamp(24px,2.8vw,34px); line-height:1.15; letter-spacing:-.015em; color:#123A33; margin:0; max-width:520px;">Свързва се с инструментите, които вече ползваш.</h2></div>
-      <p style="font-size:13.5px; line-height:1.6; color:#8a948e; max-width:260px; margin:0;">Плащания, магазини и таблици — документите идват сами, на едно място.</p>
-    </div>
-    <div data-4col style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px;">
-      <div data-reveal class="lift-sm" style="display:flex; align-items:center; justify-content:center; gap:11px; height:96px; background:#FBF8F1; border:1px solid #EAE0CD; border-radius:14px; transition:transform .5s var(--ease), box-shadow .5s, border-color .5s;"><span style="width:30px; height:30px; border-radius:8px; background:#EFE7D6; display:flex; align-items:center; justify-content:center; color:#123A33;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span><span style="font-size:15px; font-weight:600; letter-spacing:-.01em; color:#3a4843;">Stripe</span></div>
-      <div data-reveal data-reveal-delay="60" class="lift-sm" style="display:flex; align-items:center; justify-content:center; gap:11px; height:96px; background:#FBF8F1; border:1px solid #EAE0CD; border-radius:14px; transition:transform .5s var(--ease), box-shadow .5s, border-color .5s;"><span style="width:30px; height:30px; border-radius:8px; background:#EFE7D6; display:flex; align-items:center; justify-content:center; color:#123A33;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9a4 4 0 0 1 0 8H8m-2 10V3m0 10h7a4 4 0 0 1 0 8H6"/></svg></span><span style="font-size:15px; font-weight:600; letter-spacing:-.01em; color:#3a4843;">PayPal</span></div>
-      <div data-reveal data-reveal-delay="120" class="lift-sm" style="display:flex; align-items:center; justify-content:center; gap:11px; height:96px; background:#FBF8F1; border:1px solid #EAE0CD; border-radius:14px; transition:transform .5s var(--ease), box-shadow .5s, border-color .5s;"><span style="width:30px; height:30px; border-radius:8px; background:#EFE7D6; display:flex; align-items:center; justify-content:center; color:#123A33;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></svg></span><span style="font-size:15px; font-weight:600; letter-spacing:-.01em; color:#3a4843;">Revolut</span></div>
-      <div data-reveal data-reveal-delay="180" class="lift-sm" style="display:flex; align-items:center; justify-content:center; gap:11px; height:96px; background:#FBF8F1; border:1px solid #EAE0CD; border-radius:14px; transition:transform .5s var(--ease), box-shadow .5s, border-color .5s;"><span style="width:30px; height:30px; border-radius:8px; background:#EFE7D6; display:flex; align-items:center; justify-content:center; color:#123A33;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5l4 14 5-9 5 9 4-14"/></svg></span><span style="font-size:15px; font-weight:600; letter-spacing:-.01em; color:#3a4843;">Wise</span></div>
-      <div data-reveal class="lift-sm" style="display:flex; align-items:center; justify-content:center; gap:11px; height:96px; background:#FBF8F1; border:1px solid #EAE0CD; border-radius:14px; transition:transform .5s var(--ease), box-shadow .5s, border-color .5s;"><span style="width:30px; height:30px; border-radius:8px; background:#EFE7D6; display:flex; align-items:center; justify-content:center; color:#123A33;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 4 6v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6l-2-4z"/><path d="M4 6h16M9 10a3 3 0 0 0 6 0"/></svg></span><span style="font-size:15px; font-weight:600; letter-spacing:-.01em; color:#3a4843;">Shopify</span></div>
-      <div data-reveal data-reveal-delay="60" class="lift-sm" style="display:flex; align-items:center; justify-content:center; gap:11px; height:96px; background:#FBF8F1; border:1px solid #EAE0CD; border-radius:14px; transition:transform .5s var(--ease), box-shadow .5s, border-color .5s;"><span style="width:30px; height:30px; border-radius:8px; background:#EFE7D6; display:flex; align-items:center; justify-content:center; color:#123A33;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="18" cy="21" r="1"/><path d="M3 4h2l2 12h11l2-8H6"/></svg></span><span style="font-size:15px; font-weight:600; letter-spacing:-.01em; color:#3a4843;">WooCommerce</span></div>
-      <div data-reveal data-reveal-delay="120" class="lift-sm" style="display:flex; align-items:center; justify-content:center; gap:11px; height:96px; background:#FBF8F1; border:1px solid #EAE0CD; border-radius:14px; transition:transform .5s var(--ease), box-shadow .5s, border-color .5s;"><span style="width:30px; height:30px; border-radius:8px; background:#EFE7D6; display:flex; align-items:center; justify-content:center; color:#123A33;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg></span><span style="font-size:15px; font-weight:600; letter-spacing:-.01em; color:#3a4843;">Microsoft 365</span></div>
-      <div data-reveal data-reveal-delay="180" class="lift-sm" style="display:flex; align-items:center; justify-content:center; gap:11px; height:96px; background:#FBF8F1; border:1px solid #EAE0CD; border-radius:14px; transition:transform .5s var(--ease), box-shadow .5s, border-color .5s;"><span style="width:30px; height:30px; border-radius:8px; background:#EFE7D6; display:flex; align-items:center; justify-content:center; color:#123A33;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/></svg></span><span style="font-size:15px; font-weight:600; letter-spacing:-.01em; color:#3a4843;">Google Sheets</span></div>
+<section class="section-sm">
+  <div class="wrap">
+    <div class="facts">
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><div><b>Human approval on every posting</b><span>Nothing reaches the ledger automatically.</span></div></div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><div><b>Immutable double-entry ledger</b><span>Balanced entries; corrections are reversals.</span></div></div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg><div><b>Hash-chained audit trail</b><span>Every action, human or AI, is recorded and verifiable.</span></div></div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14l6-6"/><circle cx="9.5" cy="8.5" r="1.5"/><circle cx="14.5" cy="13.5" r="1.5"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg><div><b>EUR, Bulgarian VAT built in</b><span>Treatments, registers and checks follow Bulgarian rules.</span></div></div>
     </div>
   </div>
 </section>
-<section style="position:relative; padding:clamp(72px,9vh,120px) clamp(20px,5vw,72px); background:#FBF8F1; border-top:1px solid #E4DBC9; overflow:hidden;">
-  <div style="position:absolute; top:0; left:50%; transform:translateX(-50%); width:1px; height:100%; background:linear-gradient(#E4DBC9,transparent); pointer-events:none;"></div>
-  <div style="max-width:1180px; margin:0 auto;">
-    <div data-reveal style="text-align:center; margin-bottom:54px;"><div style="font-size:11px; letter-spacing:.13em; text-transform:uppercase; color:#A9854E; margin-bottom:16px;">Защо Acco</div><h2 data-ten="Document chaos<br>stops here." style="font-family:var(--serif); font-weight:400; font-size:clamp(32px,4vw,52px); line-height:1.08; letter-spacing:-.02em; color:#123A33; margin:0;">Хаосът с документите<br>спира тук.</h2></div>
-    <div data-split style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:stretch;">
-      <div data-reveal="left" class="lift" style="position:relative; background:#FFFFFF; border:1px solid #EAE0CD; border-radius:20px; padding:36px;">
-        <div style="display:inline-flex; align-items:center; gap:9px; margin-bottom:24px;"><span style="width:30px; height:30px; border-radius:9px; background:#FDECEC; color:#CB2A2A; display:flex; align-items:center; justify-content:center; font-size:15px;">✕</span><span style="font-size:13px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:#A88;">Без платформа</span></div>
-        <div style="display:flex; flex-direction:column; gap:18px;">
-          <div style="display:flex; gap:13px; align-items:flex-start;"><span style="color:#D98; margin-top:1px;">✕</span><div><div style="font-size:15px; font-weight:500; color:#3a4843;">Часове ръчно въвеждане</div><div style="font-size:13px; color:#8a948e; margin-top:2px;">Поле по поле, фактура по фактура.</div></div></div><div style="height:1px; background:#F0EADC;"></div>
-          <div style="display:flex; gap:13px; align-items:flex-start;"><span style="color:#D98; margin-top:1px;">✕</span><div><div style="font-size:15px; font-weight:500; color:#3a4843;">Фактури, разпилени по имейли</div><div style="font-size:13px; color:#8a948e; margin-top:2px;">Папки, екселски файлове, изгубени документи.</div></div></div><div style="height:1px; background:#F0EADC;"></div>
-          <div style="display:flex; gap:13px; align-items:flex-start;"><span style="color:#D98; margin-top:1px;">✕</span><div><div style="font-size:15px; font-weight:500; color:#3a4843;">Пропуснати ДДС срокове</div><div style="font-size:13px; color:#8a948e; margin-top:2px;">Глоби и грешки от невнимание.</div></div></div><div style="height:1px; background:#F0EADC;"></div>
-          <div style="display:flex; gap:13px; align-items:flex-start;"><span style="color:#D98; margin-top:1px;">✕</span><div><div style="font-size:15px; font-weight:500; color:#3a4843;">Зависимост от счетоводител</div><div style="font-size:13px; color:#8a948e; margin-top:2px;">За всяка дребна промяна или въпрос.</div></div></div>
+<section class="section bg-warm hairline-top" id="product">
+  <div class="wrap">
+    <div class="split">
+      <div class="sec-head"><span class="eyebrow">What Acco handles</span><h2 class="h2">The whole loop, from document to filing-ready records.</h2></div>
+      <p class="lead">Built for sole traders, small companies and the accountants who serve them. Only what works in the product today is listed here.</p>
+    </div>
+    <div class="matrix">
+      <a href="/features#capture"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span><h3>Document capture</h3><p>PDF, images and XML invoices. Validated, stored immutably, queued for extraction.</p><span class="k">/upload</span></a><a href="/features#extraction"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 12h10"/></svg></span><h3>Extraction & checks</h3><p>Field-by-field values with confidence. UIC, VAT number, IBAN and totals are verified by rules.</p><span class="k">/extract</span></a><a href="/features#review"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><h3>Review queue</h3><p>Low-confidence fields stand out. Correct, approve or reject — with a full history.</p><span class="k">/review</span></a><a href="/features#ledger"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span><h3>Ledger & periods</h3><p>Balanced double-entry postings, reversing corrections, locked accounting periods.</p><span class="k">/ledger</span></a><a href="/features#invoicing"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg></span><h3>Invoicing</h3><p>Sequential numbering, proformas, credit and debit notes, product catalogue with VAT codes.</p><span class="k">/invoices</span></a><a href="/features#banking"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10h18M5 10v8M9 10v8M15 10v8M19 10v8M3 18h18M12 3 3 8h18z"/></svg></span><h3>Banking & reconciliation</h3><p>CSV/XLSX statement import, ranked match suggestions, payments, receivables and payables.</p><span class="k">/banking</span></a><a href="/features#vat"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14l6-6"/><circle cx="9.5" cy="8.5" r="1.5"/><circle cx="14.5" cy="13.5" r="1.5"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg></span><h3>VAT & SAF-T</h3><p>Purchase and sales registers, period summary, VIES dataset; SAF-T export in beta.</p><span class="k">/vat</span></a><a href="/features#reports"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 4 3 5-6"/></svg></span><h3>Reports</h3><p>Trial balance, P&L, general ledger, monthly revenue and expenses, cash flow. CSV export.</p><span class="k">/reports</span></a><a href="/#ai-accountant"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 17l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/></svg></span><h3>AI Accountant</h3><p>Answers fixed questions from your records, cites sources, and never changes anything.</p><span class="k">/assistant</span></a>
+    </div>
+  </div>
+</section>
+<section class="section" id="how">
+  <div class="wrap">
+    <div class="sec-head"><span class="eyebrow">How it works</span><h2 class="h2">Seven steps. Two of them are yours, <span class="dim">and nothing moves past them without you.</span></h2></div>
+    <div class="flow">
+      <div class="flow-step auto" data-reveal><span class="dot"></span><span class="k">01</span><h3>Document</h3><p>Upload a PDF, photo or XML. It is checked and stored immutably.</p><span class="who">Automation</span></div><div class="flow-step auto" data-reveal><span class="dot"></span><span class="k">02</span><h3>Extraction</h3><p>Fields are read with a confidence score. UIC, VAT number, IBAN and totals are verified by rules.</p><span class="who">Automation</span></div><div class="flow-step human" data-reveal><span class="dot"></span><span class="k">03</span><h3>Review</h3><p>You see the document and the fields side by side. Weak fields are flagged.</p><span class="who">Your decision</span></div><div class="flow-step auto" data-reveal><span class="dot"></span><span class="k">04</span><h3>Suggestion</h3><p>Accounts, expense category and VAT treatment are proposed from rules and memory.</p><span class="who">Automation</span></div><div class="flow-step human" data-reveal><span class="dot"></span><span class="k">05</span><h3>Approval</h3><p>Approve, correct or reject. Nothing proceeds without this step.</p><span class="who">Your decision</span></div><div class="flow-step auto" data-reveal><span class="dot"></span><span class="k">06</span><h3>Ledger</h3><p>A balanced entry is posted. It cannot be edited; corrections reverse it.</p><span class="who">Automation</span></div><div class="flow-step ai" data-reveal><span class="dot"></span><span class="k">07</span><h3>Explain</h3><p>Reports, VAT and the AI Accountant read from the ledger and cite it.</p><span class="who">AI explanation</span></div>
+    </div>
+    <div class="legend"><span><i class="l-auto"></i> Automation — Acco prepares</span><span><i class="l-human"></i> Your decision — a person approves</span><span><i class="l-ai"></i> AI explanation — read-only, cited</span></div>
+  </div>
+</section>
+<section class="section bg-warm hairline-top" id="review">
+  <div class="wrap story wide">
+    <div class="story-text">
+      <span class="eyebrow">Review before anything is posted</span>
+      <h2 class="h2">Check what was read. <span class="dim">Fix what needs fixing.</span></h2>
+      <p class="body">The source document sits next to the extracted fields. Deterministic checks run first; the AI suggestion comes with its reasoning; the approval buttons belong to you.</p>
+      <ul class="points">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><div><b>Rules before probability</b><span>UIC checksum, VAT number format, IBAN mod-97 and base + VAT = total are decided by validators, not by a model.</span></div></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><div><b>Confidence you can act on</b><span>Each field shows a score and its origin. Anything below 70% or failing a check is highlighted.</span></div></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><div><b>Correct, then approve</b><span>Edit fields, regenerate the suggestion, approve or reject. Every step lands in the audit trail.</span></div></li>
+      </ul>
+    </div>
+    <div class="canvas" aria-hidden="true" data-reveal>
+      <div class="rv-grid">
+        <div class="ui">
+          <div class="ui-h"><b>Extracted data</b><span class="conf ok">94%</span></div>
+          <div class="ui-fields one">
+            <div class="ui-field"><div><b>Supplier</b><strong>Softuer Prima EOOD</strong></div><span class="conf ok">94%</span></div>
+            <div class="ui-field"><div><b>UIC</b><strong>204117823</strong></div><span class="conf ok">checked</span></div>
+            <div class="ui-field flag"><div><b>Tax base</b><strong>190.00 €</strong></div><span class="conf warn">71%</span></div>
+            <div class="ui-field"><div><b>VAT 20%</b><strong>38.00 €</strong></div><span class="conf ok">checked</span></div>
+            <div class="ui-field"><div><b>Total</b><strong>228.00 €</strong></div><span class="conf ok">checked</span></div>
+            <div class="ui-field bad"><div><b>IBAN</b><strong>BG80 BNBG 9661 1020 3456 7</strong></div><span class="conf err">invalid</span></div>
+          </div>
         </div>
-      </div>
-      <div data-reveal="right" data-reveal-delay="120" class="lift-d" style="position:relative; background:#123A33; color:#F4EFE4; border:1px solid #123A33; border-radius:20px; padding:36px; overflow:hidden; transition:transform .5s var(--ease), box-shadow .5s;">
-        <div style="position:absolute; top:-50px; right:-40px; width:240px; height:240px; border-radius:50%; background:radial-gradient(circle,rgba(233,201,140,.16),transparent 70%); pointer-events:none;"></div>
-        <div style="position:relative; display:inline-flex; align-items:center; gap:9px; margin-bottom:24px;"><span style="width:30px; height:30px; border-radius:9px; background:rgba(22,164,99,.2); color:#86f0bd; display:flex; align-items:center; justify-content:center; font-size:14px;">✓</span><span style="font-size:13px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:#9fc3b8;">С Acco</span></div>
-        <div style="position:relative; display:flex; flex-direction:column; gap:18px;">
-          <div style="display:flex; gap:13px; align-items:flex-start;"><span style="color:#86f0bd; margin-top:1px;">✓</span><div><div style="font-size:15px; font-weight:500;">AI извлича данните автоматично</div><div style="font-size:13px; color:#9fc3b8; margin-top:2px;">Снимка или PDF — готово за секунди.</div></div></div><div style="height:1px; background:rgba(255,255,255,.1);"></div>
-          <div style="display:flex; gap:13px; align-items:flex-start;"><span style="color:#86f0bd; margin-top:1px;">✓</span><div><div style="font-size:15px; font-weight:500;">Всичко на едно място, защитено</div><div style="font-size:13px; color:#9fc3b8; margin-top:2px;">Архив с одитна следа, данни в ЕС.</div></div></div><div style="height:1px; background:rgba(255,255,255,.1);"></div>
-          <div style="display:flex; gap:13px; align-items:flex-start;"><span style="color:#86f0bd; margin-top:1px;">✓</span><div><div style="font-size:15px; font-weight:500;">Готови ДДС дневници и декларация</div><div style="font-size:13px; color:#9fc3b8; margin-top:2px;">Попълват се сами, готови за подаване.</div></div></div><div style="height:1px; background:rgba(255,255,255,.1);"></div>
-          <div style="display:flex; gap:13px; align-items:flex-start;"><span style="color:#86f0bd; margin-top:1px;">✓</span><div><div style="font-size:15px; font-weight:500;">Управляваш финансите си сам</div><div style="font-size:13px; color:#9fc3b8; margin-top:2px;">Спокойно, разбираемо, без посредник.</div></div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-<section id="how" style="position:relative; padding:clamp(80px,11vh,140px) clamp(20px,5vw,72px); overflow:hidden;">
-  <div style="max-width:1180px; margin:0 auto;">
-    <div data-reveal style="max-width:680px; margin:0 auto 64px; text-align:center;"><div style="font-size:11px; letter-spacing:.13em; text-transform:uppercase; color:#A9854E; margin-bottom:16px;">Как работи</div><h2 style="font-family:var(--serif); font-weight:400; font-size:clamp(32px,4.4vw,54px); line-height:1.06; letter-spacing:-.02em; color:#123A33; margin:0 0 16px;">От документ до готов отчет — в три стъпки.</h2><p style="font-size:17px; line-height:1.6; color:#5a6a63; margin:0;">AI върши рутината, ти решаваш важното.</p></div>
-    <div style="position:relative;">
-      <div style="position:absolute; top:38px; left:14%; right:14%; height:1px; background:repeating-linear-gradient(90deg,#D9CDB6 0 8px,transparent 8px 16px); pointer-events:none;"></div>
-      <div data-3col style="display:grid; grid-template-columns:repeat(3,1fr); gap:32px;">
-        
-<div data-reveal style="text-align:center;">
-  <div style="width:76px; height:76px; margin:0 auto 26px; border-radius:50%; background:#F4EFE4; border:1px solid #E4DBC9; display:flex; align-items:center; justify-content:center; position:relative;"><span style="position:absolute; top:-8px; right:-8px; font-family:var(--mono); font-size:11px; font-weight:500; color:#fff; background:#A9854E; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center;">01</span><span style="color:#123A33;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3m0 0L8 7m4-4 4 4"/><path d="M3 15v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"/></svg></span></div>
-  <h3 style="font-family:var(--serif); font-weight:500; font-size:24px; color:#123A33; margin:0 0 10px;">Качваш</h3>
-  <p style="font-size:14px; line-height:1.65; color:#5a6a63; margin:0 auto; max-width:260px;">Снимка, PDF или XML — както ти е удобно. Или препрати имейл с фактура.</p>
+        <div style="display:flex;flex-direction:column;gap:14px">
+<div class="ui">
+  <div class="ui-h"><b>Decision</b><span class="pill warn">awaiting review</span></div>
+  <ul class="ui-steps">
+    <li class="done"><i>✓</i>Extraction</li>
+    <li class="cur"><i></i>Review fields</li>
+    <li class=""><i></i>Approval</li>
+    <li class=""><i></i>Posting</li>
+  </ul>
+  <div class="ui-actions"><span class="ui-btn brand block">Approve</span><span class="ui-btn block">Reject</span></div>
 </div>
-        
-<div data-reveal data-reveal-delay="140" style="text-align:center;">
-  <div style="width:76px; height:76px; margin:0 auto 26px; border-radius:50%; background:#F4EFE4; border:1px solid #E4DBC9; display:flex; align-items:center; justify-content:center; position:relative;"><span style="position:absolute; top:-8px; right:-8px; font-family:var(--mono); font-size:11px; font-weight:500; color:#fff; background:#A9854E; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center;">02</span><span style="color:#123A33;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.3"/></svg></span></div>
-  <h3 style="font-family:var(--serif); font-weight:500; font-size:24px; color:#123A33; margin:0 0 10px;">AI разчита</h3>
-  <p style="font-size:14px; line-height:1.65; color:#5a6a63; margin:0 auto; max-width:260px;">Извлича данните и предлага осчетоводяване срещу националния сметкоплан — винаги с „защо?“.</p>
+<div class="ui">
+  <div class="ui-h"><b>Suggestion</b><span class="pill neu">from memory</span></div>
+  <div class="ui-lines">
+    <div class="ui-line"><code>602</code><span>Dr Services</span><span class="r">190.00 €</span></div>
+    <div class="ui-line"><code>4531</code><span>Dr Input VAT</span><span class="r">38.00 €</span></div>
+    <div class="ui-line"><code>401</code><span class="cr">Cr Suppliers</span><span class="r">228.00 €</span></div>
+  </div>
+  <div class="ui-note"><b>VAT:</b> standard 20% · BG supplier · matched code STD20</div>
+</div></div>
+      </div>
+      <span class="callout" style="left:22px;bottom:22px"><i></i> Flagged: below 70% confidence</span>
+    </div>
+  </div>
+</section>
+<section class="section bg-ink on-ink">
+  <div class="wrap">
+    <div class="sec-head" style="max-width:820px"><span class="eyebrow">Three things that are never confused</span><h2 class="h2">Nothing is posted without a person. <span class="dim">Automation prepares, you decide, the assistant explains.</span></h2></div>
+    <div class="defs">
+      <div data-reveal><span class="tag-k"><i class="i-auto"></i> Automation</span><h3>Acco prepares</h3><p>Reads documents, verifies identifiers and totals, proposes accounts and VAT treatment, builds registers and reports.</p><p class="ex">In the product: <b>extraction, suggestions, registers</b></p></div>
+      <div data-reveal><span class="tag-k"><i class="i-human"></i> Your decision</span><h3>A person approves</h3><p>Only a user with the right role can approve a document, post to the ledger, lock a period or issue an invoice. The AI identity cannot.</p><p class="ex">In the product: <b>approve, post, lock, issue</b></p></div>
+      <div data-reveal><span class="tag-k"><i class="i-ai"></i> AI explanation</span><h3>The assistant explains</h3><p>Answers a fixed set of questions from your records, cites the entries it used, and abstains when the data is not there. It reads only.</p><p class="ex">In the product: <b>AI Accountant</b></p></div>
+    </div>
+  </div>
+</section>
+<section class="section" id="position">
+  <div class="wrap">
+    <div class="split">
+      <div class="sec-head"><span class="eyebrow">Receivables, payables, bank</span><h2 class="h2">Know who owes you, what you owe, <span class="dim">and what the bank says.</span></h2></div>
+      <p class="lead">Issued invoices become receivables, approved purchase invoices become payables, and imported bank statements are matched against both. Everything by due date, in EUR.</p>
+    </div>
+    <div class="canvas" aria-hidden="true" data-reveal>
+      <div class="collage">
+        <div class="c1">
+<div class="ui ui-w">
+  <div class="wt">Receivables <span>View all →</span></div>
+  <div class="big">14 320.00 €</div>
+  <div class="kv"><span>Current</span><b>11 900.00 €</b></div>
+  <div class="kv"><span>Overdue · 3 documents</span><b class="warn">2 420.00 €</b></div>
+</div></div>
+        <div class="c2">
+<div class="ui">
+  <div class="ui-h"><b>Payables by due date</b><span>as of 03.10.2026</span></div>
+  <table class="ui-table">
+    <tr><th>Bucket</th><th class="r">Docs</th><th class="r">Amount</th><th class="hide-sm">Share</th></tr>
+    <tr><td class="s">Current</td><td class="r">7</td><td class="r">4 180.00 €</td><td class="hide-sm"><span style="display:block;height:6px;border-radius:99px;background:var(--bg-warm);overflow:hidden"><span style="display:block;width:64%;height:100%;background:var(--brand);opacity:.8"></span></span></td></tr>
+    <tr><td class="s">1–30 days</td><td class="r">2</td><td class="r">1 560.00 €</td><td class="hide-sm"><span style="display:block;height:6px;border-radius:99px;background:var(--bg-warm);overflow:hidden"><span style="display:block;width:24%;height:100%;background:var(--warn);opacity:.8"></span></span></td></tr>
+    <tr><td class="s">31–60 days</td><td class="r">1</td><td class="r">640.00 €</td><td class="hide-sm"><span style="display:block;height:6px;border-radius:99px;background:var(--bg-warm);overflow:hidden"><span style="display:block;width:10%;height:100%;background:var(--err);opacity:.8"></span></span></td></tr>
+    <tfoot><tr><td>Total open</td><td class="r">10</td><td class="r">6 380.00 €</td><td class="hide-sm"></td></tr></tfoot>
+  </table>
+</div></div>
+        <div class="c3">
+<div class="ui">
+  <div class="ui-h"><b>Bank statement · UniCredit</b><span>3 to reconcile</span></div>
+  <table class="ui-table">
+    <tr><th>Date</th><th>Description</th><th class="r">Amount</th><th>Status</th></tr>
+    <tr><td>03.10</td><td class="s">Payment inv. 1180</td><td class="r">-228.00 €</td><td><span class="pill warn">suggested</span></td></tr>
+    <tr><td>02.10</td><td class="s">Receipt · INV 2026-0031</td><td class="r">1 500.00 €</td><td><span class="pill ok">matched</span></td></tr>
+    <tr><td>01.10</td><td class="s">Rent October</td><td class="r">-640.00 €</td><td><span class="pill ok">matched</span></td></tr>
+  </table>
+  <div class="ui-note" style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:10px"><span><b>Match:</b> invoice 0000001180 · Softuer Prima · 228.00 € <span class="conf ok" style="margin-left:6px">98%</span></span><span class="ui-btn brand">Confirm</span></div>
+</div></div>
+      </div>
+    </div>
+    <div class="grid-h three" style="margin-top:40px">
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg><b>Receivables from issued invoices</b><p>Sequential numbering, proformas, credit and debit notes; open items and ageing by due date.</p></div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Payables from approved purchases</b><p>Posted purchase invoices appear as open payables, grouped by due-date bucket.</p></div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10h18M5 10v8M9 10v8M15 10v8M19 10v8M3 18h18M12 3 3 8h18z"/></svg><b>Statements matched, never auto-booked</b><p>CSV/XLSX import with duplicate detection; ranked match suggestions you confirm.</p></div>
+    </div>
+  </div>
+</section>
+<section class="section bg-warm hairline-top" id="vat">
+  <div class="wrap story flip">
+    <div class="story-text">
+      <span class="eyebrow">Built for Bulgarian VAT and reporting</span>
+      <h2 class="h2">Registers and reports computed from the ledger, <span class="dim">not typed into a form.</span></h2>
+      <p class="body">Acco follows Bulgarian accounting and VAT rules out of the box: UIC and VAT-number checks, VAT treatments from 20% standard to reverse charge and intra-EU, purchase and sales registers per period, Cyrillic invoice PDFs and SAF-T preparation for the NRA. Every figure traces to a journal line and the document behind it.</p>
+      <ul class="points">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14l6-6"/><circle cx="9.5" cy="8.5" r="1.5"/><circle cx="14.5" cy="13.5" r="1.5"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg><div><b>VAT registers and period summary</b><span>Purchase and sales registers, output and input VAT, the amount payable or refundable for the month. VIES dataset for intra-EU supplies.</span></div></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 4 3 5-6"/></svg><div><b>Management reports</b><span>Trial balance, P&amp;L, general ledger, revenue and expenses by month, cash flow. CSV export.</span></div></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 4l-4 16"/></svg><div><b>SAF-T preparation <span class="tag beta">beta</span></b><span>Dataset validation, XML generation, export history. Binding to the official NRA schema is planned.</span></div></li>
+      </ul>
+    </div>
+    <div class="canvas tint" aria-hidden="true" data-reveal>
+      <div style="display:flex;flex-direction:column;gap:14px">
+<div class="ui-kpis">
+  <div class="ui-kpi"><b>Output VAT</b><strong>3 120.00 €</strong><small>12 sales invoices</small></div>
+  <div class="ui-kpi"><b>Input VAT</b><strong>1 880.00 €</strong><small>27 purchases</small></div>
+  <div class="ui-kpi"><b>VAT payable</b><strong class="ok">1 240.00 €</strong><small>period 09/2026</small></div>
 </div>
-        
-<div data-reveal data-reveal-delay="280" style="text-align:center;">
-  <div style="width:76px; height:76px; margin:0 auto 26px; border-radius:50%; background:#123A33; box-shadow:0 14px 30px rgba(18,58,51,.22); display:flex; align-items:center; justify-content:center; position:relative;"><span style="position:absolute; top:-8px; right:-8px; font-family:var(--mono); font-size:11px; font-weight:500; color:#123A33; background:#E9C98C; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center;">03</span><span style="color:#E9C98C;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></div>
-  <h3 style="font-family:var(--serif); font-weight:500; font-size:24px; color:#123A33; margin:0 0 10px;">Ти одобряваш</h3>
-  <p style="font-size:14px; line-height:1.65; color:#5a6a63; margin:0 auto; max-width:260px;">Един преглед и готово. ДДС дневниците и отчетите се пълнят сами.</p>
-</div>
+<div class="ui">
+  <div class="ui-h"><b>Trial balance</b><span>01.01.2026 – 03.10.2026</span></div>
+  <table class="ui-table">
+    <tr><th>Account</th><th>Name</th><th class="r">Debit</th><th class="r">Credit</th><th class="r hide-sm">Balance</th></tr>
+    <tr><td class="m">401</td><td class="s">Suppliers</td><td class="r">6 120.00 €</td><td class="r">12 500.00 €</td><td class="r hide-sm">-6 380.00 €</td></tr>
+    <tr><td class="m">411</td><td class="s">Customers</td><td class="r">18 400.00 €</td><td class="r">4 080.00 €</td><td class="r hide-sm">14 320.00 €</td></tr>
+    <tr><td class="m">4531</td><td class="s">Input VAT</td><td class="r">1 880.00 €</td><td class="r">0.00 €</td><td class="r hide-sm">1 880.00 €</td></tr>
+    <tr><td class="m">4532</td><td class="s">Output VAT</td><td class="r">0.00 €</td><td class="r">3 120.00 €</td><td class="r hide-sm">-3 120.00 €</td></tr>
+    <tr><td class="m">702</td><td class="s">Revenue</td><td class="r">0.00 €</td><td class="r">15 900.00 €</td><td class="r hide-sm">-15 900.00 €</td></tr>
+    <tfoot><tr><td colspan="2">Total</td><td class="r">26 400.00 €</td><td class="r">35 600.00 €</td><td class="r hide-sm"><span class="pill ok">balanced</span></td></tr></tfoot>
+  </table>
+</div></div>
+    </div>
+  </div>
+</section>
+<section class="section bg-tint hairline-top" id="ai-accountant">
+  <div class="wrap">
+    <div class="split">
+      <div class="sec-head"><span class="eyebrow">AI Accountant</span><h2 class="h2">Ask why. Get an answer with sources. <span class="dim">Nothing changes.</span></h2></div>
+      <p class="lead">A fixed set of questions about your VAT, receivables, payables and results. Each answer is built from the ledger and the registers, cites the entries it used, and shows a confidence level. When the data is not there, it says so.</p>
+    </div>
+    <div class="story" style="align-items:start;grid-template-columns:minmax(0,5fr) minmax(0,7fr)">
+      <div class="story-text">
+        <ul class="points" style="border-top:0;margin-top:0">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17h10M7 13h10M7 9h4"/><rect x="3" y="4" width="18" height="16" rx="2"/></svg><div><b>Figures come from your records</b><span>The assistant never generates numbers. It reads the journal, the registers and the documents.</span></div></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><div><b>Versioned rule cards</b><span>Tax rules are explicit cards with a legal reference and a version. Cards awaiting accountant review are labelled and lower the confidence.</span></div></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg><div><b>Read-only by design</b><span>No access to posting, approval, period locking or filing. Every question and answer is written to the audit trail.</span></div></li>
+        </ul>
       </div>
+      <div data-reveal aria-hidden="true">
+<div class="ui">
+  <div class="ui-h"><b><svg style="width:14px;height:14px;vertical-align:-2px;margin-right:6px;color:var(--brand)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 17l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/></svg>AI Accountant</b><span>reads only · never posts</span></div>
+  <div class="ui-chips"><span class="ui-chip on">Why do I owe this much VAT?</span><span class="ui-chip">Where does the amount come from?</span><span class="ui-chip">What to check before filing</span></div>
+  <div class="ui-qa">
+    <div class="ui-q"><span>Why do I owe this much VAT?</span><span class="badges"><span class="conf ok">95%</span><span class="pill neu">deterministic</span></span></div>
+    <div class="ui-a">For 09/2026 you owe <strong>1 240.00 €</strong>: output VAT of 3 120.00 € on 12 sales invoices, minus input VAT of 1 880.00 € on 27 purchases. The largest contribution is INV 2026-0031 to Delta Consult OOD (1 500.00 € base).</div>
+    <div class="ui-src"><b>Sources</b><span><svg style="width:11px;height:11px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17h10M7 13h10M7 9h4"/><rect x="3" y="4" width="18" height="16" rx="2"/></svg> Sales register 09/2026</span><span><svg style="width:11px;height:11px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17h10M7 13h10M7 9h4"/><rect x="3" y="4" width="18" height="16" rx="2"/></svg> Purchase register 09/2026</span><span><svg style="width:11px;height:11px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17h10M7 13h10M7 9h4"/><rect x="3" y="4" width="18" height="16" rx="2"/></svg> INV 2026-0031</span></div>
+    <div class="ui-foot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.5 7.5 8 9 4.5-1.5 8-4 8-9V6l-8-3z"/><path d="m9 12 2 2 4-4"/></svg> Explanation built from your records. The assistant cannot post, approve or file anything.</div>
+  </div>
+</div></div>
     </div>
   </div>
 </section>
-<section style="position:relative; padding:clamp(80px,11vh,140px) clamp(20px,5vw,72px); background:#FBF8F1; border-top:1px solid #E4DBC9;">
-  <div style="max-width:1180px; margin:0 auto;">
-    <div data-reveal style="display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap; margin-bottom:44px;">
-      <div><div style="font-size:11px; letter-spacing:.13em; text-transform:uppercase; color:#A9854E; margin-bottom:16px;">Какво можеш</div><h2 style="font-family:var(--serif); font-weight:400; font-size:clamp(32px,4.2vw,52px); line-height:1.07; letter-spacing:-.02em; color:#123A33; margin:0; max-width:560px;">Всичко за финансите на бизнеса ти.</h2></div>
-      <p style="font-size:14px; line-height:1.6; color:#6c776f; max-width:260px; margin:0;">Създадено за самонаети, фрийлансъри и малки фирми в България.</p>
-    </div>
-    <div data-bento style="display:grid; grid-template-columns:repeat(3,1fr); gap:18px;">
-      <div data-reveal class="lift-d" style="grid-column:span 2; background:#123A33; border-radius:20px; padding:34px; color:#F4EFE4; min-height:240px; display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden; transition:transform .5s var(--ease), box-shadow .5s;">
-        <div style="position:absolute; top:-50px; right:-30px; width:260px; height:260px; border-radius:50%; background:radial-gradient(circle,rgba(233,201,140,.18),transparent 70%); pointer-events:none;"></div>
-        <div style="position:relative; display:flex; align-items:center; justify-content:space-between;"><div style="width:48px; height:48px; border-radius:13px; background:rgba(233,201,140,.14); color:#E9C98C; display:flex; align-items:center; justify-content:center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg></div><span style="font-size:10px; font-family:var(--mono); color:#9fc3b8; border:1px solid rgba(255,255,255,.15); padding:5px 10px; border-radius:999px;">основен модул</span></div>
-        <div style="position:relative;"><h3 style="font-family:var(--serif); font-weight:500; font-size:26px; margin:0 0 10px;">AI извличане</h3><p style="font-size:14.5px; line-height:1.6; color:#bcd0c9; margin:0; max-width:380px;">Разчита фактури и документи автоматично — всяко поле с оценка на увереност и детерминирана проверка (ЕИК, VIES, IBAN, Основа + ДДС = Общо).</p></div>
-      </div>
-      <div data-reveal data-reveal-delay="80" class="lift" style="background:#FFFFFF; border:1px solid #EAE0CD; border-radius:20px; padding:30px; min-height:240px; display:flex; flex-direction:column; justify-content:space-between;"><div style="width:46px; height:46px; border-radius:12px; background:#FAF3E4; color:#A9854E; display:flex; align-items:center; justify-content:center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M5 3h9l5 5v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/></svg></div><div><h3 style="font-family:var(--serif); font-weight:500; font-size:22px; color:#123A33; margin:0 0 8px;">Фактуриране</h3><p style="font-size:13.5px; line-height:1.6; color:#5a6a63; margin:0;">Издаване с последователна номерация, PDF и кредитни известия.</p></div></div>
-      <div data-reveal class="lift" style="background:#FFFFFF; border:1px solid #EAE0CD; border-radius:20px; padding:30px; min-height:218px; display:flex; flex-direction:column; justify-content:space-between;"><div style="width:46px; height:46px; border-radius:12px; background:#FAF3E4; color:#A9854E; display:flex; align-items:center; justify-content:center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 5 5 19M9 6.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM20 17.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/></svg></div><div><h3 style="font-family:var(--serif); font-weight:500; font-size:22px; color:#123A33; margin:0 0 8px;">ДДС и НАП</h3><p style="font-size:13.5px; line-height:1.6; color:#5a6a63; margin:0;">Дневници и справка-декларация, готови за подаване с КЕП.</p></div></div>
-      <div data-reveal data-reveal-delay="80" class="lift" style="background:#FFFFFF; border:1px solid #EAE0CD; border-radius:20px; padding:30px; min-height:218px; display:flex; flex-direction:column; justify-content:space-between;"><div style="width:46px; height:46px; border-radius:12px; background:#EDF6F1; color:#16A463; display:flex; align-items:center; justify-content:center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6" rx="1"/><rect x="12" y="7" width="3" height="10" rx="1"/><rect x="17" y="13" width="3" height="4" rx="1"/></svg></div><div><h3 style="font-family:var(--serif); font-weight:500; font-size:22px; color:#123A33; margin:0 0 8px;">Отчети</h3><p style="font-size:13.5px; line-height:1.6; color:#5a6a63; margin:0;">ОПР, баланс и оборотна ведомост, на живо и проследими.</p></div></div>
-      <div data-reveal data-reveal-delay="160" class="lift" style="grid-column:span 2; background:#FFFFFF; border:1px solid #EAE0CD; border-radius:20px; padding:34px; min-height:218px; display:flex; align-items:center; justify-content:space-between; gap:24px;">
-        <div style="max-width:360px;"><div style="width:46px; height:46px; border-radius:12px; background:#EDF6F1; color:#16A463; display:flex; align-items:center; justify-content:center; margin-bottom:18px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 7.5 8 9 4.5-1.5 8-4 8-9V6l-8-3z"/><path d="m9 12 2 2 4-4"/></svg></div><h3 style="font-family:var(--serif); font-weight:500; font-size:22px; color:#123A33; margin:0 0 8px;">Разходи &amp; сигурен архив</h3><p style="font-size:13.5px; line-height:1.6; color:#5a6a63; margin:0;">Извличане и категоризиране на разходите. Защитено съхранение (WORM), append-only одитна следа, данни в ЕС.</p></div>
-        <div style="display:flex; flex-direction:column; gap:10px; min-width:170px;">
-          <div style="display:flex; align-items:center; gap:9px; padding:11px 14px; background:#FBF8F1; border:1px solid #F0EADC; border-radius:11px; font-size:12px; color:#3a4843;"><span style="color:#16A463;">✓</span> Хостинг в ЕС</div>
-          <div style="display:flex; align-items:center; gap:9px; padding:11px 14px; background:#FBF8F1; border:1px solid #F0EADC; border-radius:11px; font-size:12px; color:#3a4843;"><span style="color:#16A463;">✓</span> Нулево задържане на AI</div>
-          <div style="display:flex; align-items:center; gap:9px; padding:11px 14px; background:#FBF8F1; border:1px solid #F0EADC; border-radius:11px; font-size:12px; color:#3a4843;"><span style="color:#16A463;">✓</span> Хеширан одит</div>
-        </div>
-      </div>
+<section class="section" id="control">
+  <div class="wrap">
+    <div class="sec-head"><span class="eyebrow">Control and auditability</span><h2 class="h2">Built so you can trust the numbers <span class="dim">and show how you got them.</span></h2></div>
+    <div class="grid-h">
+      <div data-reveal><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.5 7.5 8 9 4.5-1.5 8-4 8-9V6l-8-3z"/><path d="m9 12 2 2 4-4"/></svg><b>Isolation per company</b><p>Each company is separated at the database level. A request outside its context is refused, not just hidden.</p></div>
+      <div data-reveal><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><b>Roles, checked on the server</b><p>Approve, post, lock and issue are tied to roles. The server re-checks every action; the interface only reflects it.</p></div>
+      <div data-reveal><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><b>Corrections by reversal</b><p>A posted entry is never edited. A mistake is corrected with a new, reversing entry, so the history stays visible.</p></div>
+      <div data-reveal><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><b>Accounting periods</b><p>Lock a period to close it. Posting into a locked period is refused.</p></div>
+      <div data-reveal><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5z"/><path d="m3 13 9 5 9-5"/></svg><b>Documents kept as uploaded</b><p>Source files are stored immutably with versions, so every posting can be traced back to the original document.</p></div>
     </div>
   </div>
 </section>
-<section style="position:relative; padding:clamp(80px,11vh,140px) clamp(20px,5vw,72px); overflow:hidden;">
-  <div style="position:absolute; top:10%; right:-10%; width:600px; height:600px; border-radius:50%; background:radial-gradient(circle,rgba(201,163,91,.1),transparent 65%); pointer-events:none; animation:glowPulse 11s ease-in-out infinite;"></div>
-  <div data-deep-grid style="position:relative; max-width:1180px; margin:0 auto; display:grid; grid-template-columns:.92fr 1.08fr; gap:56px; align-items:center;">
-    <div data-reveal="left"><div style="font-size:11px; letter-spacing:.13em; text-transform:uppercase; color:#A9854E; margin-bottom:16px;">Прегледай и одобри</div><h2 data-ten="A review queue where <span style=&quot;font-style:italic; color:#A9854E;&quot;>everything is clear.</span>" style="font-family:var(--serif); font-weight:400; font-size:clamp(32px,3.8vw,48px); line-height:1.08; letter-spacing:-.02em; color:#123A33; margin:0 0 22px;">Опашка за преглед, в която <span style="font-style:italic; color:#A9854E;">всичко е ясно.</span></h2><p style="font-size:16px; line-height:1.7; color:#4a5a53; margin:0 0 28px; max-width:440px;">AI предлага, ти решаваш. Високата увереност и чистите проверки се одобряват накуп — съмнителното изпъква само̀.</p>
-      <div style="display:flex; flex-direction:column; gap:18px; max-width:430px;">
-        <div style="display:flex; gap:14px;"><span style="flex:none; width:32px; height:32px; border-radius:9px; background:#EDF6F1; color:#16A463; display:flex; align-items:center; justify-content:center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><div><div style="font-size:15px; font-weight:600; color:#20302B;">Детерминирани проверки, не само AI</div><div style="font-size:13.5px; color:#6c776f; margin-top:2px;">ЕИК, VIES, IBAN и Основа + ДДС = Общо.</div></div></div>
-        <div style="display:flex; gap:14px;"><span style="flex:none; width:32px; height:32px; border-radius:9px; background:#FAF3E4; color:#A9854E; display:flex; align-items:center; justify-content:center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18"/></svg></span><div><div style="font-size:15px; font-weight:600; color:#20302B;">Всяко число — проследимо до документ</div><div style="font-size:13.5px; color:#6c776f; margin-top:2px;">Пълна прозрачност и одитна следа.</div></div></div>
-        <div style="display:flex; gap:14px;"><span style="flex:none; width:32px; height:32px; border-radius:9px; background:#EDF6F1; color:#16A463; display:flex; align-items:center; justify-content:center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><div><div style="font-size:15px; font-weight:600; color:#20302B;">Одобрение накуп за чистите</div><div style="font-size:13.5px; color:#6c776f; margin-top:2px;">Висока увереност + без флагове = един клик.</div></div></div>
-      </div>
-    </div>
-    <div data-reveal="right" data-reveal-delay="120" style="position:relative;">
-      <div data-parallax="0.03" style="position:relative; background:#FFFFFF; border:1px solid #EAE0CD; border-radius:18px; box-shadow:0 40px 90px rgba(18,30,26,.18); overflow:hidden;">
-        <div style="display:flex; align-items:center; gap:10px; padding:14px 18px; border-bottom:1px solid #F0EADC; background:#FBF8F1;"><span style="width:11px; height:11px; border-radius:50%; background:#E4DBC9;"></span><span style="width:11px; height:11px; border-radius:50%; background:#E4DBC9;"></span><span style="width:11px; height:11px; border-radius:50%; background:#E4DBC9;"></span><span style="margin-left:8px; font-size:12px; font-weight:600; color:#123A33;">Опашка за преглед</span><span style="margin-left:auto; font-size:11px; font-family:var(--mono); color:#9aa49e;">7 чакащи</span></div>
-        <div style="padding:8px;">
-          <div style="display:grid; grid-template-columns:auto 1fr auto auto; gap:14px; align-items:center; padding:14px; border-radius:12px; background:#FBF8F1; border-left:2px solid #16A463;"><span style="width:20px; height:20px; border-radius:5px; background:#16A463; color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px;">✓</span><div><div style="font-size:13.5px; font-weight:600; color:#20302B;">ТЕХНО ПЛЮС ООД</div><div style="font-size:11px; color:#94a09a; font-family:var(--mono);">ф-ра 0512 · 602 Външни услуги</div></div><div style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#16A463;"></span><span style="font-size:12px; font-weight:600; color:#0E8650;">98%</span></div><div style="font-size:13.5px; font-weight:600; font-variant-numeric:tabular-nums; color:#20302B;">1 500,00 €</div></div>
-          <div style="display:grid; grid-template-columns:auto 1fr auto auto; gap:14px; align-items:center; padding:14px;"><span style="width:20px; height:20px; border-radius:5px; border:1.5px solid #D9CDB6;"></span><div><div style="font-size:13.5px; font-weight:600; color:#20302B;">Софтуер Прима ЕООД</div><div style="font-size:11px; color:#94a09a; font-family:var(--mono);">ф-ра 1180 · 651 Абонаменти</div></div><div style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#16A463;"></span><span style="font-size:12px; font-weight:600; color:#0E8650;">96%</span></div><div style="font-size:13.5px; font-weight:600; font-variant-numeric:tabular-nums; color:#20302B;">228,00 €</div></div>
-          <div style="display:grid; grid-template-columns:auto 1fr auto auto; gap:14px; align-items:center; padding:14px; background:#FEF6E7; border-radius:12px;"><span style="width:20px; height:20px; border-radius:5px; border:1.5px solid #E39B12;"></span><div><div style="font-size:13.5px; font-weight:600; color:#20302B;">Куриер Спиди АД</div><div style="font-size:11px; color:#9A6406; font-family:var(--mono);">⚠ ЕИК за проверка</div></div><div style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#E39B12;"></span><span style="font-size:12px; font-weight:600; color:#9A6406;">74%</span></div><div style="font-size:13.5px; font-weight:600; font-variant-numeric:tabular-nums; color:#20302B;">42,60 €</div></div>
-          <div style="display:grid; grid-template-columns:auto 1fr auto auto; gap:14px; align-items:center; padding:14px;"><span style="width:20px; height:20px; border-radius:5px; border:1.5px solid #D9CDB6;"></span><div><div style="font-size:13.5px; font-weight:600; color:#20302B;">Енерго Про</div><div style="font-size:11px; color:#94a09a; font-family:var(--mono);">ф-ра 88213 · 602 Ел. енергия</div></div><div style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#16A463;"></span><span style="font-size:12px; font-weight:600; color:#0E8650;">99%</span></div><div style="font-size:13.5px; font-weight:600; font-variant-numeric:tabular-nums; color:#20302B;">316,40 €</div></div>
-        </div>
-        <div style="display:flex; align-items:center; gap:12px; padding:14px 18px; border-top:1px solid #F0EADC; background:#FBF8F1;"><span style="font-size:12px; color:#6c776f;">3 избрани · чисти проверки</span><span style="margin-left:auto; padding:9px 16px; background:#16A463; color:#fff; border-radius:8px; font-size:12.5px; font-weight:600;">Одобри и осчетоводи 3</span></div>
-      </div>
-      <div data-parallax="0.1" style="position:absolute; top:-22px; right:-12px; background:#123A33; color:#F4EFE4; padding:10px 15px; border-radius:12px; box-shadow:0 18px 38px rgba(18,58,51,.28); font-size:12px; font-weight:600; animation:floatYsm 6s ease-in-out infinite;">⌘ Bulk approve</div>
+<section class="section-sm bg-warm hairline-top" id="status">
+  <div class="wrap">
+    <div class="split"><div class="sec-head"><span class="eyebrow">Honest about status</span><h2 class="h2 h2-sm">What is available today, and what is coming.</h2></div><p class="lead">Only capabilities that exist in the product are listed as available. Anything still being validated is marked beta.</p></div>
+    <div class="status-cols">
+      <div><h3>Available</h3><ul class="status-list"><li><div><b>Document capture and extraction</b><span class="d">PDF with a text layer and XML invoices, parsed natively</span></div><span class="tag live">Live</span></li><li><div><b>OCR for photos and scanned PDFs</b><span class="d">EU document-AI provider (Azure Document Intelligence, EU region enforced); enabled per deployment</span></div><span class="tag beta">Beta</span></li><li><div><b>Review queue with corrections and approval</b></div><span class="tag live">Live</span></li><li><div><b>Immutable ledger, journal, accounting periods</b></div><span class="tag live">Live</span></li><li><div><b>Invoicing: numbering, proformas, credit and debit notes</b><span class="d">Invoice email delivery available; PDF generated on issue</span></div><span class="tag live">Live</span></li><li><div><b>Bank import (CSV/XLSX), matching, payments</b></div><span class="tag live">Live</span></li><li><div><b>VAT registers, period summary, VIES checks and dataset</b></div><span class="tag live">Live</span></li><li><div><b>Reports: trial balance, P&L, balance sheet, GL, monthly, cash flow</b><span class="d">CSV export</span></div><span class="tag live">Live</span></li><li><div><b>AI Accountant with citations</b></div><span class="tag live">Live</span></li><li><div><b>SAF-T dataset, validation and XML export</b><span class="d">Binding to the official NRA schema is planned</span></div><span class="tag beta">Beta</span></li></ul></div>
+      <div><h3>Planned</h3><ul class="status-list"><li><div><b>Extraction accuracy validation on real scanned invoices</b><span class="d">Runbook and scoring tool exist; the labelled sample set is being collected</span></div><span class="tag planned">Planned</span></li><li><div><b>Invoice PDF download and PDF attachment in customer emails</b><span class="d">The PDF is generated and stored; the email currently carries a reference, not the file</span></div><span class="tag planned">Planned</span></li><li><div><b>VAT return export in NRA format</b><span class="d">DEKLAR / POKUPKI / PRODAGBI files for manual filing</span></div><span class="tag planned">Planned</span></li><li><div><b>Official SAF-T XSD binding</b><span class="d">Export today validates against the internal dataset schema</span></div><span class="tag planned">Planned</span></li><li><div><b>Two-factor authentication (TOTP)</b><span class="d">Enrolment from profile settings</span></div><span class="tag planned">Planned</span></li></ul></div>
     </div>
   </div>
 </section>
-<section id="stats" style="position:relative; padding:clamp(56px,7vh,84px) clamp(20px,5vw,72px); background:#123A33; color:#F4EFE4; overflow:hidden;">
-  <div style="position:absolute; inset:0; background:radial-gradient(120% 100% at 85% 10%, rgba(233,201,140,.12), transparent 55%); pointer-events:none;"></div>
-  <div data-stats style="position:relative; max-width:1100px; margin:0 auto; display:grid; grid-template-columns:repeat(4,1fr); gap:24px;">
-    <div data-reveal data-stat-div style="text-align:center; border-right:1px solid rgba(255,255,255,.12);"><div style="font-family:var(--serif); font-size:clamp(38px,4.6vw,54px); font-weight:500; color:#E9C98C; font-variant-numeric:tabular-nums;"><span data-count="98.7" data-dec="1" data-suffix="%">98.7%</span></div><div style="font-size:13px; color:#a9c2bb; margin-top:8px;">точност при извличане</div></div>
-    <div data-reveal data-reveal-delay="100" data-stat-div style="text-align:center; border-right:1px solid rgba(255,255,255,.12);"><div style="font-family:var(--serif); font-size:clamp(38px,4.6vw,54px); font-weight:500; color:#E9C98C; font-variant-numeric:tabular-nums;"><span data-count="12" data-dec="0" data-suffix=" ч">12 ч</span></div><div style="font-size:13px; color:#a9c2bb; margin-top:8px;">спестени на месец</div></div>
-    <div data-reveal data-reveal-delay="200" data-stat-div style="text-align:center; border-right:1px solid rgba(255,255,255,.12);"><div style="font-family:var(--serif); font-size:clamp(38px,4.6vw,54px); font-weight:500; color:#E9C98C; font-variant-numeric:tabular-nums;"><span data-count="30000" data-dec="0" data-suffix="+">30 000+</span></div><div style="font-size:13px; color:#a9c2bb; margin-top:8px;">обработени документа</div></div>
-    <div data-reveal data-reveal-delay="300" style="text-align:center;"><div style="font-family:var(--serif); font-size:clamp(38px,4.6vw,54px); font-weight:500; color:#E9C98C; font-variant-numeric:tabular-nums;"><span data-count="4.9" data-dec="1">4.9</span></div><div style="font-size:13px; color:#a9c2bb; margin-top:8px;">средна оценка</div></div>
+<section class="section">
+  <div class="wrap-narrow">
+    <div class="sec-head"><span class="eyebrow">Questions</span><h2 class="h2">Frequently asked</h2></div>
+    <div class="faq-group"><h3>Posting, VAT and AI</h3><div class="faq"><details open><summary>Does Acco post anything automatically?</summary><p>No. Every posting is approved by a person in the review screen. Bank matches are suggested and confirmed by you. Nothing reaches the ledger on its own.</p></details><details><summary>How is VAT handled?</summary><p>The VAT treatment is proposed per document from rules — standard 20%, reduced, zero, exempt, reverse charge, intra-EU — and resolved as of the tax-event date. Purchase and sales registers and the period summary are computed from posted entries.</p></details><details><summary>Does Acco submit anything to the NRA?</summary><p>No. Registers, the period summary and the SAF-T export are prepared for you; filing remains your action. An export in the NRA return file format is planned.</p></details><details><summary>What does the AI do, and what can it not do?</summary><p>It reads documents, proposes accounts, categories and VAT treatment, and explains figures with citations. It cannot post, approve, lock periods or file. Those actions belong to people and are recorded in the audit trail.</p></details><details><summary>What is currently in beta?</summary><p>OCR for photos and scans (an EU document-AI provider, enabled per deployment, accuracy validation on real invoices in progress) and SAF-T XML export (binding to the official NRA schema is planned). Everything else listed as available is in use.</p></details></div></div><div class="faq-group"><h3>Records and data</h3><div class="faq"><details><summary>Can a posted entry be edited?</summary><p>No. The ledger is append-only. A mistake is corrected with a reversing entry, so what happened stays visible.</p></details><details><summary>How are my data protected?</summary><p>Each company is isolated at the database level, the ledger is append-only, and every action is written to a hash-chained audit trail. The document-AI provider used for scans is restricted to EU regions by configuration.</p></details><details><summary>What happens to my data at launch?</summary><p>It stays in your company. Early-access companies keep their ledger, documents and history when public plans are introduced.</p></details></div></div>
+    <p class="small" style="margin-top:22px"><a class="link" href="/faq">All questions <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></p>
   </div>
 </section>
-<section style="position:relative; padding:clamp(80px,11vh,140px) clamp(20px,5vw,72px); background:#FBF8F1; border-top:1px solid #E4DBC9;">
-  <div style="max-width:1100px; margin:0 auto;">
-    <div data-reveal style="max-width:760px; margin:0 auto 48px; text-align:center;"><div style="font-family:var(--serif); font-size:64px; line-height:0; color:#D9CDB6; height:34px;">&ldquo;</div><p style="font-family:var(--serif); font-weight:400; font-size:clamp(26px,3.2vw,38px); line-height:1.36; letter-spacing:-.01em; color:#123A33; margin:0 0 30px;">Нямам счетоводител. Качвам фактурите, AI ги разчита, аз одобрявам — и ДДС-то ми е готово за минути.</p><div style="display:inline-flex; align-items:center; gap:12px;"><span style="width:44px; height:44px; border-radius:50%; background:#123A33; color:#E9C98C; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:14px;">МД</span><div style="text-align:left;"><div style="font-size:14px; font-weight:600; color:#20302B;">Мартин Делчев</div><div style="font-size:12px; color:#8a948e;">Собственик · онлайн магазин</div></div></div></div>
-    <div data-3col style="display:grid; grid-template-columns:repeat(3,1fr); gap:18px;">
-      <div data-reveal class="lift-5" style="background:#fff; border:1px solid #EAE0CD; border-radius:16px; padding:26px; transition:transform .5s var(--ease), box-shadow .5s;"><div style="color:#E9C98C; font-size:14px; margin-bottom:14px;">★★★★★</div><p style="font-size:14.5px; line-height:1.65; color:#3a4843; margin:0 0 18px;">Спестявам цял ден всеки месец. ДДС дневниците просто се пълнят сами.</p><div style="display:flex; align-items:center; gap:10px;"><span style="width:34px; height:34px; border-radius:50%; background:#EDF6F1; color:#16A463; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600;">ИС</span><div><div style="font-size:13px; font-weight:600; color:#20302B;">Ивайло Стоянов</div><div style="font-size:11px; color:#8a948e;">Фрийлансър · IT</div></div></div></div>
-      <div data-reveal data-reveal-delay="100" class="lift-5" style="background:#fff; border:1px solid #EAE0CD; border-radius:16px; padding:26px; transition:transform .5s var(--ease), box-shadow .5s;"><div style="color:#E9C98C; font-size:14px; margin-bottom:14px;">★★★★★</div><p style="font-size:14.5px; line-height:1.65; color:#3a4843; margin:0 0 18px;">Най-сетне разбирам собствените си финанси. Всичко е проследимо до документа.</p><div style="display:flex; align-items:center; gap:10px;"><span style="width:34px; height:34px; border-radius:50%; background:#FAF3E4; color:#A9854E; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600;">РК</span><div><div style="font-size:13px; font-weight:600; color:#20302B;">Радост Колева</div><div style="font-size:11px; color:#8a948e;">Управител · ЕООД</div></div></div></div>
-      <div data-reveal data-reveal-delay="200" class="lift-5" style="background:#fff; border:1px solid #EAE0CD; border-radius:16px; padding:26px; transition:transform .5s var(--ease), box-shadow .5s;"><div style="color:#E9C98C; font-size:14px; margin-bottom:14px;">★★★★★</div><p style="font-size:14.5px; line-height:1.65; color:#3a4843; margin:0 0 18px;">Обработвам стотици документи на месец. Бързо, точно и спокойно.</p><div style="display:flex; align-items:center; gap:10px;"><span style="width:34px; height:34px; border-radius:50%; background:#EDF6F1; color:#16A463; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600;">ГД</span><div><div style="font-size:13px; font-weight:600; color:#20302B;">Георги Димитров</div><div style="font-size:11px; color:#8a948e;">Онлайн магазин</div></div></div></div>
-    </div>
-  </div>
-</section>
-<section id="faq" style="position:relative; padding:clamp(80px,11vh,140px) clamp(20px,5vw,72px);">
-  <div data-2col style="max-width:1100px; margin:0 auto; display:grid; grid-template-columns:.8fr 1.2fr; gap:48px; align-items:start;">
-    <div data-reveal="left" style="position:sticky; top:120px;"><div style="font-size:11px; letter-spacing:.13em; text-transform:uppercase; color:#A9854E; margin-bottom:16px;">Въпроси</div><h2 data-ten="Frequently asked questions." style="font-family:var(--serif); font-weight:400; font-size:clamp(30px,3.6vw,44px); line-height:1.08; letter-spacing:-.02em; color:#123A33; margin:0 0 18px;">Често задавани въпроси.</h2><p style="font-size:15px; line-height:1.65; color:#5a6a63; margin:0 0 22px;">Не намираш отговор? Пиши ни — отговаряме на български, бързо.</p><a href="/contact" class="j-out lift" style="display:inline-flex; align-items:center; gap:9px; padding:13px 22px; border:1px solid #C9BCA1; color:#123A33; border-radius:999px; font-size:14px; font-weight:500;">Свържи се с нас →</a></div>
-    <div data-reveal="right" style="display:flex; flex-direction:column;"><div data-faq data-open="1" style="border-bottom:1px solid #E4DBC9;"><div data-faq-q style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding:24px 0; cursor:pointer;"><span data-ten="Do I need an accountant to use it?" style="font-size:17px; font-weight:600; color:#123A33;">Нужен ли ми е счетоводител, за да го ползвам?</span><span data-faq-ic style="flex:none; color:#A9854E; font-size:22px; transform:rotate(45deg);">+</span></div><div data-faq-a style="overflow:hidden;"><p data-ten="No. Acco is built so you can do your own books — AI reads the documents and proposes the posting, and you simply approve. If you work with an accountant, you can invite them with a role." style="font-size:14.5px; line-height:1.7; color:#5a6a63; margin:0 0 24px;">Не. Acco е създаден да водиш счетоводството си сам — AI разчита документите и предлага осчетоводяване, а ти само одобряваш. Ако работиш със счетоводител, можеш да го поканиш с роля.</p></div></div><div data-faq data-open="0" style="border-bottom:1px solid #E4DBC9;"><div data-faq-q style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding:24px 0; cursor:pointer;"><span data-ten="Is my data secure?" style="font-size:17px; font-weight:600; color:#123A33;">Сигурни ли са данните ми?</span><span data-faq-ic style="flex:none; color:#A9854E; font-size:22px;">+</span></div><div data-faq-a style="max-height:0; opacity:0; overflow:hidden;"><p data-ten="Yes. Hosting and processing are in the EU, AI services retain no data, and the archive is protected (WORM) with a hashed audit trail for every action." style="font-size:14.5px; line-height:1.7; color:#5a6a63; margin:0 0 24px;">Да. Хостингът и обработката са в ЕС, AI услугите са без задържане на данни, а архивът е защитен (WORM) с хеширана одитна следа за всяко действие.</p></div></div><div data-faq data-open="0" style="border-bottom:1px solid #E4DBC9;"><div data-faq-q style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding:24px 0; cursor:pointer;"><span data-ten="Is the VAT return filed automatically?" style="font-size:17px; font-weight:600; color:#123A33;">Подава ли се ДДС декларацията автоматично?</span><span data-faq-ic style="flex:none; color:#A9854E; font-size:22px;">+</span></div><div data-faq-a style="max-height:0; opacity:0; overflow:hidden;"><p data-ten="The ledgers and the VAT return fill themselves and are ready to submit. The actual filing to the NRA is always your decision — you confirm and sign with your e-signature. AI proposes, you approve." style="font-size:14.5px; line-height:1.7; color:#5a6a63; margin:0 0 24px;">Дневниците и справка-декларацията се попълват сами и са готови за подаване. Самото подаване към НАП винаги е твое решение — потвърждаваш и подписваш с КЕП. AI предлага, ти одобряваш.</p></div></div><div data-faq data-open="0" style="border-bottom:1px solid #E4DBC9;"><div data-faq-q style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding:24px 0; cursor:pointer;"><span data-ten="Does it work for my type of business?" style="font-size:17px; font-weight:600; color:#123A33;">Работи ли за моя тип бизнес?</span><span data-faq-ic style="flex:none; color:#A9854E; font-size:22px;">+</span></div><div data-faq-a style="max-height:0; opacity:0; overflow:hidden;"><p data-ten="It is built for the self-employed, freelancers, small businesses and Ltd. companies, as well as online stores with many documents. It supports company IDs, VAT regimes, the national chart of accounts, correct Cyrillic and EUR." style="font-size:14.5px; line-height:1.7; color:#5a6a63; margin:0 0 24px;">Създадено е за самонаети, фрийлансъри, малки фирми и ЕООД, както и за онлайн магазини с много документи. Поддържа ЕИК, ДДС режими, националния сметкоплан, коректна кирилица и EUR.</p></div></div><div data-faq data-open="0" style="border-bottom:1px solid #E4DBC9;"><div data-faq-q style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding:24px 0; cursor:pointer;"><span data-ten="Is there a free trial?" style="font-size:17px; font-weight:600; color:#123A33;">Има ли безплатен период?</span><span data-faq-ic style="flex:none; color:#A9854E; font-size:22px;">+</span></div><div data-faq-a style="max-height:0; opacity:0; overflow:hidden;"><p data-ten="Yes, 7 days of full access without a card. You can try uploading, AI extraction, review and reports with real documents. If you do not continue, nothing is charged." style="font-size:14.5px; line-height:1.7; color:#5a6a63; margin:0 0 24px;">Да, 7 дни пълен достъп без банкова карта. Можеш да изпробваш качване, AI извличане, преглед и отчети с реални документи. Ако не продължиш, нищо не се таксува.</p></div></div><div data-faq data-open="0" style="border-bottom:1px solid #E4DBC9;"><div data-faq-q style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding:24px 0; cursor:pointer;"><span data-ten="Can I cancel anytime?" style="font-size:17px; font-weight:600; color:#123A33;">Мога ли да прекратя по всяко време?</span><span data-faq-ic style="flex:none; color:#A9854E; font-size:22px;">+</span></div><div data-faq-a style="max-height:0; opacity:0; overflow:hidden;"><p data-ten="Yes. You can change your plan or cancel anytime from settings, with no lock-in and no penalties." style="font-size:14.5px; line-height:1.7; color:#5a6a63; margin:0 0 24px;">Да. Сменяш плана или прекратяваш по всяко време от настройките, без срокове и неустойки.</p></div></div></div>
-  </div>
-</section>
-<section style="position:relative; padding:clamp(90px,12vh,150px) clamp(20px,5vw,72px); overflow:hidden; text-align:center; border-top:1px solid #E4DBC9;">
-  <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:760px; height:420px; max-width:90vw; background:radial-gradient(ellipse, rgba(201,163,91,.16), transparent 70%); pointer-events:none; animation:glowPulse 9s ease-in-out infinite;"></div>
-  <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:420px; height:420px; max-width:80vw; border:1px dashed rgba(169,133,78,.22); border-radius:50%; animation:spinSlow 70s linear infinite; pointer-events:none;"></div>
-  <div data-reveal style="position:relative;">
-    <div style="display:inline-flex; align-items:center; gap:8px; padding:7px 15px; border:1px solid #D9CDB6; border-radius:999px; background:rgba(255,255,255,.6); margin-bottom:26px;"><span style="width:6px; height:6px; border-radius:50%; background:#16A463;"></span><span style="font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#8a6f43;">7 дни безплатно</span></div>
-    <h2 data-ten="Start keeping your<br>books today." style="font-family:var(--serif); font-weight:400; font-size:clamp(38px,5.4vw,68px); line-height:1.04; letter-spacing:-.025em; color:#123A33; margin:0 0 18px;">Започни да си водиш<br>сметките днес.</h2>
-    <p style="font-size:18px; color:#5a6a63; margin:0 0 34px;">Без банкова карта. Без ангажимент. Спокойни финанси от първия документ.</p>
-    <div style="display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;"><a href="/register" data-magnetic class="j-dark" style="display:inline-flex; align-items:center; gap:10px; padding:17px 32px; background:#123A33; color:#F4EFE4; border-radius:999px; font-size:16px; font-weight:500; white-space:nowrap; box-shadow:0 12px 28px rgba(18,58,51,.22);">Започни безплатно <span style="font-size:16px;">→</span></a><a href="/pricing" class="j-out lift" style="display:inline-flex; align-items:center; gap:9px; padding:17px 28px; border:1px solid #C9BCA1; color:#123A33; border-radius:999px; font-size:16px; font-weight:500; white-space:nowrap;">Виж цените</a></div>
+<section class="section bg-ink on-ink">
+  <div class="wrap cta">
+    <div class="sec-head" style="margin-bottom:0"><h2 class="h2">Start with one invoice.</h2><p class="lead">Create an account, upload a document and see the suggested posting. The decision, as always, is yours.</p><div class="cta-actions" style="margin-top:8px"><a class="btn btn-ink btn-lg" href="/register">Get started <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a class="btn btn-out btn-lg" href="/features">See the product</a></div></div>
+    <div class="cta-side"><p>Controlled access while we validate extraction and VAT on real documents.</p><p>EUR functional currency. Human approval on every posting. Hash-chained audit trail.</p><p><a class="link" style="color:var(--on-ink)" href="/pricing">How access works <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></p></div>
   </div>
 </section></main>
-<footer style="position:relative; padding:clamp(56px,8vh,88px) clamp(20px,5vw,72px) 40px; background:#0F312C; color:#cfe0da; overflow:hidden;">
-  <div style="position:absolute; top:-80px; right:6%; width:380px; height:380px; border-radius:50%; background:radial-gradient(circle,rgba(233,201,140,.08),transparent 70%); pointer-events:none;"></div>
-  <div style="position:relative; max-width:1180px; margin:0 auto;">
-    <div data-foot style="display:grid; grid-template-columns:1.8fr 1fr 1fr 1fr; gap:40px; padding-bottom:44px; border-bottom:1px solid rgba(255,255,255,.1);">
+<footer class="footer" aria-label="Site footer">
+  <div class="wrap">
+    <div class="cols">
       <div>
-        <a href="/" style="display:flex; align-items:center; gap:11px; margin-bottom:18px;"><svg width="30" height="30" viewBox="0 0 34 34" fill="none"><rect width="34" height="34" rx="9" fill="#1c4d45"/><rect x="9" y="17" width="3.4" height="8" rx="1.7" fill="#E9C98C"/><rect x="15.3" y="13" width="3.4" height="12" rx="1.7" fill="#E9C98C"/><rect x="21.6" y="9" width="3.4" height="16" rx="1.7" fill="#E9C98C"/></svg><span style="font-family:var(--serif); font-size:21px; color:#F4EFE4;">Acco</span></a>
-        <p style="font-size:13.5px; line-height:1.7; color:#9fb6af; max-width:280px; margin:0 0 22px;">AI счетоводство за самонаети, фрийлансъри и малки фирми. От фактура до готов отчет, без ръчно въвеждане.</p>
-        <div style="display:inline-flex; align-items:center; gap:8px; padding:8px 13px; border:1px solid rgba(255,255,255,.14); border-radius:999px; font-size:12px; color:#9fb6af;"><span style="width:7px; height:7px; border-radius:50%; background:#16A463;"></span> AI предлага · ти одобряваш</div>
+        <a class="brand" href="/" aria-label="Acco"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#1C6B4E"/><path d="M9.5 16.5l4.2 4.2L22.5 11.5" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>acco</span></a>
+        <p class="about">Accounting software for Bulgarian businesses. Acco reads documents, proposes the accounting treatment and posts to an immutable ledger only after a person approves.</p>
       </div>
-      <div><div style="font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:#7b958d; margin-bottom:16px;">Продукт</div><div style="display:flex; flex-direction:column; gap:12px; font-size:14px;"><a href="/features" class="ul" style="width:fit-content;">Функции</a><a href="/pricing" class="ul" style="width:fit-content;">Цени</a><a href="/#how" class="ul" style="width:fit-content;">Как работи</a><a href="/features#security" class="ul" style="width:fit-content;">Сигурност</a></div></div>
-      <div><div style="font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:#7b958d; margin-bottom:16px;">Ресурси</div><div style="display:flex; flex-direction:column; gap:12px; font-size:14px;"><a href="/blog" class="ul" style="width:fit-content;">Блог</a><a href="/resources" class="ul" style="width:fit-content;">Ръководства</a><a href="/faq" class="ul" style="width:fit-content;">Въпроси</a><a href="/contact" class="ul" style="width:fit-content;">Помощ</a></div></div>
-      <div><div style="font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:#7b958d; margin-bottom:16px;">Компания</div><div style="display:flex; flex-direction:column; gap:12px; font-size:14px;"><a href="/about" class="ul" style="width:fit-content;">За нас</a><a href="/contact" class="ul" style="width:fit-content;">Контакти</a><a href="/landing/legal/privacy.html" class="ul" style="width:fit-content;">Поверителност</a><a href="/landing/legal/terms.html" class="ul" style="width:fit-content;">Общи условия</a></div></div>
+      <div><h2 class="fh">Product</h2><a href="/features">Features</a><a href="/#how">How it works</a><a href="/#ai-accountant">AI Accountant</a><a href="/pricing">Pricing</a><a href="/faq">FAQ</a></div>
+      <div><h2 class="fh">Company</h2><a href="/about">About</a><a href="/contact">Contact</a><a href="/login">Sign in</a><a href="/register">Create account</a></div>
+      <div><h2 class="fh">Legal</h2><a href="/landing/legal/privacy.html">Privacy</a><a href="/landing/legal/terms.html">Terms</a><a href="/landing/legal/cookies.html">Cookies</a><a href="/landing/legal/gdpr.html">GDPR</a></div>
     </div>
-    <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; padding-top:24px;">
-      <div style="font-size:12px; color:#7b958d;">© 2026 Acco · Всички права запазени</div>
-      <div style="display:flex; align-items:center; gap:14px; font-size:12px; color:#7b958d;"><span>Цените са в евро</span><span style="width:4px; height:4px; border-radius:50%; background:#4a655e;"></span><span>Български · English</span></div>
-    </div>
+    <div class="bottom"><span>© 2026 Acco. All rights reserved.</span><span>EUR functional currency · Legal pages are in Bulgarian</span></div>
   </div>
 </footer>
-<script src="/landing/assets/i18n.js?v=21" defer></script>
-<script src="/landing/assets/site.js?v=21" defer></script>
-</body></html>
+<script src="/landing/assets/site.js?v=44" defer></script>
+</body>
+</html>

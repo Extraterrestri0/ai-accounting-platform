@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
-Disallow: /admin
-
-Sitemap: https://acco.bg/sitemap.xml
+Disallow: /dashboard
+Disallow: /login
+Disallow: /register
+Sitemap: https://app.185-52-207-143.sslip.io/sitemap.xml
