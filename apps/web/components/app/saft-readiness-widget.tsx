@@ -2,17 +2,17 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { FileCode2, ArrowRight, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import { FileCode2, ArrowRight } from 'lucide-react';
 import { Endpoints } from '@/lib/api/endpoints';
 import { SaftStatusBadge, SaftXsdBadge, isInFlight, hasXmlArtifact } from '@/components/app/saft-status';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { dateBG } from '@/lib/format';
+import { cn } from '@/lib/utils';
 
 const MONTHS_BG = ['', 'Януари', 'Февруари', 'Март', 'Април', 'Май', 'Юни', 'Юли', 'Август', 'Септември', 'Октомври', 'Ноември', 'Декември'];
 
-/** Dashboard SAF-T readiness widget: latest export status + XSD state + validation counts. */
+/** Dashboard SAF-T readiness widget: latest export period as the key figure, status + XSD + issue counts. */
 export function SaftReadinessWidget({ companyId }: { companyId?: string }) {
   const q = useQuery({
     queryKey: ['saft', 'exports', companyId, 'latest'],
@@ -25,43 +25,39 @@ export function SaftReadinessWidget({ companyId }: { companyId?: string }) {
 
   return (
     <Card>
-      <CardHeader className="flex-row items-center justify-between space-y-0">
-        <CardTitle className="flex items-center gap-2 text-base"><FileCode2 className="h-4 w-4 text-primary" /> SAF-T готовност</CardTitle>
-        <Button variant="outline" size="sm" asChild><Link href="/saft">Отвори <ArrowRight className="h-4 w-4" /></Link></Button>
-      </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="flex h-full flex-col p-5">
+        <div className="flex items-center justify-between gap-2">
+          <p className="t-overline">SAF-T готовност</p>
+          <FileCode2 className="h-4 w-4 text-faint" strokeWidth={1.75} />
+        </div>
         {q.isLoading ? (
-          <Skeleton className="h-16 w-full" />
+          <Skeleton className="mt-3 h-7 w-32" />
         ) : !latest ? (
-          <p className="text-sm text-muted-foreground">Все още няма генериран SAF-T експорт. Отворете SAF-T, за да генерирате.</p>
+          <>
+            <p className="mt-3 text-[26px] font-semibold leading-none tracking-[-0.02em] text-faint">—</p>
+            <p className="mt-1.5 text-[13px] text-muted-foreground">Все още няма генериран SAF-T експорт.</p>
+          </>
         ) : (
           <>
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-medium text-foreground">{MONTHS_BG[latest.month]} {latest.year}</span>
-              <div className="flex items-center gap-1.5">
-                {hasXmlArtifact(latest.status) && <SaftXsdBadge xsdValid={latest.xsdValid} />}
-                <SaftStatusBadge status={latest.status} />
-              </div>
+            <p className="mt-3 text-[26px] font-semibold leading-none tracking-[-0.02em] text-foreground">{MONTHS_BG[latest.month]} {latest.year}</p>
+            <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+              <SaftStatusBadge status={latest.status} />
+              {hasXmlArtifact(latest.status) && <SaftXsdBadge xsdValid={latest.xsdValid} />}
             </div>
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <Stat icon={XCircle} label="Грешки" value={c?.errors ?? 0} tone={(c?.errors ?? 0) > 0 ? 'text-destructive' : 'text-foreground'} />
-              <Stat icon={AlertTriangle} label="Предупр." value={c?.warnings ?? 0} tone={(c?.warnings ?? 0) > 0 ? 'text-warning' : 'text-foreground'} />
-              <Stat icon={CheckCircle2} label="Бележки" value={c?.info ?? 0} tone="text-muted-foreground" />
+            <div className="mt-3 space-y-1 border-t border-border pt-3">
+              <p className="t-caption">
+                <span className={cn('tabular-nums', (c?.errors ?? 0) > 0 ? 'font-medium text-destructive' : 'text-foreground')}>{c?.errors ?? 0}</span> грешки ·{' '}
+                <span className={cn('tabular-nums', (c?.warnings ?? 0) > 0 ? 'font-medium text-warning' : 'text-foreground')}>{c?.warnings ?? 0}</span> предупреждения ·{' '}
+                <span className="tabular-nums text-foreground">{c?.info ?? 0}</span> бележки
+              </p>
+              <p className="t-caption">Последно обновен: {dateBG(latest.generatedAt)}</p>
             </div>
-            <p className="text-xs text-muted-foreground">Последно обновен: {dateBG(latest.generatedAt)}</p>
           </>
         )}
+        <Link href="/saft" className="mt-auto inline-flex items-center gap-1 pt-3 text-[13px] font-medium text-brand hover:underline">
+          Отвори SAF-T <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
       </CardContent>
     </Card>
-  );
-}
-
-function Stat({ icon: Icon, label, value, tone }: { icon: typeof XCircle; label: string; value: number; tone: string }) {
-  return (
-    <div className="rounded-lg bg-secondary/60 p-2">
-      <Icon className={`mx-auto mb-0.5 h-4 w-4 ${tone}`} />
-      <p className={`text-sm font-bold tabular-nums ${tone}`}>{value}</p>
-      <p className="text-[11px] text-muted-foreground">{label}</p>
-    </div>
   );
 }

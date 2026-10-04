@@ -8,8 +8,8 @@
  */
 
 const BASE = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000').replace(/\/$/, '');
-const TOKEN_KEY = 'mgi.access';
-const COMPANY_KEY = 'mgi.company';
+const TOKEN_KEY = 'acco.access';
+const COMPANY_KEY = 'acco.company';
 
 let accessToken: string | null = null;
 

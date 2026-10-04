@@ -19,22 +19,22 @@ export function RecentActivityWidget({ companyId, limit = 8 }: { companyId?: str
 
   return (
     <Card>
-      <CardHeader className="flex-row items-center justify-between space-y-0">
-        <CardTitle className="flex items-center gap-2 text-base"><History className="h-4 w-4 text-primary" /> Скорошна активност</CardTitle>
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/audit">Целият одит <ArrowRight className="h-4 w-4" /></Link>
+      <CardHeader className="flex-row items-center justify-between space-y-0 pb-3">
+        <CardTitle>Скорошна активност</CardTitle>
+        <Button variant="ghost" size="sm" asChild className="text-muted-foreground">
+          <Link href="/audit">Целият одит <ArrowRight /></Link>
         </Button>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         {q.isLoading ? (
           <TableSkeleton rows={5} cols={2} />
         ) : q.isError ? (
           <ErrorState onRetry={() => q.refetch()} />
         ) : !q.data || q.data.length === 0 ? (
-          <EmptyState icon={History} title="Няма активност" description="Действията във фирмата ще се появят тук." />
+          <EmptyState compact icon={History} title="Няма активност" description="Действията във фирмата ще се появят тук." />
         ) : (
-          <div className="space-y-4">
-            {q.data.map((e) => <AuditEventCard key={e.id} event={e} compact />)}
+          <div className="divide-y divide-border">
+            {q.data.map((e) => <AuditEventCard key={e.id} event={e} compact className="py-2.5" />)}
           </div>
         )}
       </CardContent>

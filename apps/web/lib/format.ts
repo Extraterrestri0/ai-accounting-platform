@@ -1,5 +1,4 @@
-/** EUR functional currency; BGN reference until 08 Aug 2026 (fixed 1 EUR = 1.95583 BGN). */
-export const EUR_BGN = 1.95583;
+/** EUR is the functional and only displayed currency. */
 
 export function toNumber(v: number | string | null | undefined): number {
   if (v === null || v === undefined) return 0;
@@ -10,12 +9,6 @@ export function toNumber(v: number | string | null | undefined): number {
 export function eur(amount: number | string | null | undefined): string {
   const n = toNumber(amount);
   return new Intl.NumberFormat('bg-BG', { style: 'currency', currency: 'EUR' }).format(n);
-}
-
-/** BGN reference amount: "2 414,06 лв.". */
-export function bgn(amount: number | string | null | undefined): string {
-  const n = toNumber(amount) * EUR_BGN;
-  return new Intl.NumberFormat('bg-BG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n) + ' лв.';
 }
 
 export function num(amount: number | string | null | undefined, digits = 2): string {

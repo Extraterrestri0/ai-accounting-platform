@@ -46,16 +46,16 @@ export function AccountingPeriodsTab() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base"><CalendarClock className="h-4 w-4 text-muted-foreground" /> Счетоводни периоди</CardTitle>
-        <CardDescription>Заключете приключен месец, за да предотвратите осчетоводявания, плащания, сторнирания, ДДС преизчисления и фактури в него.</CardDescription>
+        <CardTitle>Счетоводни периоди</CardTitle>
+        <CardDescription>Заключете приключен месец, за да спрете осчетоводявания, плащания, сторнирания, ДДС преизчисления и фактури в него.</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
         {q.isLoading ? (
-          <div className="p-4"><TableSkeleton rows={6} cols={4} /></div>
+          <TableSkeleton rows={6} cols={4} />
         ) : q.isError ? (
-          <div className="p-6"><ErrorState onRetry={() => q.refetch()} /></div>
+          <div className="p-5"><ErrorState onRetry={() => q.refetch()} /></div>
         ) : periods.length === 0 ? (
-          <div className="p-6"><EmptyState icon={CalendarClock} title="Няма периоди" /></div>
+          <EmptyState compact icon={CalendarClock} title="Няма периоди" />
         ) : (
           <Table>
             <TableHeader>
@@ -63,33 +63,36 @@ export function AccountingPeriodsTab() {
                 <TableHead>Период</TableHead>
                 <TableHead>Статус</TableHead>
                 <TableHead>Заключен от</TableHead>
-                <TableHead className="text-right">Действие</TableHead>
+                <TableHead className="w-32 text-right"><span className="sr-only">Действие</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {periods.map((p) => (
                 <TableRow key={p.key}>
                   <TableCell className="font-medium text-foreground">
-                    {periodLabel(p)} {p.isCurrent && <Badge variant="neutral" className="ml-1">текущ</Badge>}
+                    <span className="inline-flex items-center gap-2">
+                      {periodLabel(p)}
+                      {p.isCurrent && <Badge variant="brand">текущ</Badge>}
+                    </span>
                   </TableCell>
                   <TableCell>
                     {p.status === 'locked'
-                      ? <Badge variant="destructive"><Lock className="mr-1 h-3 w-3" /> Заключен</Badge>
-                      : <Badge variant="success"><LockOpen className="mr-1 h-3 w-3" /> Отворен</Badge>}
+                      ? <Badge variant="neutral" dot>Заключен</Badge>
+                      : <Badge variant="success" dot>Отворен</Badge>}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="text-muted-foreground">
                     {p.status === 'locked' && p.lockedByEmail ? (
-                      <span>{p.lockedByEmail}{p.lockedAt ? ` · ${dateTimeBG(p.lockedAt)}` : ''}</span>
+                      <span>{p.lockedByEmail}{p.lockedAt ? <span className="tabular-nums"> · {dateTimeBG(p.lockedAt)}</span> : null}</span>
                     ) : '—'}
                   </TableCell>
                   <TableCell className="text-right">
                     {p.status === 'locked' ? (
                       <Button size="sm" variant="outline" disabled={busy} onClick={() => open.mutate(p)}>
-                        {open.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <LockOpen className="h-4 w-4" />} Отвори
+                        {open.isPending ? <Loader2 className="animate-spin" /> : <LockOpen />} Отвори
                       </Button>
                     ) : (
                       <Button size="sm" variant="outline" disabled={busy} onClick={() => lock.mutate(p)}>
-                        {lock.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />} Заключи
+                        {lock.isPending ? <Loader2 className="animate-spin" /> : <Lock />} Заключи
                       </Button>
                     )}
                   </TableCell>

@@ -6,7 +6,6 @@ import { Loader2, X } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { Sidebar } from '@/components/app/sidebar';
 import { Topbar } from '@/components/app/topbar';
-import { Breadcrumbs } from '@/components/app/breadcrumbs';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { ready, user } = useAuth();
@@ -17,10 +16,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (ready && !user) router.replace('/login');
   }, [ready, user, router]);
 
+  React.useEffect(() => {
+    if (!mobileOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMobileOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [mobileOpen]);
+
   if (!ready) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -37,12 +43,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-foreground/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <div className="absolute left-0 top-0 h-full">
+        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-foreground/30" onClick={() => setMobileOpen(false)} />
+          <div className="absolute left-0 top-0 h-full shadow-modal">
             <Sidebar onNavigate={() => setMobileOpen(false)} />
             <button
-              className="absolute -right-10 top-4 flex h-8 w-8 items-center justify-center rounded-md bg-card text-foreground shadow"
+              className="absolute -right-11 top-3 flex h-9 w-9 items-center justify-center rounded-md bg-card text-foreground shadow-pop"
               onClick={() => setMobileOpen(false)}
               aria-label="Затвори"
             >
@@ -55,11 +61,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Main column */}
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar onOpenSidebar={() => setMobileOpen(true)} />
-        <div className="border-b bg-card px-4 py-2.5 sm:px-6">
-          <Breadcrumbs />
-        </div>
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
-          <div className="mx-auto w-full max-w-7xl">{children}</div>
+        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          <div className="mx-auto w-full max-w-page">{children}</div>
         </main>
       </div>
     </div>

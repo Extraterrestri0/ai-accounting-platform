@@ -33,11 +33,11 @@ export default function OAuthCallbackPage() {
       {error ? (
         <>
           <p className="text-sm text-destructive">{error}</p>
-          <button className="text-sm text-primary hover:underline" onClick={() => router.replace('/login')}>Обратно към вход</button>
+          <button className="text-sm text-foreground underline-offset-4 hover:underline" onClick={() => router.replace('/login')}>Обратно към вход</button>
         </>
       ) : (
         <>
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           <p className="text-sm text-muted-foreground">Влизане с Google…</p>
         </>
       )}

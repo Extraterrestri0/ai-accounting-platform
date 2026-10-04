@@ -15,7 +15,7 @@ export function UserMenu() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const t = useT();
-  const email = user?.email || 'demo@demo.bg';
+  const email = user?.email || '';
 
   const doLogout = async () => {
     await logout();
@@ -25,7 +25,7 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-        <Avatar className="h-9 w-9 border">
+        <Avatar className="h-8 w-8 border border-border">
           {user?.avatarUrl && <AvatarImage src={user.avatarUrl} alt="" />}
           <AvatarFallback>{initials(email.split('@')[0] || 'U')}</AvatarFallback>
         </Avatar>

@@ -3,15 +3,17 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
-import { UploadCloud, FileText, CheckCircle2, XCircle, Loader2, ArrowRight, X, AlertTriangle, RotateCw } from 'lucide-react';
+import { UploadCloud, FileText, Loader2, ArrowRight, AlertTriangle, RotateCw, FolderOpen } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { uploadDocument } from '@/lib/api/upload';
 import { ApiError } from '@/lib/api/client';
 import { Endpoints } from '@/lib/api/endpoints';
 import { PageHeader } from '@/components/app/page-header';
-import { Card, CardContent } from '@/components/ui/card';
+import { Notice } from '@/components/app/states';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useT } from '@/lib/i18n';
+import { Badge } from '@/components/ui/badge';
+import { useT, useLang } from '@/lib/i18n';
 import { bytes } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
@@ -31,6 +33,7 @@ const DONE_STATES = new Set(['ready', 'ready_for_review', 'clean', 'extracted', 
 export default function UploadPage() {
   const { activeCompany } = useAuth();
   const t = useT();
+  const { lang } = useLang();
   const qc = useQueryClient();
   const [items, setItems] = React.useState<Item[]>([]);
   const [drag, setDrag] = React.useState(false);
@@ -95,42 +98,49 @@ export default function UploadPage() {
     if (e.dataTransfer.files?.length) start(e.dataTransfer.files);
   };
 
+  const openPicker = () => inputRef.current?.click();
+  const doneCount = items.filter((i) => i.status === 'done').length;
+
   return (
     <div className="space-y-6">
       <PageHeader
         title={t('upload.title')}
         description={t('upload.subtitle')}
-        actions={<Button variant="outline" asChild><Link href="/documents">{t('upload.toDocs')} <ArrowRight className="h-4 w-4" /></Link></Button>}
+        actions={<Button variant="outline" asChild><Link href="/documents">{t('upload.toDocs')} <ArrowRight /></Link></Button>}
       />
 
       {pipelineDown && (
-        <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning-soft p-3 text-sm text-warning">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          <span>{t('pipeline.down')}</span>
-        </div>
+        <Notice tone="warning" icon={AlertTriangle}>{t('pipeline.down')}</Notice>
       )}
 
       {/* Dropzone */}
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-3">
           <div
+            role="button"
+            tabIndex={0}
+            aria-label={t('upload.drop')}
             onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
             onDragLeave={() => setDrag(false)}
             onDrop={onDrop}
-            onClick={() => inputRef.current?.click()}
+            onClick={openPicker}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPicker(); } }}
             className={cn(
-              'flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed px-6 py-14 text-center transition-colors',
-              drag ? 'border-primary bg-primary-soft' : 'border-border hover:border-primary/40 hover:bg-secondary/40',
+              'flex cursor-pointer flex-col items-center justify-center gap-4 rounded-md border border-dashed px-6 py-16 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              drag ? 'border-brand bg-brand-soft' : 'border-border-strong bg-surface-2/60 hover:border-brand/50 hover:bg-surface-2',
             )}
           >
-            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-soft text-primary">
-              <UploadCloud className="h-7 w-7" />
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-card text-brand ring-1 ring-border">
+              <UploadCloud className="h-6 w-6" strokeWidth={1.75} />
             </span>
-            <div>
-              <p className="text-base font-medium text-foreground">{t('upload.drop')}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{t('upload.hint')}</p>
+            <div className="space-y-1">
+              <p className="text-[15px] font-semibold text-foreground">{lang === 'bg' ? 'Пуснете файлове тук' : 'Drop files here'}</p>
+              <p className="text-[13px] text-muted-foreground">{t('upload.hint')}</p>
             </div>
-            {!activeCompany && <p className="text-xs text-destructive">{t('upload.pickCompany')}</p>}
+            <Button type="button" variant="outline" onClick={(e) => { e.stopPropagation(); openPicker(); }}>
+              <FolderOpen /> {lang === 'bg' ? 'Изберете файлове' : 'Choose files'}
+            </Button>
+            {!activeCompany && <p className="text-xs font-medium text-destructive">{t('upload.pickCompany')}</p>}
             <input
               ref={inputRef}
               type="file"
@@ -146,22 +156,31 @@ export default function UploadPage() {
       {/* Upload list */}
       {items.length > 0 && (
         <Card>
-          <CardContent className="divide-y p-0">
+          <CardHeader className="flex-row items-end justify-between space-y-0 pb-3">
+            <div>
+              <CardTitle>{lang === 'bg' ? 'Качени файлове' : 'Uploaded files'}</CardTitle>
+              <CardDescription className="mt-0.5">
+                <span className="tabular-nums">{doneCount}</span> / <span className="tabular-nums">{items.length}</span> {lang === 'bg' ? 'обработени' : 'processed'}
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="divide-y divide-border p-0">
             {items.map((it) => (
-              <div key={it.id} className="flex items-center gap-3 p-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
-                  <FileText className="h-5 w-5" />
+              <div key={it.id} className="flex items-center gap-4 px-5 py-3.5">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-surface-2 text-muted-foreground">
+                  <FileText className="h-4 w-4" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-sm font-medium text-foreground">{it.file.name}</p>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="truncate text-[13px] font-medium text-foreground">{it.file.name}</p>
                     <StatusPill it={it} />
                   </div>
-                  <p className="text-xs text-muted-foreground">{bytes(it.file.size)}</p>
+                  <p className="t-caption tabular-nums">{bytes(it.file.size)}</p>
                   {(it.status === 'uploading' || it.status === 'processing' || it.status === 'done') && (
-                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-valuemin={0} aria-valuemax={100}
+                      aria-valuenow={it.status === 'uploading' ? it.pct : 100}>
                       <div
-                        className={cn('h-full rounded-full transition-all', it.status === 'done' ? 'bg-success' : 'bg-primary')}
+                        className={cn('h-full rounded-full transition-[width]', it.status === 'done' ? 'bg-success' : 'bg-brand')}
                         style={{ width: `${it.status === 'processing' || it.status === 'done' ? 100 : it.pct}%` }}
                       />
                     </div>
@@ -171,12 +190,12 @@ export default function UploadPage() {
                 </div>
                 {it.status === 'done' && it.docId && (
                   <Button size="sm" variant="outline" asChild>
-                    <Link href={`/review/${it.docId}`}>{t('upload.view')}</Link>
+                    <Link href={`/review/${it.docId}`}>{t('upload.view')} <ArrowRight /></Link>
                   </Button>
                 )}
                 {(it.status === 'stalled' || it.status === 'error') && (
                   <Button size="sm" variant="outline" onClick={() => retry(it)}>
-                    <RotateCw className="h-4 w-4" /> {t('pipeline.retry')}
+                    <RotateCw /> {t('pipeline.retry')}
                   </Button>
                 )}
               </div>
@@ -190,20 +209,19 @@ export default function UploadPage() {
 
 function StatusPill({ it }: { it: Item }) {
   const t = useT();
-  const map = {
-    queued: { label: t('upload.stQueued'), cls: 'text-muted-foreground', icon: Loader2, spin: false },
-    uploading: { label: t('upload.stUploading', { pct: it.pct }), cls: 'text-primary', icon: Loader2, spin: true },
-    processing: { label: t('upload.stProcessing'), cls: 'text-warning', icon: Loader2, spin: true },
-    done: { label: t('upload.stDone'), cls: 'text-success', icon: CheckCircle2, spin: false },
-    stalled: { label: t('upload.stStalled'), cls: 'text-warning', icon: AlertTriangle, spin: false },
-    error: { label: t('upload.stError'), cls: 'text-destructive', icon: XCircle, spin: false },
-  } as const;
+  const map: Record<Status, { label: string; variant: 'neutral' | 'info' | 'warning' | 'success' | 'destructive'; spin: boolean }> = {
+    queued: { label: t('upload.stQueued'), variant: 'neutral', spin: false },
+    uploading: { label: t('upload.stUploading', { pct: it.pct }), variant: 'info', spin: true },
+    processing: { label: t('upload.stProcessing'), variant: 'warning', spin: true },
+    done: { label: t('upload.stDone'), variant: 'success', spin: false },
+    stalled: { label: t('upload.stStalled'), variant: 'warning', spin: false },
+    error: { label: t('upload.stError'), variant: 'destructive', spin: false },
+  };
   const m = map[it.status];
-  const Icon = m.icon;
   return (
-    <span className={cn('flex shrink-0 items-center gap-1.5 text-xs font-medium', m.cls)}>
-      <Icon className={cn('h-3.5 w-3.5', m.spin && 'animate-spin')} />
+    <Badge variant={m.variant} dot={!m.spin} className="shrink-0">
+      {m.spin && <Loader2 className="h-3 w-3 animate-spin" />}
       {m.label}
-    </span>
+    </Badge>
   );
 }

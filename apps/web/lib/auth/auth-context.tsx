@@ -30,7 +30,7 @@ interface AuthContextValue extends AuthState {
 }
 
 const AuthContext = React.createContext<AuthContextValue | null>(null);
-const EMAIL_KEY = 'mgi.email';
+const EMAIL_KEY = 'acco.email';
 
 function decodeJwt(token: string): { sub?: string; tid?: string } {
   try {

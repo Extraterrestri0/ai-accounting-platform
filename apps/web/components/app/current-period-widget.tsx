@@ -6,7 +6,7 @@ import { Endpoints } from '@/lib/api/endpoints';
 import { StatCard } from '@/components/app/stat-card';
 import { periodLabel } from '@/components/app/accounting-periods-tab';
 
-/** Dashboard KPI: the current accounting period and its lock status (Task 4.3). */
+/** Dashboard KPI: the current accounting period and its lock status (Task 4.3). Links to Settings → Периоди. */
 export function CurrentPeriodWidget({ companyId }: { companyId?: string }) {
   const q = useQuery({
     queryKey: ['period', 'current', companyId],
@@ -18,11 +18,13 @@ export function CurrentPeriodWidget({ companyId }: { companyId?: string }) {
   return (
     <StatCard
       label="Счетоводен период"
-      value={q.isLoading || !p ? '…' : periodLabel(p)}
-      sub={p ? (locked ? 'Заключен' : 'Отворен') : undefined}
+      value={p ? periodLabel(p) : '—'}
+      sub={p ? (locked ? 'Заключен · без нови записи' : 'Отворен за осчетоводяване') : q.isError ? 'Периодът не е зареден' : undefined}
       icon={locked ? Lock : LockOpen}
-      tone={locked ? 'warning' : 'success'}
+      tone={locked ? 'warning' : 'neutral'}
       valueTone={locked ? 'warning' : 'foreground'}
+      href="/settings"
+      loading={q.isLoading}
     />
   );
 }

@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { FileText, Search, ChevronLeft, ChevronRight, Upload, Filter, Trash2, RotateCcw, AlertTriangle, History } from 'lucide-react';
+import { FileText, Search, Upload, Trash2, RotateCcw, AlertTriangle, History } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth/auth-context';
 import { Endpoints } from '@/lib/api/endpoints';
@@ -15,17 +15,26 @@ import { StatusBadge } from '@/components/app/status-badge';
 import { EmptyState, ErrorState, TableSkeleton } from '@/components/app/states';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Segmented } from '@/components/ui/segmented';
+import { Pagination } from '@/components/ui/pagination';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { AuditHistoryDialog } from '@/components/app/audit/audit-history-dialog';
 import { dateBG, bytes } from '@/lib/format';
-import { cn } from '@/lib/utils';
 
-const STATUS_FILTERS = [
-  { key: '', label: 'Всички' },
-  { key: 'scanning', label: 'Сканиране' },
-  { key: 'ready', label: 'Извлечени' },
-  { key: 'failed', label: 'Грешка' },
+type StatusKey = '' | 'scanning' | 'ready' | 'failed';
+type View = 'active' | 'trash';
+
+const STATUS_OPTIONS: { value: StatusKey; label: string }[] = [
+  { value: '', label: 'Всички' },
+  { value: 'scanning', label: 'Сканиране' },
+  { value: 'ready', label: 'Извлечени' },
+  { value: 'failed', label: 'Грешка' },
+];
+const VIEW_OPTIONS: { value: View; label: React.ReactNode }[] = [
+  { value: 'active', label: <><FileText className="h-3.5 w-3.5" /> Документи</> },
+  { value: 'trash', label: <><Trash2 className="h-3.5 w-3.5" /> Кошче</> },
 ];
 const PAGE_SIZE = 12;
 
@@ -34,10 +43,10 @@ export default function DocumentsPage() {
   const router = useRouter();
   const qc = useQueryClient();
   const companyId = activeCompany?.id;
-  const [view, setView] = React.useState<'active' | 'trash'>('active');
+  const [view, setView] = React.useState<View>('active');
   const [search, setSearch] = React.useState('');
   const [debounced, setDebounced] = React.useState('');
-  const [status, setStatus] = React.useState('');
+  const [status, setStatus] = React.useState<StatusKey>('');
   const [page, setPage] = React.useState(1);
   const [confirmId, setConfirmId] = React.useState<string | null>(null);
   const [auditFor, setAuditFor] = React.useState<string | null>(null);
@@ -74,108 +83,94 @@ export default function DocumentsPage() {
       <PageHeader
         title="Документи"
         description="Архив на всички качени документи за текущата фирма."
-        actions={<Button asChild><Link href="/upload"><Upload className="h-4 w-4" /> Качи документ</Link></Button>}
+        actions={<Button asChild><Link href="/upload"><Upload /> Качи документ</Link></Button>}
       />
 
-      {/* View tabs */}
-      <div className="flex items-center gap-1.5">
-        <ViewTab active={view === 'active'} onClick={() => { setView('active'); setPage(1); }} icon={FileText} label="Документи" />
-        <ViewTab active={view === 'trash'} onClick={() => { setView('trash'); setPage(1); }} icon={Trash2} label="Кошче" />
-      </div>
-
       <Card>
-        {/* Toolbar */}
-        <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative max-w-xs flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
+        {/* Toolbar: search · status filter · view toggle */}
+        <div className="flex flex-col gap-3 border-b border-border px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative w-full sm:max-w-xs">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
+            <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Търсене по име на файл…"
-              className="h-9 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="pl-9"
+              aria-label="Търсене по име на файл"
             />
           </div>
-          {view === 'active' && (
-            <div className="flex items-center gap-1.5 overflow-x-auto">
-              <Filter className="mr-1 hidden h-4 w-4 text-muted-foreground sm:block" />
-              {STATUS_FILTERS.map((f) => (
-                <button
-                  key={f.key}
-                  onClick={() => { setStatus(f.key); setPage(1); }}
-                  className={cn('whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium transition-colors',
-                    status === f.key ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground')}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {view === 'active' && (
+              <Segmented value={status} onChange={(v) => { setStatus(v); setPage(1); }} options={STATUS_OPTIONS} />
+            )}
+            <Segmented value={view} onChange={(v) => { setView(v); setPage(1); }} options={VIEW_OPTIONS} />
+          </div>
         </div>
 
         {/* Body */}
         {q.isLoading ? (
-          <div className="p-4"><TableSkeleton rows={8} cols={5} /></div>
+          <TableSkeleton rows={8} cols={5} />
         ) : q.isError ? (
-          <div className="p-6"><ErrorState onRetry={() => q.refetch()} /></div>
+          <div className="p-5"><ErrorState onRetry={() => q.refetch()} /></div>
         ) : items.length === 0 ? (
-          <div className="p-6">
-            <EmptyState
-              icon={view === 'trash' ? Trash2 : FileText}
-              title={view === 'trash' ? 'Кошчето е празно' : (debounced || status ? 'Няма съвпадения' : 'Все още няма документи')}
-              description={view === 'trash' ? 'Изтритите документи се появяват тук и могат да бъдат възстановени.' : 'Качените документи ще се появят тук след обработка.'}
-            />
-          </div>
+          <EmptyState
+            icon={view === 'trash' ? Trash2 : FileText}
+            title={view === 'trash' ? 'Кошчето е празно' : (debounced || status ? 'Няма съвпадения' : 'Все още няма документи')}
+            description={view === 'trash' ? 'Изтритите документи се появяват тук и могат да бъдат възстановени.' : 'Качените документи ще се появят тук след обработка.'}
+            action={view === 'active' && !debounced && !status ? <Button asChild><Link href="/upload"><Upload /> Качи документ</Link></Button> : undefined}
+          />
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Файл</TableHead>
                 <TableHead>Тип</TableHead>
-                <TableHead>Размер</TableHead>
+                <TableHead className="num text-right">Размер</TableHead>
                 <TableHead>Статус</TableHead>
-                <TableHead className="text-right">{view === 'trash' ? 'Действия' : 'Качен на'}</TableHead>
+                <TableHead className="text-right">Качен на</TableHead>
+                <TableHead className="w-24 text-right"><span className="sr-only">Действия</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.map((d) => (
                 <TableRow
                   key={d.id}
-                  className={view === 'active' ? 'cursor-pointer' : ''}
+                  className={view === 'active' ? 'group cursor-pointer' : 'group'}
                   onClick={view === 'active' ? () => router.push(`/review/${d.id}`) : undefined}
                 >
                   <TableCell className="font-medium text-foreground">
-                    <span className="flex items-center gap-2.5">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-md bg-secondary text-muted-foreground"><FileText className="h-4 w-4" /></span>
-                      <span className="max-w-[18rem] truncate">{d.originalFilename ?? d.filename ?? '—'}</span>
-                    </span>
+                    <span className="block max-w-[20rem] truncate">{d.originalFilename ?? d.filename ?? '—'}</span>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{d.detectedType ?? '—'}</TableCell>
-                  <TableCell className="tabular-nums text-muted-foreground">{d.sizeBytes ? bytes(d.sizeBytes) : '—'}</TableCell>
+                  <TableCell className="num text-right text-muted-foreground">{d.sizeBytes ? bytes(d.sizeBytes) : '—'}</TableCell>
                   <TableCell><StatusBadge status={d.status} /></TableCell>
+                  <TableCell className="text-right tabular-nums text-muted-foreground">{dateBG(d.createdAt)}</TableCell>
                   <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                    {view === 'active' ? (
-                      <div className="flex items-center justify-end gap-2">
-                        <span className="tabular-nums text-muted-foreground">{dateBG(d.createdAt)}</span>
-                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" title="Одитна история"
-                          onClick={() => setAuditFor(d.id)}>
-                          <History className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" title="Премести в кошчето"
-                          onClick={() => trash.mutate(d.id)} disabled={trash.isPending}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Button variant="outline" size="sm" onClick={() => restore.mutate(d.id)} disabled={restore.isPending}>
-                          <RotateCcw className="h-4 w-4" /> Възстанови
-                        </Button>
-                        <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive-soft" title="Изтрий окончателно"
-                          onClick={() => setConfirmId(d.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
+                    <div className="flex items-center justify-end gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
+                      {view === 'active' ? (
+                        <>
+                          <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground" title="Одитна история" aria-label="Одитна история"
+                            onClick={() => setAuditFor(d.id)}>
+                            <History />
+                          </Button>
+                          <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" title="Премести в кошчето" aria-label="Премести в кошчето"
+                            onClick={() => trash.mutate(d.id)} disabled={trash.isPending}>
+                            <Trash2 />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground" title="Възстанови" aria-label="Възстанови"
+                            onClick={() => restore.mutate(d.id)} disabled={restore.isPending}>
+                            <RotateCcw />
+                          </Button>
+                          <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" title="Изтрий окончателно" aria-label="Изтрий окончателно"
+                            onClick={() => setConfirmId(d.id)}>
+                            <Trash2 />
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -184,13 +179,7 @@ export default function DocumentsPage() {
         )}
 
         {items.length > 0 && (
-          <div className="flex items-center justify-between border-t px-4 py-3 text-sm">
-            <span className="text-muted-foreground">{total} {total === 1 ? 'документ' : 'документа'} · страница {page} от {totalPages}</span>
-            <div className="flex items-center gap-1.5">
-              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}><ChevronLeft className="h-4 w-4" /> Назад</Button>
-              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Напред <ChevronRight className="h-4 w-4" /></Button>
-            </div>
-          </div>
+          <Pagination page={page} totalPages={totalPages} total={total} unit={total === 1 ? 'документ' : 'документа'} onChange={setPage} />
         )}
       </Card>
 
@@ -206,7 +195,7 @@ export default function DocumentsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmId(null)}>Отказ</Button>
             <Button variant="destructive" onClick={() => confirmId && purge.mutate(confirmId)} disabled={purge.isPending}>
-              <Trash2 className="h-4 w-4" /> Изтрий окончателно
+              <Trash2 /> Изтрий окончателно
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -214,14 +203,5 @@ export default function DocumentsPage() {
 
       <AuditHistoryDialog entityType="document" entityId={auditFor} subtitle="Хронология на действията по този документ." onOpenChange={(v) => !v && setAuditFor(null)} />
     </div>
-  );
-}
-
-function ViewTab({ active, onClick, icon: Icon, label }: { active: boolean; onClick: () => void; icon: typeof FileText; label: string }) {
-  return (
-    <button onClick={onClick} className={cn('flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
-      active ? 'bg-card text-foreground shadow-card border' : 'text-muted-foreground hover:text-foreground')}>
-      <Icon className="h-4 w-4" /> {label}
-    </button>
   );
 }

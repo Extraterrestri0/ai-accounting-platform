@@ -4,14 +4,15 @@ import { useQuery } from '@tanstack/react-query';
 import { ShieldCheck, ShieldAlert, ShieldX, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { Endpoints } from '@/lib/api/endpoints';
-import { cn } from '@/lib/utils';
+import { Notice } from '@/components/app/states';
+import { Badge } from '@/components/ui/badge';
 import { dateTimeBG } from '@/lib/format';
 import type { AuditChainStatus } from '@/lib/api/types';
 
-const META: Record<AuditChainStatus, { label: string; desc: string; icon: typeof ShieldCheck; cls: string }> = {
-  verified: { label: 'Проверено', desc: 'Веригата на одита е цяла и непроменена.', icon: ShieldCheck, cls: 'border-success/30 bg-success-soft text-success' },
-  warning: { label: 'Внимание', desc: 'Все още няма записи в одитната верига.', icon: ShieldAlert, cls: 'border-warning/30 bg-warning-soft text-warning' },
-  failed: { label: 'Нарушено', desc: 'Открито е несъответствие в одитната верига.', icon: ShieldX, cls: 'border-destructive/30 bg-destructive-soft text-destructive' },
+const META: Record<AuditChainStatus, { label: string; desc: string; icon: typeof ShieldCheck; tone: 'success' | 'warning' | 'destructive' }> = {
+  verified: { label: 'Проверено', desc: 'Веригата на одита е цяла и непроменена.', icon: ShieldCheck, tone: 'success' },
+  warning: { label: 'Внимание', desc: 'Все още няма записи в одитната верига.', icon: ShieldAlert, tone: 'warning' },
+  failed: { label: 'Нарушено', desc: 'Открито е несъответствие в одитната верига.', icon: ShieldX, tone: 'destructive' },
 };
 
 /**
@@ -29,27 +30,32 @@ export function AuditIntegrityStatus({ compact = false }: { compact?: boolean })
 
   if (q.isLoading) {
     return (
-      <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" /> Проверка на интегритета…
-      </div>
+      <Notice tone="neutral" icon={Loader2} className="[&_svg]:animate-spin">
+        Проверка на интегритета на одитната верига…
+      </Notice>
     );
   }
   const v = q.data;
   const m = META[v?.status ?? 'warning'];
-  const Icon = m.icon;
 
   return (
-    <div className={cn('flex items-center gap-3 rounded-lg border px-4 py-3', m.cls)}>
-      <Icon className="h-5 w-5 shrink-0" />
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold">Интегритет на одита: {m.label}</p>
-        {!compact && (
-          <p className="text-xs opacity-90">
-            {m.desc}
-            {v ? ` · ${v.events} записа · проверено ${dateTimeBG(v.checkedAt)}` : ''}
-          </p>
-        )}
-      </div>
-    </div>
+    <Notice
+      tone={m.tone}
+      icon={m.icon}
+      title={<span className="inline-flex flex-wrap items-center gap-2">Интегритет на одита <Badge variant={m.tone} dot>{m.label}</Badge></span>}
+      action={v && !compact ? (
+        <dl className="hidden text-right text-xs sm:block">
+          <dt className="t-overline">Записи</dt>
+          <dd className="font-mono tabular-nums text-foreground">{v.events}</dd>
+        </dl>
+      ) : undefined}
+    >
+      {!compact && (
+        <>
+          {m.desc}
+          {v ? <span className="tabular-nums"> Проверено на {dateTimeBG(v.checkedAt)}.</span> : null}
+        </>
+      )}
+    </Notice>
   );
 }

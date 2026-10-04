@@ -1,0 +1,14 @@
+{
+  "name": "mgi-local-ocr",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Local Tesseract OCR sidecar (DEV ONLY) — implements the app's OCR_VENDOR_URL contract so image/scanned uploads get real OCR text instead of the dev sample. NOT for production (use Azure Document Intelligence). Runs offline via tesseract.js (WASM, bul+eng).",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "pdf-to-png-converter": "^4.1.0",
+    "tesseract.js": "^5.1.1"
+  }
+}

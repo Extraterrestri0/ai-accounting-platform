@@ -11,7 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { DualMoney } from '@/components/app/money';
+import { Textarea } from '@/components/ui/textarea';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Money } from '@/components/app/money';
 import { AuditEntityHistory } from '@/components/app/audit/audit-entity-history';
 import { dateBG, toNumber } from '@/lib/format';
 import type { OpenItem, PaymentRow } from '@/lib/api/types';
@@ -35,7 +37,7 @@ export function PaymentDialog({
   const open = !!item;
   const outstanding = toNumber(item?.outstanding);
   const counterpartyLabel = kind === 'ar' ? 'Клиент' : 'Доставчик';
-  const verb = kind === 'ar' ? 'Отчети плащане' : 'Отчети плащане';
+  const verb = kind === 'ar' ? 'Отчети постъпление' : 'Отчети плащане';
 
   const [amount, setAmount] = React.useState('');
   const [paymentDate, setPaymentDate] = React.useState(today());
@@ -84,28 +86,28 @@ export function PaymentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><Wallet className="h-5 w-5 text-primary" /> {verb}</DialogTitle>
+          <DialogTitle>{verb}</DialogTitle>
           <DialogDescription>
             {item?.documentRef ? `${item.documentRef} · ` : ''}{item?.counterpartyName ?? counterpartyLabel}
           </DialogDescription>
         </DialogHeader>
 
         {/* Document settlement summary */}
-        <div className="grid grid-cols-3 gap-3 rounded-lg bg-secondary/60 px-4 py-3 text-sm">
-          <div><dt className="text-xs text-muted-foreground">Общо</dt><dd className="font-medium text-foreground"><DualMoney value={item?.total} dual={false} /></dd></div>
-          <div><dt className="text-xs text-muted-foreground">Платено</dt><dd className="font-medium text-foreground"><DualMoney value={item?.paid} dual={false} /></dd></div>
-          <div><dt className="text-xs text-muted-foreground">Остатък</dt><dd className="font-semibold text-foreground"><DualMoney value={item?.outstanding} dual={false} /></dd></div>
-        </div>
+        <dl className="grid grid-cols-3 divide-x divide-border rounded-lg border border-border bg-surface-2">
+          <div className="px-4 py-3"><dt className="t-overline">Общо</dt><dd className="mt-1 text-sm text-foreground"><Money value={item?.total} /></dd></div>
+          <div className="px-4 py-3"><dt className="t-overline">Платено</dt><dd className="mt-1 text-sm text-foreground"><Money value={item?.paid} /></dd></div>
+          <div className="px-4 py-3"><dt className="t-overline">Остатък</dt><dd className="mt-1 text-sm text-foreground"><Money value={item?.outstanding} strong /></dd></div>
+        </dl>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label htmlFor="pay-amount">Сума</Label>
-              <button type="button" className="text-xs text-primary hover:underline" onClick={() => setAmount(item?.outstanding ?? '')}>
+              <Button type="button" variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setAmount(item?.outstanding ?? '')}>
                 Пълно плащане
-              </button>
+              </Button>
             </div>
-            <Input id="pay-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
+            <Input id="pay-amount" inputMode="decimal" className="tabular-nums" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" aria-invalid={amt > outstanding + 0.005 || undefined} />
             {amt > outstanding + 0.005 && <p className="text-xs text-destructive">Сумата надвишава остатъка ({item?.outstanding}).</p>}
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -120,7 +122,7 @@ export function PaymentDialog({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="pay-notes">Бележки</Label>
-            <Input id="pay-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="По избор" />
+            <Textarea id="pay-notes" className="min-h-[60px]" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="По избор" />
           </div>
         </div>
 
@@ -128,39 +130,57 @@ export function PaymentDialog({
         {payments.length > 0 && (
           <div className="space-y-1.5">
             <Label>Платежна история</Label>
-            <div className="divide-y rounded-lg border">
-              {payments.map((p: PaymentRow) => (
-                <div key={p.id}>
-                  <div className="flex items-center gap-3 px-3 py-2 text-sm">
-                    <span className="tabular-nums text-muted-foreground">{dateBG(p.paymentDate)}</span>
-                    <span className="flex-1"><DualMoney value={p.amount} dual={false} /></span>
-                    {p.reference && <span className="max-w-[8rem] truncate text-xs text-muted-foreground">{p.reference}</span>}
-                    <Button size="icon" variant="ghost" title="Одитна история" onClick={() => setAuditOpen((cur) => (cur === p.id ? null : p.id))}>
-                      <History className="h-4 w-4" />
-                    </Button>
-                    {p.status === 'reversed' ? (
-                      <Badge variant="neutral">Сторнирано</Badge>
-                    ) : (
-                      <Button size="sm" variant="ghost" onClick={() => reverse.mutate(p.id)} disabled={reverse.isPending} title="Сторнирай плащането">
-                        {reverse.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Undo2 className="h-4 w-4" />} Сторно
-                      </Button>
-                    )}
-                  </div>
-                  {auditOpen === p.id && (
-                    <div className="border-t bg-secondary/30 px-3 py-3">
-                      <AuditEntityHistory entityType="payment" entityId={p.id} enabled={open} />
-                    </div>
-                  )}
-                </div>
-              ))}
+            <div className="overflow-hidden rounded-lg border border-border">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead>Дата</TableHead>
+                    <TableHead>Референция</TableHead>
+                    <TableHead className="num">Сума</TableHead>
+                    <TableHead className="text-right">Статус</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {payments.map((p: PaymentRow) => (
+                    <React.Fragment key={p.id}>
+                      <TableRow>
+                        <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">{dateBG(p.paymentDate)}</TableCell>
+                        <TableCell className="max-w-[8rem] truncate text-muted-foreground">{p.reference ?? '—'}</TableCell>
+                        <TableCell className="num"><Money value={p.amount} strong={p.status !== 'reversed'} className={p.status === 'reversed' ? 'text-muted-foreground line-through' : undefined} /></TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-end gap-1">
+                            {p.status === 'reversed' ? (
+                              <Badge variant="neutral">Сторнирано</Badge>
+                            ) : (
+                              <Button size="sm" variant="ghost" onClick={() => reverse.mutate(p.id)} disabled={reverse.isPending} title="Сторнирай плащането">
+                                {reverse.isPending && reverse.variables === p.id ? <Loader2 className="animate-spin" /> : <Undo2 />} Сторно
+                              </Button>
+                            )}
+                            <Button size="icon-sm" variant="ghost" title="Одитна история" aria-label="Одитна история" aria-expanded={auditOpen === p.id} onClick={() => setAuditOpen((cur) => (cur === p.id ? null : p.id))}>
+                              <History />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      {auditOpen === p.id && (
+                        <TableRow className="hover:bg-transparent">
+                          <TableCell colSpan={4} className="h-auto bg-surface-2 px-4 py-3">
+                            <AuditEntityHistory entityType="payment" entityId={p.id} enabled={open} />
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           </div>
         )}
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Затвори</Button>
-          <Button onClick={() => record.mutate()} disabled={record.isPending || invalid}>
-            {record.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />} Отчети
+          <Button variant="success" onClick={() => record.mutate()} disabled={record.isPending || invalid}>
+            {record.isPending ? <Loader2 className="animate-spin" /> : <Wallet />} Отчети
           </Button>
         </DialogFooter>
       </DialogContent>

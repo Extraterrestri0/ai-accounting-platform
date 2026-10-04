@@ -24,7 +24,7 @@ export function AuditHistoryDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{subtitle ?? 'Пълна хронология на промените по този запис.'}</DialogDescription>
         </DialogHeader>
-        <div className="max-h-[60vh] overflow-y-auto pr-1">
+        <div className="-mx-1 max-h-[60vh] overflow-y-auto px-1">
           <AuditEntityHistory entityType={entityType} entityId={entityId ?? undefined} enabled={!!entityId} />
         </div>
         <DialogFooter>

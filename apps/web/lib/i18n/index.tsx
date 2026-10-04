@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { messages, type Lang } from './dictionaries';
 
-const LANG_KEY = 'mgi.lang';
+const LANG_KEY = 'acco.lang';
 
 interface LangContextValue {
   lang: Lang;

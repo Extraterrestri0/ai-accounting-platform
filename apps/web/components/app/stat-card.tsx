@@ -1,48 +1,49 @@
-import { type LucideIcon } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowRight, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Card } from '@/components/ui/card';
 
 /**
- * KPI card (design-system): uppercase overline label, large tabular value,
- * optional dual-currency reference + delta sub-line, tone-colored value.
+ * KPI tile: small label, large tabular value, optional sub-line / trend / link.
+ * Colour is reserved for meaning (positive, needs attention); default is ink.
  */
 export function StatCard({
-  label, value, sub, icon: Icon, tone = 'neutral', valueTone,
+  label, value, sub, icon: Icon, tone = 'neutral', valueTone, href, className, loading,
 }: {
   label: string;
   value: string;
   sub?: string;
   icon?: LucideIcon;
   tone?: 'primary' | 'success' | 'warning' | 'neutral';
-  /** Color of the big number; defaults to neutral foreground. */
-  valueTone?: 'primary' | 'success' | 'warning' | 'foreground';
+  valueTone?: 'primary' | 'success' | 'warning' | 'destructive' | 'foreground';
+  href?: string;
+  className?: string;
+  loading?: boolean;
 }) {
-  const iconTones = {
-    primary: 'bg-gradient-to-br from-primary-soft to-card text-primary ring-1 ring-primary/15',
-    success: 'bg-gradient-to-br from-success-soft to-card text-success ring-1 ring-success/15',
-    warning: 'bg-gradient-to-br from-warning-soft to-card text-warning ring-1 ring-warning/15',
-    neutral: 'bg-gradient-to-br from-secondary to-card text-muted-foreground ring-1 ring-border',
-  } as const;
   const valueColors = {
-    primary: 'text-primary',
+    primary: 'text-brand',
     success: 'text-success',
     warning: 'text-warning',
+    destructive: 'text-destructive',
     foreground: 'text-foreground',
   } as const;
-  return (
-    <Card className="group p-5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-pop2">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1.5">
-          <p className="t-overline">{label}</p>
-          <p className={cn('text-[30px] font-extrabold leading-9 tabular-nums tracking-tight', valueColors[valueTone ?? 'foreground'])}>{value}</p>
-          {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
-        </div>
-        {Icon && (
-          <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-105', iconTones[tone])}>
-            <Icon className="h-5 w-5" />
-          </span>
-        )}
+  const iconTone = {
+    primary: 'text-brand', success: 'text-success', warning: 'text-warning', neutral: 'text-faint',
+  } as const;
+  const body = (
+    <>
+      <div className="flex items-center justify-between gap-2">
+        <p className="t-overline">{label}</p>
+        {Icon && <Icon className={cn('h-4 w-4', iconTone[tone])} strokeWidth={1.75} />}
       </div>
-    </Card>
+      <p className={cn('mt-3 text-[26px] font-semibold leading-none tabular-nums tracking-[-0.02em]', valueColors[valueTone ?? 'foreground'], loading && 'skeleton h-7 w-28 text-transparent')}>{value}</p>
+      {(sub || href) && (
+        <div className="mt-2.5 flex items-center justify-between gap-2">
+          {sub ? <p className="t-caption truncate">{sub}</p> : <span />}
+          {href && <ArrowRight className="h-3.5 w-3.5 shrink-0 text-faint transition-transform group-hover:translate-x-0.5" />}
+        </div>
+      )}
+    </>
   );
+  const cls = cn('group block rounded-lg border border-border bg-card p-5', href && 'transition-colors hover:border-border-strong', className);
+  return href ? <Link href={href} className={cls}>{body}</Link> : <div className={cls}>{body}</div>;
 }

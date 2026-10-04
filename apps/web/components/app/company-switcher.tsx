@@ -31,29 +31,29 @@ export function CompanySwitcher() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-2.5 rounded-lg border bg-card px-2.5 py-1.5 text-left text-sm shadow-sm transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary-soft text-xs font-semibold text-accent-foreground">
+      <DropdownMenuTrigger className="flex h-9 items-center gap-2.5 rounded-md px-2 text-left text-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-soft text-2xs font-semibold text-brand">
           {activeCompany ? initials(activeCompany.name) : <Building2 className="h-4 w-4" />}
         </span>
         <span className="hidden min-w-0 sm:block">
-          <span className="block max-w-[10rem] truncate font-medium leading-tight">{activeCompany?.name ?? 'Изберете фирма'}</span>
-          <span className="block text-[11px] leading-tight text-muted-foreground">{activeCompany?.eik ? `ЕИК ${activeCompany.eik}` : 'Няма избрана фирма'}</span>
+          <span className="block max-w-[12rem] truncate text-[13.5px] font-medium leading-tight">{activeCompany?.name ?? 'Изберете фирма'}</span>
+          <span className="block text-2xs leading-tight text-muted-foreground">{activeCompany ? (activeCompany.eik ? `ЕИК ${activeCompany.eik}` : 'Без ЕИК') : 'Няма избрана фирма'}</span>
         </span>
-        <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
+        <ChevronsUpDown className="h-3.5 w-3.5 text-faint" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
         <DropdownMenuLabel>Фирми</DropdownMenuLabel>
         {companies.length === 0 && <p className="px-2 py-1.5 text-sm text-muted-foreground">Няма налични фирми</p>}
         {companies.map((c) => (
           <DropdownMenuItem key={c.id} onClick={() => choose(c.id)} className="gap-2.5">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary-soft text-xs font-semibold text-accent-foreground">
+            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-soft text-2xs font-semibold text-brand">
               {initials(c.name)}
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate font-medium leading-tight text-foreground">{c.name}</span>
               <span className="block text-[11px] leading-tight text-muted-foreground">{c.baseCurrency}{c.eik ? ` · ЕИК ${c.eik}` : ''}</span>
             </span>
-            <Check className={cn('h-4 w-4 text-primary', activeCompany?.id === c.id ? 'opacity-100' : 'opacity-0')} />
+            <Check className={cn('h-4 w-4 text-brand', activeCompany?.id === c.id ? 'opacity-100' : 'opacity-0')} />
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />

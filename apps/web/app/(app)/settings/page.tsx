@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Building2, Users, Plus, Loader2, UserCircle, LogOut, Camera, Trash2, Globe, History } from 'lucide-react';
+import { Users, Plus, Loader2, LogOut, Camera, Trash2, Globe, History } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/auth-context';
 import { Endpoints } from '@/lib/api/endpoints';
@@ -18,7 +18,11 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Select } from '@/components/ui/select';
+import { Segmented } from '@/components/ui/segmented';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { EmptyState } from '@/components/app/states';
 import { initials } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { AccountMappingsTab } from '@/components/app/account-mappings-tab';
@@ -44,50 +48,77 @@ export default function SettingsPage() {
         <TabsList>
           <TabsTrigger value="company">{t('settings.tabCompany')}</TabsTrigger>
           <TabsTrigger value="counterparties">{t('settings.tabCounterparties')}</TabsTrigger>
-          <TabsTrigger value="accounts">{lang === 'bg' ? 'Сметки' : 'Accounts'}</TabsTrigger>
+          <TabsTrigger value="accounts">{lang === 'bg' ? 'Сметки / мапинг' : 'Accounts'}</TabsTrigger>
           <TabsTrigger value="periods">{lang === 'bg' ? 'Периоди' : 'Periods'}</TabsTrigger>
           <TabsTrigger value="profile">{t('settings.tabProfile')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="company">
           <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Building2 className="h-4 w-4 text-muted-foreground" /> {t('settings.currentCompany')}</CardTitle></CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-2">
-              <Field label={t('settings.name')} value={activeCompany?.name} />
-              <Field label={t('settings.eik')} value={activeCompany?.eik ?? '—'} />
-              <Field label={t('settings.vatStatus')} value={activeCompany?.vatStatus ?? '—'} />
-              <Field label={t('settings.currency')} value={activeCompany?.baseCurrency ?? 'EUR'} />
+            <CardHeader>
+              <CardTitle>{t('settings.currentCompany')}</CardTitle>
+              <CardDescription>{lang === 'bg' ? 'Основни данни на активната фирма.' : 'Core details of the active company.'}</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <dl className="grid border-t border-border sm:grid-cols-2">
+                <Field label={t('settings.name')} value={activeCompany?.name} />
+                <Field label={t('settings.eik')} value={activeCompany?.eik ?? '—'} mono />
+                <Field label={t('settings.vatStatus')} value={activeCompany?.vatStatus ?? '—'} capitalize />
+                <Field label={t('settings.currency')} value={activeCompany?.baseCurrency ?? 'EUR'} />
+              </dl>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="counterparties">
           <Card>
-            <CardHeader className="flex-row items-center justify-between space-y-0">
+            <div className="flex flex-col gap-3 border-b border-border px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <CardTitle className="flex items-center gap-2 text-base"><Users className="h-4 w-4 text-muted-foreground" /> {t('settings.counterparties')}</CardTitle>
-                <CardDescription>{t('settings.counterpartiesSub')}</CardDescription>
+                <CardTitle>{t('settings.counterparties')}</CardTitle>
+                <CardDescription className="mt-0.5">{t('settings.counterpartiesSub')}</CardDescription>
               </div>
-              <Button size="sm" onClick={() => setAddOpen(true)}><Plus className="h-4 w-4" /> {t('common.add')}</Button>
-            </CardHeader>
+              <Button size="sm" onClick={() => setAddOpen(true)}><Plus /> {t('common.add')}</Button>
+            </div>
             <CardContent className="p-0">
               {!cpQ.data || cpQ.data.length === 0 ? (
-                <p className="p-6 text-sm text-muted-foreground">{t('settings.noCounterparties')}</p>
+                <EmptyState
+                  compact
+                  icon={Users}
+                  title={t('settings.noCounterparties')}
+                  action={<Button size="sm" variant="outline" onClick={() => setAddOpen(true)}><Plus /> {t('settings.addCounterparty')}</Button>}
+                />
               ) : (
-                <div className="divide-y">
-                  {cpQ.data.map((c: any) => (
-                    <div key={c.id} className="flex items-center gap-3 px-4 py-3">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-soft text-xs font-semibold text-accent-foreground">{initials(c.name)}</span>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">{c.name}</p>
-                        <p className="text-xs text-muted-foreground">{c.eik ? `${t('settings.eik')} ${c.eik}` : c.vatNumber ? `${t('dashboard.kpiVatPayable')} ${c.vatNumber}` : '—'}</p>
-                      </div>
-                      <Badge variant="neutral">{c.kind === 'customer' ? t('settings.customer') : c.kind === 'supplier' ? t('settings.supplier') : c.kind}</Badge>
-                      <ViesStatusBadge counterpartyId={c.id} showRefresh />
-                      <Button variant="ghost" size="icon" title="Одитна история" onClick={() => setCpAuditFor(c.id)}><History className="h-4 w-4" /></Button>
-                    </div>
-                  ))}
-                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('settings.name')}</TableHead>
+                      <TableHead>{t('settings.eik')}</TableHead>
+                      <TableHead>{t('settings.type')}</TableHead>
+                      <TableHead>VIES</TableHead>
+                      <TableHead className="w-12"><span className="sr-only">{t('common.actions')}</span></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {cpQ.data.map((c: any) => (
+                      <TableRow key={c.id} className="group">
+                        <TableCell className="font-medium text-foreground">
+                          <span className="flex items-center gap-2.5">
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-brand-soft text-[11px] font-semibold text-brand">{initials(c.name)}</span>
+                            <span className="truncate">{c.name}</span>
+                          </span>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs text-muted-foreground">{c.eik ?? c.vatNumber ?? '—'}</TableCell>
+                        <TableCell>
+                          <Badge variant="neutral">{c.kind === 'customer' ? t('settings.customer') : c.kind === 'supplier' ? t('settings.supplier') : c.kind}</Badge>
+                        </TableCell>
+                        <TableCell><ViesStatusBadge counterpartyId={c.id} showRefresh /></TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="icon-sm" className="text-muted-foreground opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100" title="Одитна история" aria-label="Одитна история" onClick={() => setCpAuditFor(c.id)}><History /></Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               )}
             </CardContent>
           </Card>
@@ -138,11 +169,13 @@ function ProfileTab() {
 
   return (
     <Card>
-      <CardHeader><CardTitle className="flex items-center gap-2 text-base"><UserCircle className="h-4 w-4 text-muted-foreground" /> {t('profile.title')}</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle>{t('profile.title')}</CardTitle>
+      </CardHeader>
       <CardContent className="space-y-6">
         {/* Avatar */}
         <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16 border">
+          <Avatar className="h-16 w-16 border border-border">
             {user?.avatarUrl && <AvatarImage src={user.avatarUrl} alt="" />}
             <AvatarFallback className="text-lg">{initials((email || 'U').split('@')[0])}</AvatarFallback>
           </Avatar>
@@ -151,47 +184,49 @@ function ProfileTab() {
             <p className="text-sm text-muted-foreground">{email}</p>
             <div className="flex items-center gap-2 pt-1">
               <Button size="sm" variant="outline" disabled={busy} onClick={() => fileRef.current?.click()}>
-                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />} {t('profile.uploadPhoto')}
+                {busy ? <Loader2 className="animate-spin" /> : <Camera />} {t('profile.uploadPhoto')}
               </Button>
               {user?.avatarUrl && (
                 <Button size="sm" variant="ghost" disabled={busy} className="text-destructive" onClick={onRemove}>
-                  <Trash2 className="h-4 w-4" /> {t('profile.removePhoto')}
+                  <Trash2 /> {t('profile.removePhoto')}
                 </Button>
               )}
               <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden"
                 onChange={(e) => { onPick(e.target.files?.[0]); e.target.value = ''; }} />
             </div>
-            <p className="text-xs text-muted-foreground">{t('profile.photoHint')}</p>
+            <p className="t-caption">{t('profile.photoHint')}</p>
           </div>
         </div>
 
         {/* Language */}
-        <div className="space-y-1.5">
-          <Label className="flex items-center gap-1.5"><Globe className="h-3.5 w-3.5" /> {t('profile.language')}</Label>
-          <div className="inline-flex rounded-md border border-border p-0.5">
-            {(['bg', 'en'] as Lang[]).map((l) => (
-              <button key={l} onClick={() => setLang(l)} aria-pressed={lang === l}
-                className={cn('rounded px-3 py-1 text-sm font-medium transition-colors',
-                  lang === l ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')}>
-                {l === 'bg' ? t('profile.languageBg') : t('profile.languageEn')}
-              </button>
-            ))}
-          </div>
+        <div className="space-y-2">
+          <Label className="flex items-center gap-1.5"><Globe className="h-3.5 w-3.5 text-muted-foreground" /> {t('profile.language')}</Label>
+          <Segmented<Lang>
+            size="md"
+            value={lang}
+            onChange={setLang}
+            options={[
+              { value: 'bg', label: t('profile.languageBg') },
+              { value: 'en', label: t('profile.languageEn') },
+            ]}
+          />
         </div>
 
-        <Button variant="outline" onClick={async () => { await logout(); router.replace('/login'); }} className="text-destructive">
-          <LogOut className="h-4 w-4" /> {t('profile.logout')}
-        </Button>
+        <div className="border-t border-border pt-5">
+          <Button variant="outline" onClick={async () => { await logout(); router.replace('/login'); }} className="text-destructive">
+            <LogOut /> {t('profile.logout')}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
 }
 
-function Field({ label, value }: { label: string; value?: string }) {
+function Field({ label, value, mono, capitalize }: { label: string; value?: string; mono?: boolean; capitalize?: boolean }) {
   return (
-    <div className="rounded-lg bg-secondary/50 p-3">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="font-medium capitalize text-foreground">{value ?? '—'}</p>
+    <div className="border-b border-border px-5 py-3.5 [&:last-child]:border-b-0 sm:odd:border-r sm:[&:nth-last-child(-n+2)]:border-b-0">
+      <dt className="t-overline">{label}</dt>
+      <dd className={cn('mt-1 text-sm font-medium text-foreground', mono && 'font-mono tabular-nums', capitalize && 'capitalize')}>{value ?? '—'}</dd>
     </div>
   );
 }
@@ -209,19 +244,22 @@ function AddCounterpartyDialog({ open, onOpenChange, onAdded }: { open: boolean;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader><DialogTitle>{t('settings.addCounterparty')}</DialogTitle></DialogHeader>
-        <div className="space-y-3">
-          <div className="space-y-1.5"><Label>{t('settings.type')}</Label>
-            <select value={kind} onChange={(e) => setKind(e.target.value)} className="h-9 w-full rounded-md border border-input bg-card px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <DialogHeader>
+          <DialogTitle>{t('settings.addCounterparty')}</DialogTitle>
+          <DialogDescription>{t('settings.counterpartiesSub')}</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-1.5"><Label htmlFor="cp-kind">{t('settings.type')}</Label>
+            <Select id="cp-kind" value={kind} onChange={(e) => setKind(e.target.value)}>
               <option value="customer">{t('settings.customer')}</option><option value="supplier">{t('settings.supplier')}</option>
-            </select>
+            </Select>
           </div>
-          <div className="space-y-1.5"><Label>{t('settings.name')}</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Фирма ЕООД" /></div>
-          <div className="space-y-1.5"><Label>{t('settings.eikOptional')}</Label><Input value={eik} onChange={(e) => setEik(e.target.value)} placeholder="203912837" /></div>
+          <div className="space-y-1.5"><Label htmlFor="cp-name">{t('settings.name')}</Label><Input id="cp-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Фирма ЕООД" /></div>
+          <div className="space-y-1.5"><Label htmlFor="cp-eik">{t('settings.eikOptional')}</Label><Input id="cp-eik" value={eik} onChange={(e) => setEik(e.target.value)} placeholder="203912837" /></div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
-          <Button onClick={() => create.mutate()} disabled={create.isPending || !name}>{create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null} {t('common.add')}</Button>
+          <Button onClick={() => create.mutate()} disabled={create.isPending || !name}>{create.isPending ? <Loader2 className="animate-spin" /> : null} {t('common.add')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

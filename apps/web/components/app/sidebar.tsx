@@ -7,20 +7,25 @@ import { Brand } from '@/components/app/brand';
 import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
+/** Light application sidebar: grouped navigation, quiet labels, brand-green active marker. */
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const t = useT();
   return (
-    <aside className="flex h-full w-60 flex-col border-r border-border bg-card">
-      <div className="flex h-14 items-center px-4">
-        <Brand tone="dark" />
+    <aside className="flex h-full w-[232px] flex-col border-r border-sidebar-border bg-sidebar">
+      <div className="flex h-14 items-center px-5">
+        <Link href="/dashboard" onClick={onNavigate} aria-label="Acco">
+          <Brand />
+        </Link>
       </div>
 
-      <nav className="flex-1 space-y-5 overflow-y-auto scrollbar-thin px-3 py-3">
-        {NAV.map((group) => (
-          <div key={group.titleKey}>
-            <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">{t(group.titleKey)}</p>
-            <ul className="space-y-0.5">
+      <nav className="scrollbar-thin flex-1 overflow-y-auto px-3 pb-4 pt-1" aria-label="Основна навигация">
+        {NAV.map((group, gi) => (
+          <div key={group.titleKey ?? gi} className={cn(gi > 0 && 'mt-5')}>
+            {group.titleKey && (
+              <p className="mb-1 px-2.5 text-2xs font-medium uppercase tracking-[0.08em] text-faint">{t(group.titleKey)}</p>
+            )}
+            <ul className="space-y-px">
               {group.items.map((item) => {
                 const active = pathname === item.href || pathname.startsWith(item.href + '/');
                 const Icon = item.icon;
@@ -29,15 +34,16 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                     <Link
                       href={item.href}
                       onClick={onNavigate}
+                      aria-current={active ? 'page' : undefined}
                       className={cn(
-                        'relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all',
+                        'group relative flex h-8 items-center gap-2.5 rounded-md px-2.5 text-[13.5px] transition-colors',
                         active
-                          ? 'bg-gradient-to-r from-primary-soft to-primary-soft/30 font-semibold text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.12)] before:absolute before:left-0 before:top-1/2 before:h-5 before:w-1 before:-translate-y-1/2 before:rounded-r-full before:bg-grad-primary'
-                          : 'font-medium text-foreground/75 hover:bg-secondary hover:text-foreground',
+                          ? 'bg-accent font-medium text-foreground before:absolute before:-left-3 before:top-1/2 before:h-4 before:w-[3px] before:-translate-y-1/2 before:rounded-r-full before:bg-brand'
+                          : 'text-sidebar-foreground hover:bg-accent/70 hover:text-foreground',
                       )}
                     >
-                      <Icon className={cn('h-[18px] w-[18px] transition-colors', active ? 'text-primary' : 'text-muted-foreground')} />
-                      {t(item.key)}
+                      <Icon className={cn('h-4 w-4 shrink-0 transition-colors', active ? 'text-brand' : 'text-faint group-hover:text-muted-foreground')} strokeWidth={1.75} />
+                      <span className="truncate">{t(item.key)}</span>
                     </Link>
                   </li>
                 );
@@ -46,10 +52,6 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         ))}
       </nav>
-
-      <div className="border-t border-border p-4">
-        <p className="text-[11px] leading-relaxed text-muted-foreground">EUR функционална валута</p>
-      </div>
     </aside>
   );
 }

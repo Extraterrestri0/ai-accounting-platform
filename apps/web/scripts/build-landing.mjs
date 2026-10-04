@@ -1,11 +1,10 @@
 /* ============================================================================
-   Static multi-page generator for the Acco marketing site.
-   Editorial finance: warm cream + deep forest green + brass/gold.
-   Newsreader display · Inter UI · IBM Plex Mono. Faithful port of the Acco
-   design export: sticky blurred nav, scroll-reveal, magnetic buttons, parallax
-   floating hero cards, FAQ accordion, billing toggle, validated contact form.
-   Inline styles preserved for fidelity; hover/focus are real CSS classes
-   (.j-dark/.j-out/.j-gold/.lift*) handled in site.css; logic in site.js.
+   Static generator for the Acco marketing site (v3, English-first).
+   One design system with the application. Product visuals are faithful
+   miniatures of real Acco screens (shown in the app's English mode), composed
+   as editorial scenes. Content rule: only capabilities that exist in the
+   repository; planned items are labelled. No invented customers, numbers,
+   certifications or integrations.
    Run:  node apps/web/scripts/build-landing.mjs
    Output: apps/web/public/landing/*.html + public/sitemap.xml + robots.txt
    ============================================================================ */
@@ -16,57 +15,52 @@ import { dirname, join } from 'node:path';
 const __dir = dirname(fileURLToPath(import.meta.url));
 const OUT = join(__dir, '..', 'public', 'landing');
 const PUB = join(__dir, '..', 'public');
-const SITE = 'https://acco.bg';
+const SITE = 'https://app.185-52-207-143.sslip.io'; // temporary public host until a real domain is configured
 const BRAND = 'Acco';
-const EMAIL = 'hello@acco.com';
-const V = 'v=21';
+// No public contact address is published: there is no verified, monitored inbox yet (see /contact).
+const V = 'v=44';
 mkdirSync(OUT, { recursive: true });
 
-/* escape a string for use inside a double-quoted HTML attribute (data-ten EN) */
-const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-/* heading with built-in BG/EN swap: site.js swaps innerHTML on language toggle */
-const TH = (en) => ` data-ten="${esc(en)}"`;
-
-/* ---- inline SVG icons (stroke = currentColor) ---------------------------- */
-const s = (p, w = 1.6) => `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+/* ---- icons --------------------------------------------------------------- */
+const s = (p, w = 1.75) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I = {
-  arrow: '<span style="font-size:16px;">→</span>',
-  upload: s('<path d="M12 15V3m0 0L8 7m4-4 4 4"/><path d="M3 15v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"/>'),
-  cpu: s('<path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.3"/>'),
-  check: s('<path d="M20 6 9 17l-5-5"/>', 1.8),
-  spark: s('<path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/>'),
-  file: s('<path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M5 3h9l5 5v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>'),
-  bank: s('<path d="M19 5 5 19M9 6.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM20 17.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>'),
-  chart: s('<path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6" rx="1"/><rect x="12" y="7" width="3" height="10" rx="1"/><rect x="17" y="13" width="3" height="4" rx="1"/>'),
-  wallet: s('<rect x="2" y="6" width="20" height="13" rx="2"/><path d="M16 12h.01M2 10h20"/>'),
+  arrow: s('<path d="M5 12h14M13 6l6 6-6 6"/>', 2),
+  chev: s('<path d="M9 6l6 6-6 6"/>', 2),
+  check: s('<path d="M20 6 9 17l-5-5"/>', 2.2),
+  checkc: s('<circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/>'),
+  upload: s('<path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>'),
+  scan: s('<path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 12h10"/>'),
+  review: s('<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'),
+  book: s('<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>'),
+  invoice: s('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>'),
+  bank: s('<path d="M3 10h18M5 10v8M9 10v8M15 10v8M19 10v8M3 18h18M12 3 3 8h18z"/>'),
+  chart: s('<path d="M3 3v18h18"/><path d="M7 15l4-4 4 3 5-6"/>'),
+  vat: s('<path d="M9 14l6-6"/><circle cx="9.5" cy="8.5" r="1.5"/><circle cx="14.5" cy="13.5" r="1.5"/><rect x="3" y="3" width="18" height="18" rx="3"/>'),
+  spark: s('<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 17l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>'),
   shield: s('<path d="M12 3 4 6v6c0 5 3.5 7.5 8 9 4.5-1.5 8-4 8-9V6l-8-3z"/><path d="m9 12 2 2 4-4"/>'),
-  shieldP: s('<path d="M12 3 4 6v6c0 5 3.5 7.5 8 9 4.5-1.5 8-4 8-9V6l-8-3z"/>'),
-  ledger: s('<path d="M9 12h6M9 16h6M9 8h6"/><rect x="4" y="3" width="16" height="18" rx="2"/>'),
-  globe: s('<circle cx="12" cy="12" r="9"/><path d="M2 12h20M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>'),
-  roles: s('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11l-3 3-2-2"/>'),
-  user: s('<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8M5 21a7 7 0 0 1 14 0"/>'),
-  store: s('<path d="M4 9h16l-1-5H5zM5 9v11h14V9M9 20v-6h6v6"/>'),
-  cart: s('<path d="M3 4h2l2 12h11l2-8H6M9 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2m9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>'),
-  book: s('<path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h7M8 11h7"/>'),
-  cal: s('<path d="M4 5h16v16H4zM4 9h16M8 3v4M16 3v4"/>'),
-  life: s('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/>'),
+  lock: s('<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'),
+  eu: s('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>'),
+  chain: s('<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>'),
+  user: s('<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'),
+  cite: s('<path d="M7 17h10M7 13h10M7 9h4"/><rect x="3" y="4" width="18" height="16" rx="2"/>'),
+  menu: s('<path d="M4 7h16M4 12h16M4 17h16"/>', 2),
   mail: s('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'),
-  phone: s('<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L8 9.6a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2z"/>'),
   clock: s('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
-  li: s('<path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2"/><path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4"/>'),
-  fb: s('<path d="M14 8h2V5h-2c-1.7 0-3 1.3-3 3v2H9v3h2v6h3v-6h2l1-3h-3V8z"/>'),
-  menu: s('<path d="M3 7h18M3 12h18M3 17h18"/>', 1.8),
+  cal: s('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
+  xml: s('<path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 4l-4 16"/>'),
+  eye: s('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'),
+  ban: s('<circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/>'),
+  layers: s('<path d="m12 3 9 5-9 5-9-5 9-5z"/><path d="m3 13 9 5 9-5"/>'),
 };
 
-/* ---- brand mark ---------------------------------------------------------- */
-const LOGO = `<svg width="34" height="34" viewBox="0 0 34 34" fill="none"><rect width="34" height="34" rx="9" fill="#123A33"/><rect x="9" y="17" width="3.4" height="8" rx="1.7" fill="#D9B978"/><rect x="15.3" y="13" width="3.4" height="12" rx="1.7" fill="#D9B978"/><rect x="21.6" y="9" width="3.4" height="16" rx="1.7" fill="#E9C98C"/></svg>`;
-const LOGO_F = `<svg width="30" height="30" viewBox="0 0 34 34" fill="none"><rect width="34" height="34" rx="9" fill="#1c4d45"/><rect x="9" y="17" width="3.4" height="8" rx="1.7" fill="#E9C98C"/><rect x="15.3" y="13" width="3.4" height="12" rx="1.7" fill="#E9C98C"/><rect x="21.6" y="9" width="3.4" height="16" rx="1.7" fill="#E9C98C"/></svg>`;
+/* ---- brand ---------------------------------------------------------------- */
+const LOGO = `<svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#1C6B4E"/><path d="M9.5 16.5l4.2 4.2L22.5 11.5" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const brand = (href = '/') => `<a class="brand" href="${href}" aria-label="${BRAND}">${LOGO}<span>acco</span></a>`;
 
-/* ---- shared head --------------------------------------------------------- */
+/* ---- head / nav / footer --------------------------------------------------- */
 const head = (p) => `<!DOCTYPE html>
-<html lang="bg">
+<html lang="en">
 <head>
-<script>document.documentElement.classList.add('js')</script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>${p.title}</title>
@@ -75,657 +69,722 @@ const head = (p) => `<!DOCTYPE html>
 <meta name="robots" content="index, follow" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="${BRAND}" />
-<meta property="og:locale" content="bg_BG" />
+<meta property="og:locale" content="en_GB" />
 <meta property="og:title" content="${p.title}" />
 <meta property="og:description" content="${p.desc}" />
 <meta property="og:url" content="${SITE}${p.url}" />
-<meta name="theme-color" content="#123A33" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="${p.title}" />
+<meta name="twitter:description" content="${p.desc}" />
+<meta name="theme-color" content="#FFFFFF" />
 <link rel="icon" href="/landing/assets/app-icon.svg" type="image/svg+xml" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preload" href="/landing/assets/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="stylesheet" href="/landing/assets/tokens.css?${V}" />
 <link rel="stylesheet" href="/landing/assets/site.css?${V}" />
 <script type="application/ld+json">${JSON.stringify(p.jsonld)}</script>
 </head>
-<body>`;
+<body>
+<a class="skip" href="#main">Skip to content</a>`;
 
-/* ---- nav + mobile menu --------------------------------------------------- */
-const NAVLINKS = [
-  ['/features', 'Функции'], ['/#how', 'Как работи'], ['/pricing', 'Цени'], ['/faq', 'Въпроси'],
-];
-const nlink = (href, t, on) => on
-  ? `<a href="${href}" style="font-size:14.5px; font-weight:600; color:#123A33; border-bottom:2px solid #A9854E; padding-bottom:3px;">${t}</a>`
-  : `<a href="${href}" class="ul" style="font-size:14.5px; font-weight:500; color:#20302B;">${t}</a>`;
-
-const mobileMenu = () => `
-<div data-mobile-menu style="position:fixed; inset:0; z-index:90; background:rgba(244,239,228,.97); backdrop-filter:blur(8px); flex-direction:column; padding:28px clamp(20px,5vw,72px);">
-  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:48px;">
-    <div style="display:flex; align-items:center; gap:12px;">${LOGO}<span style="font-family:var(--serif); font-size:22px; font-weight:500; color:#123A33;">${BRAND}</span></div>
-    <div style="display:flex; align-items:center; gap:12px;">
-      <div style="display:flex; align-items:center; border:1px solid #D6CCB7; border-radius:999px; overflow:hidden; font-size:12px; font-weight:600;"><button type="button" data-lang="bg" class="on" style="border:none; cursor:pointer; padding:7px 13px; background:#123A33; color:#F4EFE4;">BG</button><button type="button" data-lang="en" style="border:none; cursor:pointer; padding:7px 13px; background:transparent; color:#7c857f;">EN</button></div>
-      <button data-menu-close style="background:none; border:1px solid #D6CCB7; border-radius:999px; width:42px; height:42px; font-size:20px; color:#123A33; cursor:pointer;">✕</button>
+const NAVLINKS = [['/features', 'Product'], ['/#how', 'How it works'], ['/#ai-accountant', 'AI Accountant'], ['/pricing', 'Pricing'], ['/about', 'About']];
+const nav = (active) => `
+<header class="nav" id="nav">
+  <div class="wrap inner">
+    ${brand()}
+    <nav class="nav-links" aria-label="Main">
+      ${NAVLINKS.map(([h, t]) => `<a href="${h}"${h === active ? ' aria-current="page"' : ''}>${t}</a>`).join('')}
+    </nav>
+    <div class="nav-actions">
+      <a class="btn btn-out btn-sm" href="/login">Sign in</a>
+      <a class="btn btn-ink btn-sm" href="/register">Get started</a>
+      <button class="nav-burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="mobile-menu"><span class="ic-menu">${I.menu}</span><span class="ic-close">${s('<path d="M6 6l12 12M18 6 6 18"/>', 2)}</span></button>
     </div>
   </div>
-  <a href="/features" style="font-family:var(--serif); font-size:32px; color:#123A33; padding:14px 0; border-bottom:1px solid #E4DBC9;">Функции</a>
-  <a href="/#how" style="font-family:var(--serif); font-size:32px; color:#123A33; padding:14px 0; border-bottom:1px solid #E4DBC9;">Как работи</a>
-  <a href="/pricing" style="font-family:var(--serif); font-size:32px; color:#123A33; padding:14px 0; border-bottom:1px solid #E4DBC9;">Цени</a>
-  <a href="/faq" style="font-family:var(--serif); font-size:32px; color:#123A33; padding:14px 0; border-bottom:1px solid #E4DBC9;">Въпроси</a>
-  <a href="/login" style="font-family:var(--serif); font-size:32px; color:#123A33; padding:14px 0; border-bottom:1px solid #E4DBC9;">Вход</a>
-  <a href="/register" style="margin-top:32px; text-align:center; padding:16px; background:#123A33; color:#F4EFE4; border-radius:999px; font-size:16px; font-weight:500;">Започни безплатно</a>
-</div>`;
-
-const nav = (active) => `${mobileMenu()}
-<nav id="nav" style="position:fixed; top:0; left:0; right:0; z-index:80; display:flex; align-items:center; justify-content:space-between; gap:40px; padding:20px clamp(20px,5vw,72px); border-bottom:1px solid rgba(228,219,201,.7);">
-  <a href="/" style="display:flex; align-items:center; gap:12px;">${LOGO}<span style="font-family:var(--serif); font-size:22px; font-weight:500; letter-spacing:-.01em; color:#123A33;">${BRAND}</span></a>
-  <div data-nav-links style="display:flex; align-items:center; justify-content:center; flex:1; gap:36px;">
-    ${NAVLINKS.map(([h, t]) => nlink(h, t, h === active)).join('')}
-  </div>
-  <div data-nav-actions style="display:flex; align-items:center; gap:18px;">
-    <div style="display:flex; align-items:center; border:1px solid #D6CCB7; border-radius:999px; overflow:hidden; font-size:11px; font-weight:600;"><button type="button" data-lang="bg" class="on" style="border:none; cursor:pointer; padding:5px 11px; background:#123A33; color:#F4EFE4;">BG</button><button type="button" data-lang="en" style="border:none; cursor:pointer; padding:5px 11px; background:transparent; color:#7c857f;">EN</button></div>
-    <a href="/login" class="ul" style="font-size:14px; font-weight:500; color:#20302B;">Вход</a>
-    <a href="/register" data-magnetic class="j-dark" style="display:inline-flex; align-items:center; gap:8px; padding:11px 21px; background:#123A33; color:#F4EFE4; border-radius:999px; font-size:14px; font-weight:500; white-space:nowrap; box-shadow:0 8px 20px rgba(18,58,51,.18);">Започни безплатно</a>
-  </div>
-  <button data-nav-menu style="background:none; border:1px solid #D6CCB7; border-radius:999px; width:44px; height:44px; align-items:center; justify-content:center; cursor:pointer; color:#123A33;">${I.menu}</button>
+</header>
+<nav class="mobile-menu" id="mobile-menu" aria-label="Mobile">
+  ${[...NAVLINKS, ['/faq', 'FAQ'], ['/contact', 'Contact']].map(([h, t]) => `<a class="mm-link" href="${h}">${t} ${I.chev}</a>`).join('')}
+  <div class="mm-actions"><a class="btn btn-ink" href="/register">Get started</a><a class="btn btn-out" href="/login">Sign in</a></div>
+  <p class="mm-foot">Accounting that prepares the work. You approve it.</p>
 </nav>
-<main>`;
+<main id="main">`;
 
-/* ---- footer -------------------------------------------------------------- */
-const fcol = (h, links) => `<div><div style="font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:#7b958d; margin-bottom:16px;">${h}</div><div style="display:flex; flex-direction:column; gap:12px; font-size:14px;">${links.map(([href, t]) => `<a href="${href}" class="ul" style="width:fit-content;">${t}</a>`).join('')}</div></div>`;
+const fcol = (h, links) => `<div><h2 class="fh">${h}</h2>${links.map(([href, t]) => `<a href="${href}">${t}</a>`).join('')}</div>`;
 const footer = () => `</main>
-<footer style="position:relative; padding:clamp(56px,8vh,88px) clamp(20px,5vw,72px) 40px; background:#0F312C; color:#cfe0da; overflow:hidden;">
-  <div style="position:absolute; top:-80px; right:6%; width:380px; height:380px; border-radius:50%; background:radial-gradient(circle,rgba(233,201,140,.08),transparent 70%); pointer-events:none;"></div>
-  <div style="position:relative; max-width:1180px; margin:0 auto;">
-    <div data-foot style="display:grid; grid-template-columns:1.8fr 1fr 1fr 1fr; gap:40px; padding-bottom:44px; border-bottom:1px solid rgba(255,255,255,.1);">
+<footer class="footer" aria-label="Site footer">
+  <div class="wrap">
+    <div class="cols">
       <div>
-        <a href="/" style="display:flex; align-items:center; gap:11px; margin-bottom:18px;">${LOGO_F}<span style="font-family:var(--serif); font-size:21px; color:#F4EFE4;">${BRAND}</span></a>
-        <p style="font-size:13.5px; line-height:1.7; color:#9fb6af; max-width:280px; margin:0 0 22px;">AI счетоводство за самонаети, фрийлансъри и малки фирми. От фактура до готов отчет, без ръчно въвеждане.</p>
-        <div style="display:inline-flex; align-items:center; gap:8px; padding:8px 13px; border:1px solid rgba(255,255,255,.14); border-radius:999px; font-size:12px; color:#9fb6af;"><span style="width:7px; height:7px; border-radius:50%; background:#16A463;"></span> AI предлага · ти одобряваш</div>
+        ${brand()}
+        <p class="about">Accounting software for Bulgarian businesses. Acco reads documents, proposes the accounting treatment and posts to an immutable ledger only after a person approves.</p>
       </div>
-      ${fcol('Продукт', [['/features', 'Функции'], ['/pricing', 'Цени'], ['/#how', 'Как работи'], ['/features#security', 'Сигурност']])}
-      ${fcol('Ресурси', [['/blog', 'Блог'], ['/resources', 'Ръководства'], ['/faq', 'Въпроси'], ['/contact', 'Помощ']])}
-      ${fcol('Компания', [['/about', 'За нас'], ['/contact', 'Контакти'], ['/landing/legal/privacy.html', 'Поверителност'], ['/landing/legal/terms.html', 'Общи условия']])}
+      ${fcol('Product', [['/features', 'Features'], ['/#how', 'How it works'], ['/#ai-accountant', 'AI Accountant'], ['/pricing', 'Pricing'], ['/faq', 'FAQ']])}
+      ${fcol('Company', [['/about', 'About'], ['/contact', 'Contact'], ['/login', 'Sign in'], ['/register', 'Create account']])}
+      ${fcol('Legal', [['/landing/legal/privacy.html', 'Privacy'], ['/landing/legal/terms.html', 'Terms'], ['/landing/legal/cookies.html', 'Cookies'], ['/landing/legal/gdpr.html', 'GDPR']])}
     </div>
-    <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; padding-top:24px;">
-      <div style="font-size:12px; color:#7b958d;">© 2026 ${BRAND} · Всички права запазени</div>
-      <div style="display:flex; align-items:center; gap:14px; font-size:12px; color:#7b958d;"><span>Цените са в евро</span><span style="width:4px; height:4px; border-radius:50%; background:#4a655e;"></span><span>Български · English</span></div>
-    </div>
+    <div class="bottom"><span>© ${new Date().getFullYear()} ${BRAND}. All rights reserved.</span><span>EUR functional currency · Legal pages are in Bulgarian</span></div>
   </div>
 </footer>
-<script src="/landing/assets/i18n.js?${V}" defer></script>
 <script src="/landing/assets/site.js?${V}" defer></script>
-</body></html>`;
+</body>
+</html>`;
 
-/* ---- shared atoms -------------------------------------------------------- */
-const lab = (t) => `<div style="font-size:11px; letter-spacing:.13em; text-transform:uppercase; color:#A9854E; margin-bottom:16px;">${t}</div>`;
-const eyebrow = (t) => `<div data-reveal style="position:relative; display:inline-flex; align-items:center; gap:9px; padding:8px 15px; border:1px solid #D9CDB6; border-radius:999px; background:rgba(255,255,255,.55); margin-bottom:28px;"><span style="width:7px; height:7px; border-radius:50%; background:#16A463;"></span><span style="font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#8a6f43;">${t}</span></div>`;
-const btnDark = (href, t, big) => `<a href="${href}" data-magnetic class="j-dark" style="display:inline-flex; align-items:center; gap:10px; padding:${big ? '17px 32px' : '16px 28px'}; background:#123A33; color:#F4EFE4; border-radius:999px; font-size:${big ? '16px' : '15px'}; font-weight:500; white-space:nowrap; box-shadow:0 12px 28px rgba(18,58,51,.22);">${t} ${I.arrow}</a>`;
-const btnOut = (href, t, big) => `<a href="${href}" class="j-out lift" style="display:inline-flex; align-items:center; gap:9px; padding:${big ? '17px 28px' : '16px 26px'}; border:1px solid #C9BCA1; color:#123A33; border-radius:999px; font-size:${big ? '16px' : '15px'}; font-weight:500; white-space:nowrap;">${t}</a>`;
-const secHeadC = (l, h, p) => `<div data-reveal style="max-width:680px; margin:0 auto 54px; text-align:center;">${lab(l)}<h2 style="font-family:var(--serif); font-weight:400; font-size:clamp(32px,4vw,52px); line-height:1.08; letter-spacing:-.02em; color:#123A33; margin:0 0 14px;">${h}</h2>${p ? `<p style="font-size:17px; line-height:1.6; color:#5a6a63; margin:0;">${p}</p>` : ''}</div>`;
+/* ============================================================================
+   Product fragments (miniatures of the real screens, English UI mode)
+   ============================================================================ */
+const bar = (crumb) => `<div class="ui-bar"><span class="brand">${LOGO}<span>acco</span></span><span class="crumb">${crumb}</span><span class="sp"><span class="av">AD</span></span></div>`;
 
-/* ---- HOME: hero ---------------------------------------------------------- */
-const homeHero = () => `
-<section id="hero" style="position:relative; padding:148px clamp(20px,5vw,72px) 80px; overflow:hidden;">
-  <div id="hero-spot" style="position:absolute; width:620px; height:620px; left:60%; top:30%; transform:translate(-50%,-50%); background:radial-gradient(circle, rgba(201,163,91,.16), transparent 62%); border-radius:50%; pointer-events:none; transition:left .5s var(--ease), top .5s var(--ease);"></div>
-  <div style="position:absolute; bottom:-120px; left:-140px; width:460px; height:460px; border-radius:50%; background:radial-gradient(circle, rgba(18,58,51,.06), transparent 70%); pointer-events:none;"></div>
-  <div data-hero-grid style="position:relative; max-width:1280px; margin:0 auto; display:grid; grid-template-columns:1.02fr .98fr; gap:56px; align-items:center;">
-    <div>
-      <div data-reveal style="display:inline-flex; align-items:center; gap:9px; padding:8px 15px; border:1px solid #D9CDB6; border-radius:999px; background:rgba(255,255,255,.55); margin-bottom:30px;"><span style="width:7px; height:7px; border-radius:50%; background:#16A463; animation:pulseDot 2.6s infinite;"></span><span style="font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#8a6f43;">AI счетоводство · България</span></div>
-      <h1 data-reveal data-reveal-delay="80"${TH('From invoice chaos<br>to <span style="font-style:italic; color:#A9854E;">calm</span> finances.')} style="font-family:var(--serif); font-weight:400; font-size:clamp(46px,6.4vw,86px); line-height:1.0; letter-spacing:-.025em; color:#123A33; margin:0 0 28px;">От хаос с фактурите<br>към <span style="font-style:italic; color:#A9854E;">спокойни</span> финанси.</h1>
-      <p data-reveal data-reveal-delay="160" style="font-size:clamp(16px,1.4vw,19px); line-height:1.65; color:#4a5a53; max-width:480px; margin:0 0 38px;">Снимай документа, AI го разчита, ти одобряваш. Готови ДДС и отчети — води си счетоводството сам, без счетоводител.</p>
-      <div data-reveal data-reveal-delay="240" style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:30px;">
-        ${btnDark('/register', 'Започни безплатно')}
-        <a href="/#how" class="j-out lift" style="display:inline-flex; align-items:center; gap:10px; padding:16px 26px; border:1px solid #C9BCA1; color:#123A33; border-radius:999px; font-size:15px; font-weight:500; white-space:nowrap;"><span style="display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:#123A33; color:#E9C98C; font-size:9px;">▶</span> Виж как работи</a>
-      </div>
-      <div data-reveal data-reveal-delay="320" style="display:flex; align-items:center; gap:20px; font-size:13px; color:#6c776f; flex-wrap:wrap;">
-        <span style="display:inline-flex; align-items:center; gap:6px;"><span style="color:#16A463;">✓</span> Без банкова карта</span>
-        <span style="display:inline-flex; align-items:center; gap:6px;"><span style="color:#16A463;">✓</span> 7 дни безплатно</span>
-        <span style="display:inline-flex; align-items:center; gap:6px;"><span style="color:#16A463;">✓</span> Откажи по всяко време</span>
-      </div>
-    </div>
-    <div data-hero-visual data-reveal="scale" data-reveal-delay="200" style="position:relative; height:560px;">
-      <div data-parallax="-0.03" style="position:absolute; top:54%; left:52%; width:520px; height:520px; transform:translate(-50%,-50%); border:1px dashed rgba(169,133,78,.28); border-radius:50%; animation:spinSlow 60s linear infinite; pointer-events:none;"></div>
-      <div style="position:absolute; top:54%; left:52%; width:360px; height:360px; transform:translate(-50%,-50%); border:1px solid rgba(18,58,51,.07); border-radius:50%; pointer-events:none;"></div>
-      <div data-parallax="0.04" style="position:absolute; top:18px; right:0; width:min(390px,92%); background:#FFFFFF; border:1px solid #EAE0CD; border-radius:18px; box-shadow:0 30px 70px rgba(18,30,26,.18); padding:24px; animation:floatY 8s ease-in-out infinite;">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;"><div style="display:flex; align-items:center; gap:9px;"><span style="width:9px; height:9px; border-radius:50%; background:#16A463; animation:pulseDot 2.4s infinite;"></span><span style="font-size:13px; font-weight:600; color:#123A33;">AI извлече данните</span></div><span style="font-size:11px; color:#9aa49e; font-family:var(--mono);">0.8s</span></div>
-        <div style="display:flex; align-items:center; justify-content:space-between; padding-bottom:14px; border-bottom:1px solid #F0EADC;"><div><div style="font-size:11px; color:#94a09a; margin-bottom:3px;">Доставчик</div><div style="font-size:14px; font-weight:600; color:#20302B;">ТЕХНО ПЛЮС ООД</div></div><div style="display:flex; gap:5px;"><span style="font-size:10px; font-weight:600; color:#0E8650; background:#ECFBF3; padding:4px 8px; border-radius:999px;">ЕИК ✓</span><span style="font-size:10px; font-weight:600; color:#0E8650; background:#ECFBF3; padding:4px 8px; border-radius:999px;">VIES ✓</span></div></div>
-        <div style="display:flex; justify-content:space-between; padding:13px 0 9px; font-size:13px;"><span style="color:#6c776f;">Данъчна основа</span><span style="font-weight:600; font-variant-numeric:tabular-nums; color:#20302B;">1 250,00 €</span></div>
-        <div style="display:flex; justify-content:space-between; padding-bottom:13px; font-size:13px; border-bottom:1px solid #F0EADC;"><span style="color:#6c776f;">ДДС 20%</span><span style="font-weight:600; font-variant-numeric:tabular-nums; color:#20302B;">250,00 €</span></div>
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 0 4px;"><span style="font-size:13px; font-weight:600; color:#123A33;">Общо</span><span style="font-family:var(--serif); font-size:25px; font-weight:500; font-variant-numeric:tabular-nums; color:#123A33;">1 500,00 €</span></div>
-        <div style="margin-top:8px; display:flex; align-items:center; gap:8px; padding:9px 12px; background:#FBF8F1; border-radius:9px; font-size:11px; color:#6c776f;"><span style="font-family:var(--mono); color:#A9854E;">Dr</span> 602 Външни услуги <span style="margin-left:auto; font-family:var(--mono); color:#A9854E;">Cr</span> 401 Доставчици</div>
-        <div style="margin-top:12px; display:flex; gap:9px;"><span style="flex:1; text-align:center; padding:11px; background:#16A463; color:#fff; border-radius:9px; font-size:13px; font-weight:600;">Одобри и осчетоводи</span><span style="padding:11px 14px; border:1px solid #E4DBC9; color:#6c776f; border-radius:9px; font-size:13px;">защо?</span></div>
-      </div>
-      <div data-parallax="0.09" style="position:absolute; bottom:30px; left:0; width:210px; background:#123A33; color:#F4EFE4; border-radius:16px; padding:18px 20px; box-shadow:0 22px 46px rgba(18,58,51,.3); animation:floatYlg 7s ease-in-out infinite .3s;"><div style="font-size:11px; color:#9fc3b8; letter-spacing:.04em; margin-bottom:7px;">ДДС за внасяне · май</div><div style="font-family:var(--serif); font-size:32px; font-weight:500; font-variant-numeric:tabular-nums;">1 260 €</div><div style="margin-top:10px; height:5px; border-radius:3px; background:rgba(255,255,255,.16); overflow:hidden;"><div style="width:72%; height:100%; background:#E9C98C; border-radius:3px;"></div></div><div style="margin-top:8px; font-size:10px; color:#86b0a4; font-family:var(--mono);">срок · 14 юни</div></div>
-      <div data-parallax="0.13" style="position:absolute; top:120px; left:-8px; display:flex; align-items:center; gap:8px; background:#fff; border:1px solid #EAE0CD; border-radius:999px; padding:8px 14px; box-shadow:0 14px 32px rgba(18,30,26,.13); animation:floatYsm 6.4s ease-in-out infinite .5s;"><span style="width:9px; height:9px; border-radius:50%; background:#16A463;"></span><span style="font-size:12px; font-weight:600; color:#20302B;">Точност 98%</span></div>
-      <div data-parallax="0.06" style="position:absolute; bottom:-6px; right:36px; width:172px; background:#FBF8F1; border:1px solid #EAE0CD; border-radius:14px; padding:15px; box-shadow:0 18px 40px rgba(18,30,26,.12); animation:floatYsm 7.6s ease-in-out infinite .9s;"><div style="font-size:11px; color:#94a09a; margin-bottom:10px;">Парично салдо</div><div style="display:flex; align-items:flex-end; gap:5px; height:42px;"><div style="flex:1; height:46%; background:#D9CDB6; border-radius:3px;"></div><div style="flex:1; height:64%; background:#C9B98F; border-radius:3px;"></div><div style="flex:1; height:38%; background:#D9CDB6; border-radius:3px;"></div><div style="flex:1; height:82%; background:#A9854E; border-radius:3px;"></div><div style="flex:1; height:70%; background:#C9B98F; border-radius:3px;"></div><div style="flex:1; height:100%; background:#123A33; border-radius:3px;"></div></div></div>
-    </div>
-  </div>
-</section>`;
-
-/* ---- integrations / trust ------------------------------------------------ */
-const intgItem = (ic, name, delay) => `<div data-reveal${delay ? ` data-reveal-delay="${delay}"` : ''} class="lift-sm" style="display:flex; align-items:center; justify-content:center; gap:11px; height:96px; background:#FBF8F1; border:1px solid #EAE0CD; border-radius:14px; transition:transform .5s var(--ease), box-shadow .5s, border-color .5s;"><span style="width:30px; height:30px; border-radius:8px; background:#EFE7D6; display:flex; align-items:center; justify-content:center; color:#123A33;">${ic}</span><span style="font-size:15px; font-weight:600; letter-spacing:-.01em; color:#3a4843;">${name}</span></div>`;
-const integrations = () => `
-<section style="position:relative; padding:clamp(56px,7vh,90px) clamp(20px,5vw,72px) clamp(40px,5vh,64px);">
-  <div style="max-width:1180px; margin:0 auto;">
-    <div data-reveal style="display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap; margin-bottom:34px;">
-      <div>${lab('Интеграции')}<h2 style="font-family:var(--serif); font-weight:400; font-size:clamp(24px,2.8vw,34px); line-height:1.15; letter-spacing:-.015em; color:#123A33; margin:0; max-width:520px;">Свързва се с инструментите, които вече ползваш.</h2></div>
-      <p style="font-size:13.5px; line-height:1.6; color:#8a948e; max-width:260px; margin:0;">Плащания, магазини и таблици — документите идват сами, на едно място.</p>
-    </div>
-    <div data-4col style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px;">
-      ${intgItem(s('<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>', 1.7), 'Stripe')}
-      ${intgItem(s('<path d="M6 3h9a4 4 0 0 1 0 8H8m-2 10V3m0 10h7a4 4 0 0 1 0 8H6"/>', 1.7), 'PayPal', 60)}
-      ${intgItem(s('<circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/>', 1.7), 'Revolut', 120)}
-      ${intgItem(s('<path d="M3 5l4 14 5-9 5 9 4-14"/>', 1.7), 'Wise', 180)}
-      ${intgItem(s('<path d="M6 2 4 6v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6l-2-4z"/><path d="M4 6h16M9 10a3 3 0 0 0 6 0"/>', 1.7), 'Shopify')}
-      ${intgItem(s('<circle cx="9" cy="21" r="1"/><circle cx="18" cy="21" r="1"/><path d="M3 4h2l2 12h11l2-8H6"/>', 1.7), 'WooCommerce', 60)}
-      ${intgItem(s('<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>', 1.7), 'Microsoft 365', 120)}
-      ${intgItem(s('<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/>', 1.7), 'Google Sheets', 180)}
-    </div>
-  </div>
-</section>`;
-
-/* ---- story: chaos -> calm (before/after) --------------------------------- */
-const baBad = (t, d) => `<div style="display:flex; gap:13px; align-items:flex-start;"><span style="color:#D98; margin-top:1px;">✕</span><div><div style="font-size:15px; font-weight:500; color:#3a4843;">${t}</div><div style="font-size:13px; color:#8a948e; margin-top:2px;">${d}</div></div></div>`;
-const baOk = (t, d) => `<div style="display:flex; gap:13px; align-items:flex-start;"><span style="color:#86f0bd; margin-top:1px;">✓</span><div><div style="font-size:15px; font-weight:500;">${t}</div><div style="font-size:13px; color:#9fc3b8; margin-top:2px;">${d}</div></div></div>`;
-const hr = (c) => `<div style="height:1px; background:${c};"></div>`;
-const beforeAfter = () => `
-<section style="position:relative; padding:clamp(72px,9vh,120px) clamp(20px,5vw,72px); background:#FBF8F1; border-top:1px solid #E4DBC9; overflow:hidden;">
-  <div style="position:absolute; top:0; left:50%; transform:translateX(-50%); width:1px; height:100%; background:linear-gradient(#E4DBC9,transparent); pointer-events:none;"></div>
-  <div style="max-width:1180px; margin:0 auto;">
-    <div data-reveal style="text-align:center; margin-bottom:54px;">${lab('Защо ' + BRAND)}<h2${TH('Document chaos<br>stops here.')} style="font-family:var(--serif); font-weight:400; font-size:clamp(32px,4vw,52px); line-height:1.08; letter-spacing:-.02em; color:#123A33; margin:0;">Хаосът с документите<br>спира тук.</h2></div>
-    <div data-split style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:stretch;">
-      <div data-reveal="left" class="lift" style="position:relative; background:#FFFFFF; border:1px solid #EAE0CD; border-radius:20px; padding:36px;">
-        <div style="display:inline-flex; align-items:center; gap:9px; margin-bottom:24px;"><span style="width:30px; height:30px; border-radius:9px; background:#FDECEC; color:#CB2A2A; display:flex; align-items:center; justify-content:center; font-size:15px;">✕</span><span style="font-size:13px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:#A88;">Без платформа</span></div>
-        <div style="display:flex; flex-direction:column; gap:18px;">
-          ${baBad('Часове ръчно въвеждане', 'Поле по поле, фактура по фактура.')}${hr('#F0EADC')}
-          ${baBad('Фактури, разпилени по имейли', 'Папки, екселски файлове, изгубени документи.')}${hr('#F0EADC')}
-          ${baBad('Пропуснати ДДС срокове', 'Глоби и грешки от невнимание.')}${hr('#F0EADC')}
-          ${baBad('Зависимост от счетоводител', 'За всяка дребна промяна или въпрос.')}
-        </div>
-      </div>
-      <div data-reveal="right" data-reveal-delay="120" class="lift-d" style="position:relative; background:#123A33; color:#F4EFE4; border:1px solid #123A33; border-radius:20px; padding:36px; overflow:hidden; transition:transform .5s var(--ease), box-shadow .5s;">
-        <div style="position:absolute; top:-50px; right:-40px; width:240px; height:240px; border-radius:50%; background:radial-gradient(circle,rgba(233,201,140,.16),transparent 70%); pointer-events:none;"></div>
-        <div style="position:relative; display:inline-flex; align-items:center; gap:9px; margin-bottom:24px;"><span style="width:30px; height:30px; border-radius:9px; background:rgba(22,164,99,.2); color:#86f0bd; display:flex; align-items:center; justify-content:center; font-size:14px;">✓</span><span style="font-size:13px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:#9fc3b8;">С ${BRAND}</span></div>
-        <div style="position:relative; display:flex; flex-direction:column; gap:18px;">
-          ${baOk('AI извлича данните автоматично', 'Снимка или PDF — готово за секунди.')}${hr('rgba(255,255,255,.1)')}
-          ${baOk('Всичко на едно място, защитено', 'Архив с одитна следа, данни в ЕС.')}${hr('rgba(255,255,255,.1)')}
-          ${baOk('Готови ДДС дневници и декларация', 'Попълват се сами, готови за подаване.')}${hr('rgba(255,255,255,.1)')}
-          ${baOk('Управляваш финансите си сам', 'Спокойно, разбираемо, без посредник.')}
-        </div>
-      </div>
-    </div>
-  </div>
-</section>`;
-
-/* ---- how it works -------------------------------------------------------- */
-const howStep = (num, ic, title, body, delay, dark) => `
-<div data-reveal${delay ? ` data-reveal-delay="${delay}"` : ''} style="text-align:center;">
-  <div style="width:76px; height:76px; margin:0 auto 26px; border-radius:50%; ${dark ? 'background:#123A33; box-shadow:0 14px 30px rgba(18,58,51,.22);' : 'background:#F4EFE4; border:1px solid #E4DBC9;'} display:flex; align-items:center; justify-content:center; position:relative;"><span style="position:absolute; top:-8px; right:-8px; font-family:var(--mono); font-size:11px; font-weight:500; color:${dark ? '#123A33' : '#fff'}; background:${dark ? '#E9C98C' : '#A9854E'}; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center;">${num}</span><span style="color:${dark ? '#E9C98C' : '#123A33'};">${ic}</span></div>
-  <h3 style="font-family:var(--serif); font-weight:500; font-size:24px; color:#123A33; margin:0 0 10px;">${title}</h3>
-  <p style="font-size:14px; line-height:1.65; color:#5a6a63; margin:0 auto; max-width:260px;">${body}</p>
+const frPaper = (hl = '') => `
+<div class="paper ui-paper">
+  <p class="p-h5">Invoice</p><div class="no">No. 0000001180 · 30.09.2026</div>
+  <div class="grid"><div><b>Supplier</b><span>Softuer Prima EOOD</span><span class="mono" style="font-size:10.5px">UIC 204117823</span></div><div><b>Customer</b><span>Demo Firma EOOD</span><span class="mono" style="font-size:10.5px">UIC 123456789</span></div></div>
+  <div class="row"><span>Prima Cloud subscription · October</span><span class="num">190.00</span></div>
+  <div class="row"><span>Tax base</span><span class="num${hl === 'net' ? ' hl' : ''}">190.00 €</span></div>
+  <div class="row"><span>VAT 20%</span><span class="num">38.00 €</span></div>
+  <div class="row total"><span>Total</span><span class="num${hl === 'total' ? ' hl' : ''}">228.00 €</span></div>
 </div>`;
-const how = () => `
-<section id="how" style="position:relative; padding:clamp(80px,11vh,140px) clamp(20px,5vw,72px); overflow:hidden;">
-  <div style="max-width:1180px; margin:0 auto;">
-    <div data-reveal style="max-width:680px; margin:0 auto 64px; text-align:center;">${lab('Как работи')}<h2 style="font-family:var(--serif); font-weight:400; font-size:clamp(32px,4.4vw,54px); line-height:1.06; letter-spacing:-.02em; color:#123A33; margin:0 0 16px;">От документ до готов отчет — в три стъпки.</h2><p style="font-size:17px; line-height:1.6; color:#5a6a63; margin:0;">AI върши рутината, ти решаваш важното.</p></div>
-    <div style="position:relative;">
-      <div style="position:absolute; top:38px; left:14%; right:14%; height:1px; background:repeating-linear-gradient(90deg,#D9CDB6 0 8px,transparent 8px 16px); pointer-events:none;"></div>
-      <div data-3col style="display:grid; grid-template-columns:repeat(3,1fr); gap:32px;">
-        ${howStep('01', I.upload, 'Качваш', 'Снимка, PDF или XML — както ти е удобно. Или препрати имейл с фактура.')}
-        ${howStep('02', I.cpu, 'AI разчита', 'Извлича данните и предлага осчетоводяване срещу националния сметкоплан — винаги с „защо?“.', 140)}
-        ${howStep('03', I.check, 'Ти одобряваш', 'Един преглед и готово. ДДС дневниците и отчетите се пълнят сами.', 280, true)}
-      </div>
+
+const frReviewMain = () => `
+<div class="ui lift">
+  ${bar('<span>Review</span><span>›</span><b>f-1180-softprima.pdf</b>')}
+  <div class="ui-title"><p class="ui-h5">f-1180-softprima.pdf</p><div class="meta"><b>Softuer Prima EOOD</b><span>No. 0000001180</span><span>30.09.2026</span><b class="num">228.00 €</b></div></div>
+  <div class="ui-h" style="border-top:1px solid var(--line);margin-top:10px"><b>Extracted data</b><span class="conf ok">overall confidence 94%</span></div>
+  <div class="ui-fields">
+    <div class="ui-group">Document</div>
+    <div class="ui-field"><div><b>Invoice No.</b><strong>0000001180</strong></div><span class="conf ok">98%</span></div>
+    <div class="ui-field"><div><b>Tax event date</b><strong>30.09.2026</strong></div><span class="conf ok">96%</span></div>
+    <div class="ui-group">Amounts &amp; VAT</div>
+    <div class="ui-field flag"><div><b>Tax base</b><strong>190.00 €</strong></div><span class="conf warn">71%</span></div>
+    <div class="ui-field"><div><b>VAT 20%</b><strong>38.00 €</strong></div><span class="conf ok">checked</span></div>
+    <div class="ui-field"><div><b>Total</b><strong>228.00 €</strong></div><span class="conf ok">checked</span></div>
+    <div class="ui-field"><div><b>Treatment</b><strong>standard · 20%</strong></div><span class="conf ok">rule</span></div>
+    <div class="ui-group">Supplier</div>
+    <div class="ui-field"><div><b>Name</b><strong>Softuer Prima EOOD</strong></div><span class="conf ok">94%</span></div>
+    <div class="ui-field"><div><b>UIC</b><strong>204117823</strong></div><span class="conf ok">checked</span></div>
+  </div>
+</div>`;
+
+const frDecision = (state = 'review') => `
+<div class="ui">
+  <div class="ui-h"><b>Decision</b>${state === 'posted' ? '<span class="pill ok">posted</span>' : state === 'approved' ? '<span class="pill ok">approved</span>' : '<span class="pill warn">awaiting review</span>'}</div>
+  <ul class="ui-steps">
+    <li class="done"><i>✓</i>Extraction</li>
+    <li class="${state === 'review' ? 'cur' : 'done'}"><i>${state === 'review' ? '' : '✓'}</i>Review fields</li>
+    <li class="${state === 'review' ? '' : state === 'approved' ? 'done' : 'done'}"><i>${state === 'review' ? '' : '✓'}</i>Approval</li>
+    <li class="${state === 'approved' ? 'cur' : state === 'posted' ? 'done' : ''}"><i>${state === 'posted' ? '✓' : ''}</i>Posting</li>
+  </ul>
+  <div class="ui-actions">${state === 'review' ? '<span class="ui-btn brand block">Approve</span><span class="ui-btn block">Reject</span>' : state === 'approved' ? '<span class="ui-btn brand block">Post to ledger</span>' : '<span class="ui-note" style="margin:0">Journal entry <b class="mono">JE-2026-00417</b></span>'}</div>
+</div>`;
+
+const frSuggestion = () => `
+<div class="ui">
+  <div class="ui-h"><b>Suggestion</b><span class="pill neu">from memory</span></div>
+  <div class="ui-lines">
+    <div class="ui-line"><code>602</code><span>Dr Services</span><span class="r">190.00 €</span></div>
+    <div class="ui-line"><code>4531</code><span>Dr Input VAT</span><span class="r">38.00 €</span></div>
+    <div class="ui-line"><code>401</code><span class="cr">Cr Suppliers</span><span class="r">228.00 €</span></div>
+  </div>
+  <div class="ui-note"><b>VAT:</b> standard 20% · BG supplier · matched code STD20</div>
+</div>`;
+
+const frTicket = () => `
+<div class="ticket">
+  <div class="t">${I.checkc} Posted to the ledger</div>
+  <div class="m">JE-2026-00417 · 03.10.2026</div>
+  <div class="by">Approved by <b>Ana Dimitrova</b> · recorded in the audit trail</div>
+</div>`;
+
+const frAR = () => `
+<div class="ui ui-w">
+  <div class="wt">Receivables <span>View all →</span></div>
+  <div class="big">14 320.00 €</div>
+  <div class="kv"><span>Current</span><b>11 900.00 €</b></div>
+  <div class="kv"><span>Overdue · 3 documents</span><b class="warn">2 420.00 €</b></div>
+</div>`;
+
+const frAging = () => `
+<div class="ui">
+  <div class="ui-h"><b>Payables by due date</b><span>as of 03.10.2026</span></div>
+  <table class="ui-table">
+    <tr><th>Bucket</th><th class="r">Docs</th><th class="r">Amount</th><th class="hide-sm">Share</th></tr>
+    <tr><td class="s">Current</td><td class="r">7</td><td class="r">4 180.00 €</td><td class="hide-sm"><span style="display:block;height:6px;border-radius:99px;background:var(--bg-warm);overflow:hidden"><span style="display:block;width:64%;height:100%;background:var(--brand);opacity:.8"></span></span></td></tr>
+    <tr><td class="s">1–30 days</td><td class="r">2</td><td class="r">1 560.00 €</td><td class="hide-sm"><span style="display:block;height:6px;border-radius:99px;background:var(--bg-warm);overflow:hidden"><span style="display:block;width:24%;height:100%;background:var(--warn);opacity:.8"></span></span></td></tr>
+    <tr><td class="s">31–60 days</td><td class="r">1</td><td class="r">640.00 €</td><td class="hide-sm"><span style="display:block;height:6px;border-radius:99px;background:var(--bg-warm);overflow:hidden"><span style="display:block;width:10%;height:100%;background:var(--err);opacity:.8"></span></span></td></tr>
+    <tfoot><tr><td>Total open</td><td class="r">10</td><td class="r">6 380.00 €</td><td class="hide-sm"></td></tr></tfoot>
+  </table>
+</div>`;
+
+const frBankMatch = () => `
+<div class="ui">
+  <div class="ui-h"><b>Bank statement · UniCredit</b><span>3 to reconcile</span></div>
+  <table class="ui-table">
+    <tr><th>Date</th><th>Description</th><th class="r">Amount</th><th>Status</th></tr>
+    <tr><td>03.10</td><td class="s">Payment inv. 1180</td><td class="r">-228.00 €</td><td><span class="pill warn">suggested</span></td></tr>
+    <tr><td>02.10</td><td class="s">Receipt · INV 2026-0031</td><td class="r">1 500.00 €</td><td><span class="pill ok">matched</span></td></tr>
+    <tr><td>01.10</td><td class="s">Rent October</td><td class="r">-640.00 €</td><td><span class="pill ok">matched</span></td></tr>
+  </table>
+  <div class="ui-note" style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:10px"><span><b>Match:</b> invoice 0000001180 · Softuer Prima · 228.00 € <span class="conf ok" style="margin-left:6px">98%</span></span><span class="ui-btn brand">Confirm</span></div>
+</div>`;
+
+const frTB = () => `
+<div class="ui">
+  <div class="ui-h"><b>Trial balance</b><span>01.01.2026 – 03.10.2026</span></div>
+  <table class="ui-table">
+    <tr><th>Account</th><th>Name</th><th class="r">Debit</th><th class="r">Credit</th><th class="r hide-sm">Balance</th></tr>
+    <tr><td class="m">401</td><td class="s">Suppliers</td><td class="r">6 120.00 €</td><td class="r">12 500.00 €</td><td class="r hide-sm">-6 380.00 €</td></tr>
+    <tr><td class="m">411</td><td class="s">Customers</td><td class="r">18 400.00 €</td><td class="r">4 080.00 €</td><td class="r hide-sm">14 320.00 €</td></tr>
+    <tr><td class="m">4531</td><td class="s">Input VAT</td><td class="r">1 880.00 €</td><td class="r">0.00 €</td><td class="r hide-sm">1 880.00 €</td></tr>
+    <tr><td class="m">4532</td><td class="s">Output VAT</td><td class="r">0.00 €</td><td class="r">3 120.00 €</td><td class="r hide-sm">-3 120.00 €</td></tr>
+    <tr><td class="m">702</td><td class="s">Revenue</td><td class="r">0.00 €</td><td class="r">15 900.00 €</td><td class="r hide-sm">-15 900.00 €</td></tr>
+    <tfoot><tr><td colspan="2">Total</td><td class="r">26 400.00 €</td><td class="r">35 600.00 €</td><td class="r hide-sm"><span class="pill ok">balanced</span></td></tr></tfoot>
+  </table>
+</div>`;
+
+const frVatKpis = () => `
+<div class="ui-kpis">
+  <div class="ui-kpi"><b>Output VAT</b><strong>3 120.00 €</strong><small>12 sales invoices</small></div>
+  <div class="ui-kpi"><b>Input VAT</b><strong>1 880.00 €</strong><small>27 purchases</small></div>
+  <div class="ui-kpi"><b>VAT payable</b><strong class="ok">1 240.00 €</strong><small>period 09/2026</small></div>
+</div>`;
+
+const frSaft = () => `
+<div class="ui flat">
+  <div class="ui-h"><b>SAF-T exports</b><span class="pill beta" style="background:var(--warn-soft);color:var(--warn)">beta</span></div>
+  <table class="ui-table">
+    <tr><th>Period</th><th>Status</th><th class="r">Errors</th><th class="r hide-sm">Warnings</th><th></th></tr>
+    <tr><td class="s">September 2026</td><td><span class="pill ok">completed</span></td><td class="r">0</td><td class="r hide-sm">3</td><td class="r"><span class="ui-btn">XML</span></td></tr>
+    <tr><td class="s">August 2026</td><td><span class="pill ok">completed</span></td><td class="r">0</td><td class="r hide-sm">1</td><td class="r"><span class="ui-btn">XML</span></td></tr>
+  </table>
+</div>`;
+
+const frAssistant = () => `
+<div class="ui">
+  <div class="ui-h"><b>${I.spark.replace('<svg', '<svg style="width:14px;height:14px;vertical-align:-2px;margin-right:6px;color:var(--brand)"')}AI Accountant</b><span>reads only · never posts</span></div>
+  <div class="ui-chips"><span class="ui-chip on">Why do I owe this much VAT?</span><span class="ui-chip">Where does the amount come from?</span><span class="ui-chip">What to check before filing</span></div>
+  <div class="ui-qa">
+    <div class="ui-q"><span>Why do I owe this much VAT?</span><span class="badges"><span class="conf ok">95%</span><span class="pill neu">deterministic</span></span></div>
+    <div class="ui-a">For 09/2026 you owe <strong>1 240.00 €</strong>: output VAT of 3 120.00 € on 12 sales invoices, minus input VAT of 1 880.00 € on 27 purchases. The largest contribution is INV 2026-0031 to Delta Consult OOD (1 500.00 € base).</div>
+    <div class="ui-src"><b>Sources</b><span>${I.cite.replace('<svg', '<svg style="width:11px;height:11px"')} Sales register 09/2026</span><span>${I.cite.replace('<svg', '<svg style="width:11px;height:11px"')} Purchase register 09/2026</span><span>${I.cite.replace('<svg', '<svg style="width:11px;height:11px"')} INV 2026-0031</span></div>
+    <div class="ui-foot">${I.shield} Explanation built from your records. The assistant cannot post, approve or file anything.</div>
+  </div>
+</div>`;
+
+const frJournal = () => `
+<div class="ui ui-je">
+  <div class="ui-h"><b>Journal</b><span>append-only · corrections are reversing entries</span></div>
+  <div class="hd"><code>JE-2026-00417</code><span>Purchase invoice 0000001180 · Softuer Prima EOOD</span><span class="pill ok">posted</span></div>
+  <table class="ui-table">
+    <tr><th>Account</th><th>Description</th><th class="r">Debit</th><th class="r">Credit</th></tr>
+    <tr><td class="m">602</td><td>External services</td><td class="r">190.00 €</td><td class="r">—</td></tr>
+    <tr><td class="m">4531</td><td>Input VAT</td><td class="r">38.00 €</td><td class="r">—</td></tr>
+    <tr><td class="m">401</td><td>Suppliers · Softuer Prima EOOD</td><td class="r">—</td><td class="r">228.00 €</td></tr>
+    <tfoot><tr><td colspan="2">Balanced</td><td class="r">228.00 €</td><td class="r">228.00 €</td></tr></tfoot>
+  </table>
+</div>`;
+
+const frDashboard = () => `
+<div class="ui lift" style="font-size:12px">
+  ${bar('<b>Dashboard</b>')}
+  <div style="padding:16px;background:var(--bg-warm);display:flex;flex-direction:column;gap:12px">
+    <div class="ui-kpis" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+      <div class="ui-kpi"><b>Awaiting review</b><strong class="warn">4</strong><small>need approval</small></div>
+      <div class="ui-kpi"><b>VAT payable</b><strong>1 240.00 €</strong><small>period 09/2026</small></div>
+      <div class="ui-kpi"><b>Receivables</b><strong>14 320.00 €</strong><small>3 overdue</small></div>
+      <div class="ui-kpi"><b>Net result · 2026</b><strong class="ok">18 420.50 €</strong><small>from the ledger</small></div>
+    </div>
+    <div class="ui flat">
+      <div class="ui-h"><b>Recent documents</b><span>All →</span></div>
+      <table class="ui-table">
+        <tr><th>File</th><th class="hide-sm">Supplier</th><th>Status</th><th class="r">Date</th></tr>
+        <tr><td class="s">f-1180-softprima.pdf</td><td class="hide-sm">Softuer Prima EOOD</td><td><span class="pill warn">awaiting review</span></td><td class="r">03.10.2026</td></tr>
+        <tr><td class="s">energo-88213.pdf</td><td class="hide-sm">Energo-Pro</td><td><span class="pill ok">posted</span></td><td class="r">02.10.2026</td></tr>
+        <tr><td class="s">kurier-0917.jpg</td><td class="hide-sm">—</td><td><span class="pill info">extracting</span></td><td class="r">02.10.2026</td></tr>
+      </table>
+    </div>
+  </div>
+</div>`;
+
+const frUpload = () => `
+<div class="ui">
+  <div class="ui-h"><b>Upload documents</b><span>PDF · JPG · PNG · XML · up to 20 MB</span></div>
+  <div class="ui-drop"><span class="ui-drop-ic">${I.upload}</span><b>Drop files here or choose from your computer</b><span>Each file is checked, stored immutably and queued for extraction.</span></div>
+  <table class="ui-table">
+    <tr><th>File</th><th class="hide-sm">Size</th><th>Status</th><th class="r">Uploaded</th></tr>
+    <tr><td class="s">f-1180-softprima.pdf</td><td class="hide-sm">184 KB</td><td><span class="pill ok">extracted · 22 fields</span></td><td class="r">10:42</td></tr>
+    <tr><td class="s">kurier-0917.jpg</td><td class="hide-sm">1.2 MB</td><td><span class="pill info">extracting</span></td><td class="r">10:41</td></tr>
+    <tr><td class="s">invoice-2026-0031.xml</td><td class="hide-sm">9 KB</td><td><span class="pill ok">parsed · native XML</span></td><td class="r">10:39</td></tr>
+  </table>
+</div>`;
+
+const frAudit = () => `
+<div class="ui">
+  <div class="ui-h"><b>Audit trail</b><span class="conf ok">chain verified · 1 284 events</span></div>
+  <ul class="ui-log">
+    <li><i class="a-human"></i><div><b>Ana Dimitrova</b> posted <code>JE-2026-00417</code> from review <code>f-1180-softprima.pdf</code></div><span>03.10 · 10:58</span><em>7f3a…c21e</em></li>
+    <li><i class="a-human"></i><div><b>Ana Dimitrova</b> approved review · corrected <code>tax_base</code> 19.00 → 190.00 €</div><span>03.10 · 10:57</span><em>b91d…04af</em></li>
+    <li><i class="a-ai"></i><div><b>AI suggestion</b> proposed 602 / 4531 / 401 · rule <code>STD20</code> · memory: Softuer Prima</div><span>03.10 · 10:44</span><em>e2c8…77b0</em></li>
+    <li><i class="a-auto"></i><div><b>Extraction</b> completed · 22 fields · overall 94%</div><span>03.10 · 10:42</span><em>51aa…9d3c</em></li>
+    <li><i class="a-human"></i><div><b>Ana Dimitrova</b> uploaded <code>f-1180-softprima.pdf</code></div><span>03.10 · 10:41</span><em>0c7e…b1f2</em></li>
+  </ul>
+</div>`;
+
+const frPeriods = () => `
+<div class="ui flat">
+  <div class="ui-h"><b>Accounting periods</b><span>2026</span></div>
+  <table class="ui-table">
+    <tr><th>Period</th><th>Status</th><th class="r hide-sm">Entries</th><th class="r">Locked by</th></tr>
+    <tr><td class="s">October 2026</td><td><span class="pill info">open</span></td><td class="r hide-sm">14</td><td class="r">—</td></tr>
+    <tr><td class="s">September 2026</td><td><span class="pill ok">locked</span></td><td class="r hide-sm">61</td><td class="r">A. Dimitrova</td></tr>
+    <tr><td class="s">August 2026</td><td><span class="pill ok">locked</span></td><td class="r hide-sm">57</td><td class="r">A. Dimitrova</td></tr>
+  </table>
+</div>`;
+
+/* ============================================================================
+   Home sections
+   ============================================================================ */
+const hero = () => `
+<section class="hero">
+  <div class="wrap inner">
+    <span class="eyebrow"><span>Accounting software · Human approval<span class="hide-m"> · EUR</span></span></span>
+    <h1 class="display">Accounting that prepares the work. <span class="dim">You approve it.</span></h1>
+    <p class="lead">Acco reads your invoices, proposes the accounting treatment and VAT, and posts to an immutable ledger only when a person approves.<span class="hide-m"> Every number traces back to a document.</span></p>
+    <div class="hero-cta">
+      <a class="btn btn-ink btn-lg" href="/register">Get started ${I.arrow}</a>
+      <a class="btn btn-out btn-lg" href="#how">See how it works</a>
+    </div>
+    <p class="hero-note"><span>Immutable ledger</span><span>Hash-chained audit trail</span><span>Built for Bulgarian VAT</span></p>
+  </div>
+  <div class="wrap-wide">
+    <div class="scene" role="img" aria-label="The Acco review screen: extracted fields next to the source document, with the approval step and the posting result" data-reveal>
+      <div class="sc-doc" aria-hidden="true">${frPaper('total')}</div>
+      <div class="sc-main" aria-hidden="true">${frReviewMain()}</div>
+      <div class="sc-sugg" aria-hidden="true">${frDecision('review')}</div>
+      <div class="sc-ticket" aria-hidden="true">${frTicket()}</div>
     </div>
   </div>
 </section>`;
 
-/* ---- features bento (home) ----------------------------------------------- */
-const bento = () => `
-<section style="position:relative; padding:clamp(80px,11vh,140px) clamp(20px,5vw,72px); background:#FBF8F1; border-top:1px solid #E4DBC9;">
-  <div style="max-width:1180px; margin:0 auto;">
-    <div data-reveal style="display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap; margin-bottom:44px;">
-      <div>${lab('Какво можеш')}<h2 style="font-family:var(--serif); font-weight:400; font-size:clamp(32px,4.2vw,52px); line-height:1.07; letter-spacing:-.02em; color:#123A33; margin:0; max-width:560px;">Всичко за финансите на бизнеса ти.</h2></div>
-      <p style="font-size:14px; line-height:1.6; color:#6c776f; max-width:260px; margin:0;">Създадено за самонаети, фрийлансъри и малки фирми в България.</p>
+const facts = () => `
+<section class="section-sm">
+  <div class="wrap">
+    <div class="facts">
+      <div>${I.user}<div><b>Human approval on every posting</b><span>Nothing reaches the ledger automatically.</span></div></div>
+      <div>${I.book}<div><b>Immutable double-entry ledger</b><span>Balanced entries; corrections are reversals.</span></div></div>
+      <div>${I.chain}<div><b>Hash-chained audit trail</b><span>Every action, human or AI, is recorded and verifiable.</span></div></div>
+      <div>${I.vat}<div><b>EUR, Bulgarian VAT built in</b><span>Treatments, registers and checks follow Bulgarian rules.</span></div></div>
     </div>
-    <div data-bento style="display:grid; grid-template-columns:repeat(3,1fr); gap:18px;">
-      <div data-reveal class="lift-d" style="grid-column:span 2; background:#123A33; border-radius:20px; padding:34px; color:#F4EFE4; min-height:240px; display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden; transition:transform .5s var(--ease), box-shadow .5s;">
-        <div style="position:absolute; top:-50px; right:-30px; width:260px; height:260px; border-radius:50%; background:radial-gradient(circle,rgba(233,201,140,.18),transparent 70%); pointer-events:none;"></div>
-        <div style="position:relative; display:flex; align-items:center; justify-content:space-between;"><div style="width:48px; height:48px; border-radius:13px; background:rgba(233,201,140,.14); color:#E9C98C; display:flex; align-items:center; justify-content:center;">${I.spark}</div><span style="font-size:10px; font-family:var(--mono); color:#9fc3b8; border:1px solid rgba(255,255,255,.15); padding:5px 10px; border-radius:999px;">основен модул</span></div>
-        <div style="position:relative;"><h3 style="font-family:var(--serif); font-weight:500; font-size:26px; margin:0 0 10px;">AI извличане</h3><p style="font-size:14.5px; line-height:1.6; color:#bcd0c9; margin:0; max-width:380px;">Разчита фактури и документи автоматично — всяко поле с оценка на увереност и детерминирана проверка (ЕИК, VIES, IBAN, Основа + ДДС = Общо).</p></div>
-      </div>
-      ${bentoCard(I.file, 'Фактуриране', 'Издаване с последователна номерация, PDF и кредитни известия.', 80, 240)}
-      ${bentoCard(I.bank, 'ДДС и НАП', 'Дневници и справка-декларация, готови за подаване с КЕП.', 0, 218)}
-      ${bentoCard(I.chart, 'Отчети', 'ОПР, баланс и оборотна ведомост, на живо и проследими.', 80, 218, true)}
-      <div data-reveal data-reveal-delay="160" class="lift" style="grid-column:span 2; background:#FFFFFF; border:1px solid #EAE0CD; border-radius:20px; padding:34px; min-height:218px; display:flex; align-items:center; justify-content:space-between; gap:24px;">
-        <div style="max-width:360px;"><div style="width:46px; height:46px; border-radius:12px; background:#EDF6F1; color:#16A463; display:flex; align-items:center; justify-content:center; margin-bottom:18px;">${I.shield}</div><h3 style="font-family:var(--serif); font-weight:500; font-size:22px; color:#123A33; margin:0 0 8px;">Разходи &amp; сигурен архив</h3><p style="font-size:13.5px; line-height:1.6; color:#5a6a63; margin:0;">Извличане и категоризиране на разходите. Защитено съхранение (WORM), append-only одитна следа, данни в ЕС.</p></div>
-        <div style="display:flex; flex-direction:column; gap:10px; min-width:170px;">
-          <div style="display:flex; align-items:center; gap:9px; padding:11px 14px; background:#FBF8F1; border:1px solid #F0EADC; border-radius:11px; font-size:12px; color:#3a4843;"><span style="color:#16A463;">✓</span> Хостинг в ЕС</div>
-          <div style="display:flex; align-items:center; gap:9px; padding:11px 14px; background:#FBF8F1; border:1px solid #F0EADC; border-radius:11px; font-size:12px; color:#3a4843;"><span style="color:#16A463;">✓</span> Нулево задържане на AI</div>
-          <div style="display:flex; align-items:center; gap:9px; padding:11px 14px; background:#FBF8F1; border:1px solid #F0EADC; border-radius:11px; font-size:12px; color:#3a4843;"><span style="color:#16A463;">✓</span> Хеширан одит</div>
+  </div>
+</section>`;
+
+const MATRIX = [
+  ['/features#capture', I.upload, 'Document capture', 'PDF, images and XML invoices. Validated, stored immutably, queued for extraction.', 'upload'],
+  ['/features#extraction', I.scan, 'Extraction & checks', 'Field-by-field values with confidence. UIC, VAT number, IBAN and totals are verified by rules.', 'extract'],
+  ['/features#review', I.review, 'Review queue', 'Low-confidence fields stand out. Correct, approve or reject — with a full history.', 'review'],
+  ['/features#ledger', I.book, 'Ledger & periods', 'Balanced double-entry postings, reversing corrections, locked accounting periods.', 'ledger'],
+  ['/features#invoicing', I.invoice, 'Invoicing', 'Sequential numbering, proformas, credit and debit notes, product catalogue with VAT codes.', 'invoices'],
+  ['/features#banking', I.bank, 'Banking & reconciliation', 'CSV/XLSX statement import, ranked match suggestions, payments, receivables and payables.', 'banking'],
+  ['/features#vat', I.vat, 'VAT & SAF-T', 'Purchase and sales registers, period summary, VIES dataset; SAF-T export in beta.', 'vat'],
+  ['/features#reports', I.chart, 'Reports', 'Trial balance, P&L, general ledger, monthly revenue and expenses, cash flow. CSV export.', 'reports'],
+  ['/#ai-accountant', I.spark, 'AI Accountant', 'Answers fixed questions from your records, cites sources, and never changes anything.', 'assistant'],
+];
+const matrix = () => `
+<section class="section bg-warm hairline-top" id="product">
+  <div class="wrap">
+    <div class="split">
+      <div class="sec-head"><span class="eyebrow">What Acco handles</span><h2 class="h2">The whole loop, from document to filing-ready records.</h2></div>
+      <p class="lead">Built for sole traders, small companies and the accountants who serve them. Only what works in the product today is listed here.</p>
+    </div>
+    <div class="matrix">
+      ${MATRIX.map(([href, ic, t, d, k]) => `<a href="${href}"><span class="ic">${ic}</span><h3>${t}</h3><p>${d}</p><span class="k">/${k}</span></a>`).join('')}
+    </div>
+  </div>
+</section>`;
+
+const FLOW = [
+  ['auto', '01', 'Document', 'Upload a PDF, photo or XML. It is checked and stored immutably.', 'Automation'],
+  ['auto', '02', 'Extraction', 'Fields are read with a confidence score. UIC, VAT number, IBAN and totals are verified by rules.', 'Automation'],
+  ['human', '03', 'Review', 'You see the document and the fields side by side. Weak fields are flagged.', 'Your decision'],
+  ['auto', '04', 'Suggestion', 'Accounts, expense category and VAT treatment are proposed from rules and memory.', 'Automation'],
+  ['human', '05', 'Approval', 'Approve, correct or reject. Nothing proceeds without this step.', 'Your decision'],
+  ['auto', '06', 'Ledger', 'A balanced entry is posted. It cannot be edited; corrections reverse it.', 'Automation'],
+  ['ai', '07', 'Explain', 'Reports, VAT and the AI Accountant read from the ledger and cite it.', 'AI explanation'],
+];
+const flow = () => `
+<section class="section" id="how">
+  <div class="wrap">
+    <div class="sec-head"><span class="eyebrow">How it works</span><h2 class="h2">Seven steps. Two of them are yours, <span class="dim">and nothing moves past them without you.</span></h2></div>
+    <div class="flow">
+      ${FLOW.map(([k, n, t, d, who]) => `<div class="flow-step ${k}" data-reveal><span class="dot"></span><span class="k">${n}</span><h3>${t}</h3><p>${d}</p><span class="who">${who}</span></div>`).join('')}
+    </div>
+    <div class="legend"><span><i class="l-auto"></i> Automation — Acco prepares</span><span><i class="l-human"></i> Your decision — a person approves</span><span><i class="l-ai"></i> AI explanation — read-only, cited</span></div>
+  </div>
+</section>`;
+
+const storyReview = () => `
+<section class="section bg-warm hairline-top" id="review">
+  <div class="wrap story wide">
+    <div class="story-text">
+      <span class="eyebrow">Review before anything is posted</span>
+      <h2 class="h2">Check what was read. <span class="dim">Fix what needs fixing.</span></h2>
+      <p class="body">The source document sits next to the extracted fields. Deterministic checks run first; the AI suggestion comes with its reasoning; the approval buttons belong to you.</p>
+      <ul class="points">
+        <li>${I.check}<div><b>Rules before probability</b><span>UIC checksum, VAT number format, IBAN mod-97 and base + VAT = total are decided by validators, not by a model.</span></div></li>
+        <li>${I.eye}<div><b>Confidence you can act on</b><span>Each field shows a score and its origin. Anything below 70% or failing a check is highlighted.</span></div></li>
+        <li>${I.user}<div><b>Correct, then approve</b><span>Edit fields, regenerate the suggestion, approve or reject. Every step lands in the audit trail.</span></div></li>
+      </ul>
+    </div>
+    <div class="canvas" aria-hidden="true" data-reveal>
+      <div class="rv-grid">
+        <div class="ui">
+          <div class="ui-h"><b>Extracted data</b><span class="conf ok">94%</span></div>
+          <div class="ui-fields one">
+            <div class="ui-field"><div><b>Supplier</b><strong>Softuer Prima EOOD</strong></div><span class="conf ok">94%</span></div>
+            <div class="ui-field"><div><b>UIC</b><strong>204117823</strong></div><span class="conf ok">checked</span></div>
+            <div class="ui-field flag"><div><b>Tax base</b><strong>190.00 €</strong></div><span class="conf warn">71%</span></div>
+            <div class="ui-field"><div><b>VAT 20%</b><strong>38.00 €</strong></div><span class="conf ok">checked</span></div>
+            <div class="ui-field"><div><b>Total</b><strong>228.00 €</strong></div><span class="conf ok">checked</span></div>
+            <div class="ui-field bad"><div><b>IBAN</b><strong>BG80 BNBG 9661 1020 3456 7</strong></div><span class="conf err">invalid</span></div>
+          </div>
         </div>
+        <div style="display:flex;flex-direction:column;gap:14px">${frDecision('review')}${frSuggestion()}</div>
+      </div>
+      <span class="callout" style="left:22px;bottom:22px"><i></i> Flagged: below 70% confidence</span>
+    </div>
+  </div>
+</section>`;
+
+const statement = () => `
+<section class="section bg-ink on-ink">
+  <div class="wrap">
+    <div class="sec-head" style="max-width:820px"><span class="eyebrow">Three things that are never confused</span><h2 class="h2">Nothing is posted without a person. <span class="dim">Automation prepares, you decide, the assistant explains.</span></h2></div>
+    <div class="defs">
+      <div data-reveal><span class="tag-k"><i class="i-auto"></i> Automation</span><h3>Acco prepares</h3><p>Reads documents, verifies identifiers and totals, proposes accounts and VAT treatment, builds registers and reports.</p><p class="ex">In the product: <b>extraction, suggestions, registers</b></p></div>
+      <div data-reveal><span class="tag-k"><i class="i-human"></i> Your decision</span><h3>A person approves</h3><p>Only a user with the right role can approve a document, post to the ledger, lock a period or issue an invoice. The AI identity cannot.</p><p class="ex">In the product: <b>approve, post, lock, issue</b></p></div>
+      <div data-reveal><span class="tag-k"><i class="i-ai"></i> AI explanation</span><h3>The assistant explains</h3><p>Answers a fixed set of questions from your records, cites the entries it used, and abstains when the data is not there. It reads only.</p><p class="ex">In the product: <b>AI Accountant</b></p></div>
+    </div>
+  </div>
+</section>`;
+
+const storyMoney = () => `
+<section class="section" id="position">
+  <div class="wrap">
+    <div class="split">
+      <div class="sec-head"><span class="eyebrow">Receivables, payables, bank</span><h2 class="h2">Know who owes you, what you owe, <span class="dim">and what the bank says.</span></h2></div>
+      <p class="lead">Issued invoices become receivables, approved purchase invoices become payables, and imported bank statements are matched against both. Everything by due date, in EUR.</p>
+    </div>
+    <div class="canvas" aria-hidden="true" data-reveal>
+      <div class="collage">
+        <div class="c1">${frAR()}</div>
+        <div class="c2">${frAging()}</div>
+        <div class="c3">${frBankMatch()}</div>
       </div>
     </div>
+    <div class="grid-h three" style="margin-top:40px">
+      <div>${I.invoice}<b>Receivables from issued invoices</b><p>Sequential numbering, proformas, credit and debit notes; open items and ageing by due date.</p></div>
+      <div>${I.clock}<b>Payables from approved purchases</b><p>Posted purchase invoices appear as open payables, grouped by due-date bucket.</p></div>
+      <div>${I.bank}<b>Statements matched, never auto-booked</b><p>CSV/XLSX import with duplicate detection; ranked match suggestions you confirm.</p></div>
+    </div>
   </div>
 </section>`;
-const bentoCard = (ic, t, d, delay, minh, green) => `<div data-reveal${delay ? ` data-reveal-delay="${delay}"` : ''} class="lift" style="background:#FFFFFF; border:1px solid #EAE0CD; border-radius:20px; padding:30px; min-height:${minh}px; display:flex; flex-direction:column; justify-content:space-between;"><div style="width:46px; height:46px; border-radius:12px; background:${green ? '#EDF6F1' : '#FAF3E4'}; color:${green ? '#16A463' : '#A9854E'}; display:flex; align-items:center; justify-content:center;">${ic}</div><div><h3 style="font-family:var(--serif); font-weight:500; font-size:22px; color:#123A33; margin:0 0 8px;">${t}</h3><p style="font-size:13.5px; line-height:1.6; color:#5a6a63; margin:0;">${d}</p></div></div>`;
 
-/* ---- deep dive: review queue --------------------------------------------- */
-const dvFeat = (ic, t, d, green) => `<div style="display:flex; gap:14px;"><span style="flex:none; width:32px; height:32px; border-radius:9px; background:${green ? '#EDF6F1' : '#FAF3E4'}; color:${green ? '#16A463' : '#A9854E'}; display:flex; align-items:center; justify-content:center;">${ic}</span><div><div style="font-size:15px; font-weight:600; color:#20302B;">${t}</div><div style="font-size:13.5px; color:#6c776f; margin-top:2px;">${d}</div></div></div>`;
-const qrow = (sel, name, meta, conf, amount, warn) => `<div style="display:grid; grid-template-columns:auto 1fr auto auto; gap:14px; align-items:center; padding:14px;${sel ? ' border-radius:12px; background:#FBF8F1; border-left:2px solid #16A463;' : ''}${warn ? ' background:#FEF6E7; border-radius:12px;' : ''}"><span style="width:20px; height:20px; border-radius:5px; ${sel ? 'background:#16A463; color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px;' : warn ? 'border:1.5px solid #E39B12;' : 'border:1.5px solid #D9CDB6;'}">${sel ? '✓' : ''}</span><div><div style="font-size:13.5px; font-weight:600; color:#20302B;">${name}</div><div style="font-size:11px; color:${warn ? '#9A6406' : '#94a09a'}; font-family:var(--mono);">${meta}</div></div><div style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:${warn ? '#E39B12' : '#16A463'};"></span><span style="font-size:12px; font-weight:600; color:${warn ? '#9A6406' : '#0E8650'};">${conf}</span></div><div style="font-size:13.5px; font-weight:600; font-variant-numeric:tabular-nums; color:#20302B;">${amount}</div></div>`;
-const deepDive = () => `
-<section style="position:relative; padding:clamp(80px,11vh,140px) clamp(20px,5vw,72px); overflow:hidden;">
-  <div style="position:absolute; top:10%; right:-10%; width:600px; height:600px; border-radius:50%; background:radial-gradient(circle,rgba(201,163,91,.1),transparent 65%); pointer-events:none; animation:glowPulse 11s ease-in-out infinite;"></div>
-  <div data-deep-grid style="position:relative; max-width:1180px; margin:0 auto; display:grid; grid-template-columns:.92fr 1.08fr; gap:56px; align-items:center;">
-    <div data-reveal="left">${lab('Прегледай и одобри')}<h2${TH('A review queue where <span style="font-style:italic; color:#A9854E;">everything is clear.</span>')} style="font-family:var(--serif); font-weight:400; font-size:clamp(32px,3.8vw,48px); line-height:1.08; letter-spacing:-.02em; color:#123A33; margin:0 0 22px;">Опашка за преглед, в която <span style="font-style:italic; color:#A9854E;">всичко е ясно.</span></h2><p style="font-size:16px; line-height:1.7; color:#4a5a53; margin:0 0 28px; max-width:440px;">AI предлага, ти решаваш. Високата увереност и чистите проверки се одобряват накуп — съмнителното изпъква само̀.</p>
-      <div style="display:flex; flex-direction:column; gap:18px; max-width:430px;">
-        ${dvFeat(I.check, 'Детерминирани проверки, не само AI', 'ЕИК, VIES, IBAN и Основа + ДДС = Общо.', true)}
-        ${dvFeat(s('<path d="M12 3v18M3 12h18"/>', 2), 'Всяко число — проследимо до документ', 'Пълна прозрачност и одитна следа.')}
-        ${dvFeat(s('<path d="M5 13l4 4L19 7"/>', 2), 'Одобрение накуп за чистите', 'Висока увереност + без флагове = един клик.', true)}
+const storyTax = () => `
+<section class="section bg-warm hairline-top" id="vat">
+  <div class="wrap story flip">
+    <div class="story-text">
+      <span class="eyebrow">Built for Bulgarian VAT and reporting</span>
+      <h2 class="h2">Registers and reports computed from the ledger, <span class="dim">not typed into a form.</span></h2>
+      <p class="body">Acco follows Bulgarian accounting and VAT rules out of the box: UIC and VAT-number checks, VAT treatments from 20% standard to reverse charge and intra-EU, purchase and sales registers per period, Cyrillic invoice PDFs and SAF-T preparation for the NRA. Every figure traces to a journal line and the document behind it.</p>
+      <ul class="points">
+        <li>${I.vat}<div><b>VAT registers and period summary</b><span>Purchase and sales registers, output and input VAT, the amount payable or refundable for the month. VIES dataset for intra-EU supplies.</span></div></li>
+        <li>${I.chart}<div><b>Management reports</b><span>Trial balance, P&amp;L, general ledger, revenue and expenses by month, cash flow. CSV export.</span></div></li>
+        <li>${I.xml}<div><b>SAF-T preparation <span class="tag beta">beta</span></b><span>Dataset validation, XML generation, export history. Binding to the official NRA schema is planned.</span></div></li>
+      </ul>
+    </div>
+    <div class="canvas tint" aria-hidden="true" data-reveal>
+      <div style="display:flex;flex-direction:column;gap:14px">${frVatKpis()}${frTB()}</div>
+    </div>
+  </div>
+</section>`;
+
+const ai = () => `
+<section class="section bg-tint hairline-top" id="ai-accountant">
+  <div class="wrap">
+    <div class="split">
+      <div class="sec-head"><span class="eyebrow">AI Accountant</span><h2 class="h2">Ask why. Get an answer with sources. <span class="dim">Nothing changes.</span></h2></div>
+      <p class="lead">A fixed set of questions about your VAT, receivables, payables and results. Each answer is built from the ledger and the registers, cites the entries it used, and shows a confidence level. When the data is not there, it says so.</p>
+    </div>
+    <div class="story" style="align-items:start;grid-template-columns:minmax(0,5fr) minmax(0,7fr)">
+      <div class="story-text">
+        <ul class="points" style="border-top:0;margin-top:0">
+          <li>${I.cite}<div><b>Figures come from your records</b><span>The assistant never generates numbers. It reads the journal, the registers and the documents.</span></div></li>
+          <li>${I.book}<div><b>Versioned rule cards</b><span>Tax rules are explicit cards with a legal reference and a version. Cards awaiting accountant review are labelled and lower the confidence.</span></div></li>
+          <li>${I.ban}<div><b>Read-only by design</b><span>No access to posting, approval, period locking or filing. Every question and answer is written to the audit trail.</span></div></li>
+        </ul>
       </div>
-    </div>
-    <div data-reveal="right" data-reveal-delay="120" style="position:relative;">
-      <div data-parallax="0.03" style="position:relative; background:#FFFFFF; border:1px solid #EAE0CD; border-radius:18px; box-shadow:0 40px 90px rgba(18,30,26,.18); overflow:hidden;">
-        <div style="display:flex; align-items:center; gap:10px; padding:14px 18px; border-bottom:1px solid #F0EADC; background:#FBF8F1;"><span style="width:11px; height:11px; border-radius:50%; background:#E4DBC9;"></span><span style="width:11px; height:11px; border-radius:50%; background:#E4DBC9;"></span><span style="width:11px; height:11px; border-radius:50%; background:#E4DBC9;"></span><span style="margin-left:8px; font-size:12px; font-weight:600; color:#123A33;">Опашка за преглед</span><span style="margin-left:auto; font-size:11px; font-family:var(--mono); color:#9aa49e;">7 чакащи</span></div>
-        <div style="padding:8px;">
-          ${qrow(true, 'ТЕХНО ПЛЮС ООД', 'ф-ра 0512 · 602 Външни услуги', '98%', '1 500,00 €')}
-          ${qrow(false, 'Софтуер Прима ЕООД', 'ф-ра 1180 · 651 Абонаменти', '96%', '228,00 €')}
-          ${qrow(false, 'Куриер Спиди АД', '⚠ ЕИК за проверка', '74%', '42,60 €', true)}
-          ${qrow(false, 'Енерго Про', 'ф-ра 88213 · 602 Ел. енергия', '99%', '316,40 €')}
-        </div>
-        <div style="display:flex; align-items:center; gap:12px; padding:14px 18px; border-top:1px solid #F0EADC; background:#FBF8F1;"><span style="font-size:12px; color:#6c776f;">3 избрани · чисти проверки</span><span style="margin-left:auto; padding:9px 16px; background:#16A463; color:#fff; border-radius:8px; font-size:12.5px; font-weight:600;">Одобри и осчетоводи 3</span></div>
-      </div>
-      <div data-parallax="0.1" style="position:absolute; top:-22px; right:-12px; background:#123A33; color:#F4EFE4; padding:10px 15px; border-radius:12px; box-shadow:0 18px 38px rgba(18,58,51,.28); font-size:12px; font-weight:600; animation:floatYsm 6s ease-in-out infinite;">⌘ Bulk approve</div>
+      <div data-reveal aria-hidden="true">${frAssistant()}</div>
     </div>
   </div>
 </section>`;
 
-/* ---- stats --------------------------------------------------------------- */
-const statCell = (count, dec, suffix, shown, label, delay, last) => `<div data-reveal${delay ? ` data-reveal-delay="${delay}"` : ''}${last ? '' : ' data-stat-div'} style="text-align:center;${last ? '' : ' border-right:1px solid rgba(255,255,255,.12);'}"><div style="font-family:var(--serif); font-size:clamp(38px,4.6vw,54px); font-weight:500; color:#E9C98C; font-variant-numeric:tabular-nums;"><span data-count="${count}" data-dec="${dec}"${suffix ? ` data-suffix="${suffix}"` : ''}>${shown}</span></div><div style="font-size:13px; color:#a9c2bb; margin-top:8px;">${label}</div></div>`;
-const stats = () => `
-<section id="stats" style="position:relative; padding:clamp(56px,7vh,84px) clamp(20px,5vw,72px); background:#123A33; color:#F4EFE4; overflow:hidden;">
-  <div style="position:absolute; inset:0; background:radial-gradient(120% 100% at 85% 10%, rgba(233,201,140,.12), transparent 55%); pointer-events:none;"></div>
-  <div data-stats style="position:relative; max-width:1100px; margin:0 auto; display:grid; grid-template-columns:repeat(4,1fr); gap:24px;">
-    ${statCell('98.7', '1', '%', '98.7%', 'точност при извличане')}
-    ${statCell('12', '0', ' ч', '12 ч', 'спестени на месец', 100)}
-    ${statCell('30000', '0', '+', '30 000+', 'обработени документа', 200)}
-    ${statCell('4.9', '1', '', '4.9', 'средна оценка', 300, true)}
-  </div>
-</section>`;
-
-/* ---- testimonials -------------------------------------------------------- */
-const tcard = (text, init, name, role, bg, col, delay) => `<div data-reveal${delay ? ` data-reveal-delay="${delay}"` : ''} class="lift-5" style="background:#fff; border:1px solid #EAE0CD; border-radius:16px; padding:26px; transition:transform .5s var(--ease), box-shadow .5s;"><div style="color:#E9C98C; font-size:14px; margin-bottom:14px;">★★★★★</div><p style="font-size:14.5px; line-height:1.65; color:#3a4843; margin:0 0 18px;">${text}</p><div style="display:flex; align-items:center; gap:10px;"><span style="width:34px; height:34px; border-radius:50%; background:${bg}; color:${col}; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600;">${init}</span><div><div style="font-size:13px; font-weight:600; color:#20302B;">${name}</div><div style="font-size:11px; color:#8a948e;">${role}</div></div></div></div>`;
-const testimonials = () => `
-<section style="position:relative; padding:clamp(80px,11vh,140px) clamp(20px,5vw,72px); background:#FBF8F1; border-top:1px solid #E4DBC9;">
-  <div style="max-width:1100px; margin:0 auto;">
-    <div data-reveal style="max-width:760px; margin:0 auto 48px; text-align:center;"><div style="font-family:var(--serif); font-size:64px; line-height:0; color:#D9CDB6; height:34px;">&ldquo;</div><p style="font-family:var(--serif); font-weight:400; font-size:clamp(26px,3.2vw,38px); line-height:1.36; letter-spacing:-.01em; color:#123A33; margin:0 0 30px;">Нямам счетоводител. Качвам фактурите, AI ги разчита, аз одобрявам — и ДДС-то ми е готово за минути.</p><div style="display:inline-flex; align-items:center; gap:12px;"><span style="width:44px; height:44px; border-radius:50%; background:#123A33; color:#E9C98C; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:14px;">МД</span><div style="text-align:left;"><div style="font-size:14px; font-weight:600; color:#20302B;">Мартин Делчев</div><div style="font-size:12px; color:#8a948e;">Собственик · онлайн магазин</div></div></div></div>
-    <div data-3col style="display:grid; grid-template-columns:repeat(3,1fr); gap:18px;">
-      ${tcard('Спестявам цял ден всеки месец. ДДС дневниците просто се пълнят сами.', 'ИС', 'Ивайло Стоянов', 'Фрийлансър · IT', '#EDF6F1', '#16A463')}
-      ${tcard('Най-сетне разбирам собствените си финанси. Всичко е проследимо до документа.', 'РК', 'Радост Колева', 'Управител · ЕООД', '#FAF3E4', '#A9854E', 100)}
-      ${tcard('Обработвам стотици документи на месец. Бързо, точно и спокойно.', 'ГД', 'Георги Димитров', 'Онлайн магазин', '#EDF6F1', '#16A463', 200)}
+const control = () => `
+<section class="section" id="control">
+  <div class="wrap">
+    <div class="sec-head"><span class="eyebrow">Control and auditability</span><h2 class="h2">Built so you can trust the numbers <span class="dim">and show how you got them.</span></h2></div>
+    <div class="grid-h">
+      <div data-reveal>${I.shield}<b>Isolation per company</b><p>Each company is separated at the database level. A request outside its context is refused, not just hidden.</p></div>
+      <div data-reveal>${I.user}<b>Roles, checked on the server</b><p>Approve, post, lock and issue are tied to roles. The server re-checks every action; the interface only reflects it.</p></div>
+      <div data-reveal>${I.book}<b>Corrections by reversal</b><p>A posted entry is never edited. A mistake is corrected with a new, reversing entry, so the history stays visible.</p></div>
+      <div data-reveal>${I.cal}<b>Accounting periods</b><p>Lock a period to close it. Posting into a locked period is refused.</p></div>
+      <div data-reveal>${I.layers}<b>Documents kept as uploaded</b><p>Source files are stored immutably with versions, so every posting can be traced back to the original document.</p></div>
     </div>
   </div>
 </section>`;
 
-/* ---- FAQ ----------------------------------------------------------------- */
+const AVAILABLE = [
+  ['Document capture and extraction', 'PDF with a text layer and XML invoices, parsed natively'],
+  ['OCR for photos and scanned PDFs', 'EU document-AI provider (Azure Document Intelligence, EU region enforced); enabled per deployment', 'beta'],
+  ['Review queue with corrections and approval', ''],
+  ['Immutable ledger, journal, accounting periods', ''],
+  ['Invoicing: numbering, proformas, credit and debit notes', 'Invoice email delivery available; PDF generated on issue'],
+  ['Bank import (CSV/XLSX), matching, payments', ''],
+  ['VAT registers, period summary, VIES checks and dataset', ''],
+  ['Reports: trial balance, P&L, balance sheet, GL, monthly, cash flow', 'CSV export'],
+  ['AI Accountant with citations', ''],
+  ['SAF-T dataset, validation and XML export', 'Binding to the official NRA schema is planned', 'beta'],
+];
+
+const PLANNED = [
+  ['Extraction accuracy validation on real scanned invoices', 'Runbook and scoring tool exist; the labelled sample set is being collected'],
+  ['Invoice PDF download and PDF attachment in customer emails', 'The PDF is generated and stored; the email currently carries a reference, not the file'],
+  ['VAT return export in NRA format', 'DEKLAR / POKUPKI / PRODAGBI files for manual filing'],
+  ['Official SAF-T XSD binding', 'Export today validates against the internal dataset schema'],
+  ['Two-factor authentication (TOTP)', 'Enrolment from profile settings'],
+];
+
+const status = () => `
+<section class="section-sm bg-warm hairline-top" id="status">
+  <div class="wrap">
+    <div class="split"><div class="sec-head"><span class="eyebrow">Honest about status</span><h2 class="h2 h2-sm">What is available today, and what is coming.</h2></div><p class="lead">Only capabilities that exist in the product are listed as available. Anything still being validated is marked beta.</p></div>
+    <div class="status-cols">
+      <div><h3>Available</h3><ul class="status-list">${AVAILABLE.map(([t, d, k]) => `<li><div><b>${t}</b>${d ? `<span class="d">${d}</span>` : ''}</div><span class="tag ${k === 'beta' ? 'beta' : 'live'}">${k === 'beta' ? 'Beta' : 'Live'}</span></li>`).join('')}</ul></div>
+      <div><h3>Planned</h3><ul class="status-list">${PLANNED.map(([t, d]) => `<li><div><b>${t}</b><span class="d">${d}</span></div><span class="tag planned">Planned</span></li>`).join('')}</ul></div>
+    </div>
+  </div>
+</section>`;
+
 const FAQS = [
-  ['Нужен ли ми е счетоводител, за да го ползвам?', `Не. ${BRAND} е създаден да водиш счетоводството си сам — AI разчита документите и предлага осчетоводяване, а ти само одобряваш. Ако работиш със счетоводител, можеш да го поканиш с роля.`,
-    'Do I need an accountant to use it?', `No. ${BRAND} is built so you can do your own books — AI reads the documents and proposes the posting, and you simply approve. If you work with an accountant, you can invite them with a role.`],
-  ['Сигурни ли са данните ми?', 'Да. Хостингът и обработката са в ЕС, AI услугите са без задържане на данни, а архивът е защитен (WORM) с хеширана одитна следа за всяко действие.',
-    'Is my data secure?', 'Yes. Hosting and processing are in the EU, AI services retain no data, and the archive is protected (WORM) with a hashed audit trail for every action.'],
-  ['Подава ли се ДДС декларацията автоматично?', 'Дневниците и справка-декларацията се попълват сами и са готови за подаване. Самото подаване към НАП винаги е твое решение — потвърждаваш и подписваш с КЕП. AI предлага, ти одобряваш.',
-    'Is the VAT return filed automatically?', 'The ledgers and the VAT return fill themselves and are ready to submit. The actual filing to the NRA is always your decision — you confirm and sign with your e-signature. AI proposes, you approve.'],
-  ['Работи ли за моя тип бизнес?', 'Създадено е за самонаети, фрийлансъри, малки фирми и ЕООД, както и за онлайн магазини с много документи. Поддържа ЕИК, ДДС режими, националния сметкоплан, коректна кирилица и EUR.',
-    'Does it work for my type of business?', 'It is built for the self-employed, freelancers, small businesses and Ltd. companies, as well as online stores with many documents. It supports company IDs, VAT regimes, the national chart of accounts, correct Cyrillic and EUR.'],
-  ['Има ли безплатен период?', 'Да, 7 дни пълен достъп без банкова карта. Можеш да изпробваш качване, AI извличане, преглед и отчети с реални документи. Ако не продължиш, нищо не се таксува.',
-    'Is there a free trial?', 'Yes, 7 days of full access without a card. You can try uploading, AI extraction, review and reports with real documents. If you do not continue, nothing is charged.'],
-  ['Мога ли да прекратя по всяко време?', 'Да. Сменяш плана или прекратяваш по всяко време от настройките, без срокове и неустойки.',
-    'Can I cancel anytime?', 'Yes. You can change your plan or cancel anytime from settings, with no lock-in and no penalties.'],
+  ['Getting started', [
+    ['Do I need an accountant to use Acco?', 'No. Acco is built so you can keep your own books: it reads documents, proposes the accounting treatment and VAT, and you approve. If you work with an accountant, invite them to the company with their own role (accountant, approver or viewer).'],
+    ['What documents can I upload?', 'PDF invoices with a text layer and XML invoices are read directly. Photos and scanned PDFs go through an EU document-AI provider (beta) when it is enabled for your deployment. You can always correct or complete fields in the review screen.'],
+    ['Which currency does Acco use?', 'EUR is the functional currency for all amounts, reports and registers.'],
+    ['Can several people work in one company?', 'Yes. Users are invited to a company with a role. Roles decide who can approve, post, lock periods or issue invoices, and the server re-checks every action.'],
+  ]],
+  ['Posting, VAT and AI', [
+    ['Does Acco post anything automatically?', 'No. Every posting is approved by a person in the review screen. Bank matches are suggested and confirmed by you. Nothing reaches the ledger on its own.'],
+    ['How is VAT handled?', 'The VAT treatment is proposed per document from rules — standard 20%, reduced, zero, exempt, reverse charge, intra-EU — and resolved as of the tax-event date. Purchase and sales registers and the period summary are computed from posted entries.'],
+    ['Does Acco submit anything to the NRA?', 'No. Registers, the period summary and the SAF-T export are prepared for you; filing remains your action. An export in the NRA return file format is planned.'],
+    ['What does the AI do, and what can it not do?', 'It reads documents, proposes accounts, categories and VAT treatment, and explains figures with citations. It cannot post, approve, lock periods or file. Those actions belong to people and are recorded in the audit trail.'],
+    ['What is currently in beta?', 'OCR for photos and scans (an EU document-AI provider, enabled per deployment, accuracy validation on real invoices in progress) and SAF-T XML export (binding to the official NRA schema is planned). Everything else listed as available is in use.'],
+  ]],
+  ['Records and data', [
+    ['Can a posted entry be edited?', 'No. The ledger is append-only. A mistake is corrected with a reversing entry, so what happened stays visible.'],
+    ['How are my data protected?', 'Each company is isolated at the database level, the ledger is append-only, and every action is written to a hash-chained audit trail. The document-AI provider used for scans is restricted to EU regions by configuration.'],
+    ['What happens to my data at launch?', 'It stays in your company. Early-access companies keep their ledger, documents and history when public plans are introduced.'],
+  ]],
+  ['Access', [
+    ['How does controlled access work?', 'Create an account and upload your first invoice. Acco is being validated with a limited number of companies; pricing is published at launch, and early-access companies see the plans first and keep their data.'],
+    ['How much does it cost?', 'Acco is in controlled access and pricing is not public yet. No card is required during early access.'],
+  ]],
 ];
-const faqItem = (q, a, open, qEN, aEN) => `<div data-faq data-open="${open ? '1' : '0'}" style="border-bottom:1px solid #E4DBC9;"><div data-faq-q style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding:24px 0; cursor:pointer;"><span${qEN ? TH(qEN) : ''} style="font-size:17px; font-weight:600; color:#123A33;">${q}</span><span data-faq-ic style="flex:none; color:#A9854E; font-size:22px;${open ? ' transform:rotate(45deg);' : ''}">+</span></div><div data-faq-a style="${open ? '' : 'max-height:0; opacity:0; '}overflow:hidden;"><p${aEN ? TH(aEN) : ''} style="font-size:14.5px; line-height:1.7; color:#5a6a63; margin:0 0 24px;">${a}</p></div></div>`;
-const faqSplit = (items, title, asH1, enTitle) => `
-<section id="faq" style="position:relative; padding:clamp(80px,11vh,140px) clamp(20px,5vw,72px);">
-  <div data-2col style="max-width:1100px; margin:0 auto; display:grid; grid-template-columns:.8fr 1.2fr; gap:48px; align-items:start;">
-    <div data-reveal="left" style="position:sticky; top:120px;">${lab('Въпроси')}${asH1 ? `<h1${enTitle ? TH(enTitle) : ''} style="font-family:var(--serif); font-weight:400; font-size:clamp(30px,3.6vw,44px); line-height:1.08; letter-spacing:-.02em; color:#123A33; margin:0 0 18px;">${title}</h1>` : `<h2${enTitle ? TH(enTitle) : ''} style="font-family:var(--serif); font-weight:400; font-size:clamp(30px,3.6vw,44px); line-height:1.08; letter-spacing:-.02em; color:#123A33; margin:0 0 18px;">${title}</h2>`}<p style="font-size:15px; line-height:1.65; color:#5a6a63; margin:0 0 22px;">Не намираш отговор? Пиши ни — отговаряме на български, бързо.</p><a href="/contact" class="j-out lift" style="display:inline-flex; align-items:center; gap:9px; padding:13px 22px; border:1px solid #C9BCA1; color:#123A33; border-radius:999px; font-size:14px; font-weight:500;">Свържи се с нас →</a></div>
-    <div data-reveal="right" style="display:flex; flex-direction:column;">${items.map(([q, a, qEN, aEN], i) => faqItem(q, a, i === 0, qEN, aEN)).join('')}</div>
+
+const faqList = (groups, openFirst = true) => groups.map((g, gi) => `<div class="faq-group"><h3>${g[0]}</h3><div class="faq">${g[1].map(([q, a], i) => `<details${openFirst && gi === 0 && i === 0 ? ' open' : ''}><summary>${q}</summary><p>${a}</p></details>`).join('')}</div></div>`).join('');
+const faqHome = () => `
+<section class="section">
+  <div class="wrap-narrow">
+    <div class="sec-head"><span class="eyebrow">Questions</span><h2 class="h2">Frequently asked</h2></div>
+    ${faqList([FAQS[1], FAQS[2]])}
+    <p class="small" style="margin-top:22px"><a class="link" href="/faq">All questions ${I.arrow}</a></p>
   </div>
 </section>`;
 
-/* ---- final CTA ----------------------------------------------------------- */
-const finalCta = () => `
-<section style="position:relative; padding:clamp(90px,12vh,150px) clamp(20px,5vw,72px); overflow:hidden; text-align:center; border-top:1px solid #E4DBC9;">
-  <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:760px; height:420px; max-width:90vw; background:radial-gradient(ellipse, rgba(201,163,91,.16), transparent 70%); pointer-events:none; animation:glowPulse 9s ease-in-out infinite;"></div>
-  <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:420px; height:420px; max-width:80vw; border:1px dashed rgba(169,133,78,.22); border-radius:50%; animation:spinSlow 70s linear infinite; pointer-events:none;"></div>
-  <div data-reveal style="position:relative;">
-    <div style="display:inline-flex; align-items:center; gap:8px; padding:7px 15px; border:1px solid #D9CDB6; border-radius:999px; background:rgba(255,255,255,.6); margin-bottom:26px;"><span style="width:6px; height:6px; border-radius:50%; background:#16A463;"></span><span style="font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#8a6f43;">7 дни безплатно</span></div>
-    <h2${TH('Start keeping your<br>books today.')} style="font-family:var(--serif); font-weight:400; font-size:clamp(38px,5.4vw,68px); line-height:1.04; letter-spacing:-.025em; color:#123A33; margin:0 0 18px;">Започни да си водиш<br>сметките днес.</h2>
-    <p style="font-size:18px; color:#5a6a63; margin:0 0 34px;">Без банкова карта. Без ангажимент. Спокойни финанси от първия документ.</p>
-    <div style="display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;">${btnDark('/register', 'Започни безплатно', true)}${btnOut('/pricing', 'Виж цените', true)}</div>
+const cta = (h = 'Start with one invoice.', p = 'Create an account, upload a document and see the suggested posting. The decision, as always, is yours.') => `
+<section class="section bg-ink on-ink">
+  <div class="wrap cta">
+    <div class="sec-head" style="margin-bottom:0"><h2 class="h2">${h}</h2><p class="lead">${p}</p><div class="cta-actions" style="margin-top:8px"><a class="btn btn-ink btn-lg" href="/register">Get started ${I.arrow}</a><a class="btn btn-out btn-lg" href="/features">See the product</a></div></div>
+    <div class="cta-side"><p>Controlled access while we validate extraction and VAT on real documents.</p><p>EUR functional currency. Human approval on every posting. Hash-chained audit trail.</p><p><a class="link" style="color:var(--on-ink)" href="/pricing">How access works ${I.arrow}</a></p></div>
   </div>
 </section>`;
 
-/* ---- generic page hero (centered) ---------------------------------------- */
-const pageHero = (eb, h1, lead, ctas, enH1, enLead) => `
-<section style="position:relative; padding:150px clamp(20px,5vw,72px) 70px; overflow:hidden; text-align:center;">
-  <div style="position:absolute; top:-100px; left:50%; transform:translateX(-50%); width:680px; height:560px; max-width:95vw; background:radial-gradient(ellipse, rgba(201,163,91,.14), transparent 66%); pointer-events:none; animation:glowPulse 11s ease-in-out infinite;"></div>
-  ${eyebrow(eb)}
-  <h1 data-reveal data-reveal-delay="80"${enH1 ? TH(enH1) : ''} style="position:relative; font-family:var(--serif); font-weight:400; font-size:clamp(40px,5.6vw,76px); line-height:1.04; letter-spacing:-.025em; color:#123A33; margin:0 auto 24px; max-width:880px;">${h1}</h1>
-  <p data-reveal data-reveal-delay="160"${enLead ? TH(enLead) : ''} style="position:relative; font-size:clamp(16px,1.4vw,19px); line-height:1.65; color:#4a5a53; max-width:580px; margin:0 auto 34px;">${lead}</p>
-  ${ctas ? `<div data-reveal data-reveal-delay="240" style="position:relative; display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;">${ctas}</div>` : ''}
-</section>`;
-
-/* ---- FEATURES page: alternating feature rows ----------------------------- */
-const featChecks = (items) => `<div style="display:flex; flex-direction:column; gap:14px; max-width:430px;">${items.map(([b, r, bEN, rEN]) => `<div style="display:flex; gap:12px; align-items:flex-start;"><span style="color:#16A463; margin-top:2px;">✓</span><span${bEN ? TH(`<strong style="color:#20302B;">${bEN}</strong> — ${rEN}`) : ''} style="font-size:14.5px; color:#3a4843;"><strong style="color:#20302B;">${b}</strong> — ${r}</span></div>`).join('')}</div>`;
-const featText = (num, h2, lead, checks, h2EN, leadEN) => `<div data-reveal="left"><div style="display:inline-flex; align-items:center; gap:8px; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#A9854E; margin-bottom:18px;"><span style="width:24px; height:1px; background:#A9854E;"></span>${num}</div><h2${h2EN ? TH(h2EN) : ''} style="font-family:var(--serif); font-weight:400; font-size:clamp(30px,3.6vw,46px); line-height:1.08; letter-spacing:-.02em; color:#123A33; margin:0 0 18px;">${h2}</h2><p${leadEN ? TH(leadEN) : ''} style="font-size:16px; line-height:1.7; color:#4a5a53; margin:0 0 26px; max-width:440px;">${lead}</p>${featChecks(checks)}</div>`;
-const featRow = (textFirst, alt, anchor, text, media) => `
-<section${anchor ? ` id="${anchor}"` : ''} style="position:relative; padding:clamp(64px,8vh,110px) clamp(20px,5vw,72px); border-top:1px solid #E4DBC9;${alt ? ' background:#FBF8F1;' : ''}">
-  <div data-feat style="max-width:1180px; margin:0 auto; display:grid; grid-template-columns:${textFirst ? '1fr 1.1fr' : '1.1fr 1fr'}; gap:64px; align-items:center;">
-    ${textFirst ? text + media : media + text}
+/* ============================================================================
+   Inner pages
+   ============================================================================ */
+const pageHero = (eyebrow, h1, lead, ctas = '', aside = '') => `
+<section class="page-hero${aside ? ' has-aside' : ''}"><div class="wrap inner">
+  <div class="ph-text">
+    <span class="eyebrow">${eyebrow}</span>
+    <h1 class="display">${h1}</h1>
+    ${lead ? `<p class="lead">${lead}</p>` : ''}
+    ${ctas ? `<div class="hero-cta">${ctas}</div>` : ''}
   </div>
-</section>`;
+  ${aside ? `<div class="ph-aside">${aside}</div>` : ''}
+</div></section>`;
 
-const mediaExtract = () => `<div data-reveal="right" data-feat-media style="position:relative;">
-  <div style="position:relative; background:#fff; border:1px solid #EAE0CD; border-radius:18px; box-shadow:0 34px 80px rgba(18,30,26,.16); overflow:hidden;">
-    <div style="display:flex; gap:0;">
-      <div style="width:38%; background:#FBF8F1; border-right:1px solid #F0EADC; padding:18px; display:flex; flex-direction:column; gap:8px;"><div style="font-size:10px; font-family:var(--mono); color:#9aa49e; margin-bottom:4px;">фактура.pdf</div><div style="height:8px; background:#E4DBC9; border-radius:3px; width:80%;"></div><div style="height:8px; background:#EDE6D6; border-radius:3px; width:60%;"></div><div style="height:8px; background:#EDE6D6; border-radius:3px; width:90%;"></div><div style="height:8px; background:#EDE6D6; border-radius:3px; width:50%;"></div><div style="margin-top:auto; height:8px; background:#E4DBC9; border-radius:3px; width:70%;"></div><div style="height:8px; background:#EDE6D6; border-radius:3px; width:40%;"></div></div>
-      <div style="flex:1; padding:20px;"><div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;"><span style="width:8px; height:8px; border-radius:50%; background:#16A463; animation:pulseDot 2.4s infinite;"></span><span style="font-size:12px; font-weight:600; color:#123A33;">Извлечени полета</span></div>
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid #F4EEE0;"><span style="font-size:12px; color:#6c776f;">Доставчик</span><span style="display:flex; align-items:center; gap:6px;"><span style="font-size:12.5px; font-weight:600; color:#20302B;">ТЕХНО ПЛЮС</span><span style="width:7px; height:7px; border-radius:50%; background:#16A463;"></span></span></div>
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid #F4EEE0;"><span style="font-size:12px; color:#6c776f;">ЕИК</span><span style="display:flex; align-items:center; gap:6px;"><span style="font-size:12.5px; font-weight:600; color:#20302B; font-variant-numeric:tabular-nums;">204…891</span><span style="font-size:10px; font-weight:600; color:#0E8650; background:#ECFBF3; padding:2px 6px; border-radius:999px;">ЕИК ✓</span></span></div>
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid #F4EEE0;"><span style="font-size:12px; color:#6c776f;">Основа</span><span style="display:flex; align-items:center; gap:6px;"><span style="font-size:12.5px; font-weight:600; color:#20302B; font-variant-numeric:tabular-nums;">1 250,00 €</span><span style="width:7px; height:7px; border-radius:50%; background:#16A463;"></span></span></div>
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0;"><span style="font-size:12px; color:#6c776f;">ДДС 20%</span><span style="display:flex; align-items:center; gap:6px;"><span style="font-size:12.5px; font-weight:600; color:#20302B; font-variant-numeric:tabular-nums;">250,00 €</span><span style="width:7px; height:7px; border-radius:50%; background:#E39B12;"></span></span></div>
-        <div style="margin-top:12px; display:flex; align-items:center; justify-content:center; gap:7px; padding:9px; background:#ECFBF3; border-radius:9px; font-size:11.5px; font-weight:600; color:#0E8650;">Основа + ДДС = Общо ✓</div>
-      </div>
-    </div>
-  </div>
-  <div data-parallax="0.08" style="position:absolute; bottom:-18px; left:-14px; display:flex; align-items:center; gap:8px; background:#123A33; color:#F4EFE4; padding:10px 14px; border-radius:12px; box-shadow:0 18px 38px rgba(18,58,51,.28); font-size:12px; font-weight:600; animation:floatYsm 6s ease-in-out infinite;"><span style="width:8px; height:8px; border-radius:50%; background:#86f0bd;"></span> Готово за 0.8 секунди</div>
-</div>`;
-
-const mediaInvoice = () => `<div data-reveal="left" data-feat-media style="position:relative;">
-  <div style="background:#fff; border:1px solid #EAE0CD; border-radius:18px; box-shadow:0 34px 80px rgba(18,30,26,.16); overflow:hidden;">
-    <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #F0EADC;"><span style="font-size:13px; font-weight:600; color:#123A33;">Нова фактура · INV-2026-0042</span><span style="font-size:11px; color:#9aa49e; font-family:var(--mono);">чернова</span></div>
-    <div style="padding:20px;">
-      <div style="display:grid; grid-template-columns:1fr auto auto; gap:12px; font-size:11px; color:#9aa49e; padding-bottom:8px; border-bottom:1px solid #F4EEE0;"><span>Описание</span><span>Кол.</span><span>Сума</span></div>
-      <div style="display:grid; grid-template-columns:1fr auto auto; gap:12px; font-size:12.5px; color:#20302B; padding:11px 0; border-bottom:1px solid #F4EEE0;"><span>Консултантски услуги</span><span style="font-variant-numeric:tabular-nums;">10</span><span style="font-variant-numeric:tabular-nums; font-weight:600;">1 000,00 €</span></div>
-      <div style="display:grid; grid-template-columns:1fr auto auto; gap:12px; font-size:12.5px; color:#20302B; padding:11px 0; border-bottom:1px solid #F4EEE0;"><span>Поддръжка · месечна</span><span style="font-variant-numeric:tabular-nums;">1</span><span style="font-variant-numeric:tabular-nums; font-weight:600;">250,00 €</span></div>
-      <div style="margin-top:14px; display:flex; justify-content:flex-end;"><div style="width:200px;"><div style="display:flex; justify-content:space-between; font-size:12.5px; color:#6c776f; padding:4px 0;"><span>Нето</span><span style="font-variant-numeric:tabular-nums;">1 250,00 €</span></div><div style="display:flex; justify-content:space-between; font-size:12.5px; color:#6c776f; padding:4px 0; border-bottom:1px solid #F4EEE0;"><span>ДДС 20%</span><span style="font-variant-numeric:tabular-nums;">250,00 €</span></div><div style="display:flex; justify-content:space-between; align-items:baseline; padding:10px 0 2px;"><span style="font-size:12.5px; font-weight:600; color:#123A33;">Общо</span><span style="font-family:var(--serif); font-size:22px; font-weight:500; color:#123A33; font-variant-numeric:tabular-nums;">1 500,00 €</span></div></div></div>
-    </div>
-    <div style="display:flex; gap:10px; padding:14px 20px; border-top:1px solid #F0EADC; background:#FBF8F1;"><span style="flex:1; text-align:center; padding:10px; background:#123A33; color:#fff; border-radius:8px; font-size:13px; font-weight:600;">Издай фактура</span><span style="padding:10px 14px; border:1px solid #E4DBC9; color:#6c776f; border-radius:8px; font-size:13px;">PDF</span></div>
-  </div>
-</div>`;
-
-const mediaVat = () => `<div data-reveal="right" data-feat-media style="position:relative;">
-  <div style="background:#fff; border:1px solid #EAE0CD; border-radius:18px; box-shadow:0 34px 80px rgba(18,30,26,.16); overflow:hidden;">
-    <div style="padding:18px 20px; border-bottom:1px solid #F0EADC; display:flex; align-items:center; justify-content:space-between;"><span style="font-size:13px; font-weight:600; color:#123A33;">Справка-декларация · май 2026</span><span style="font-size:10px; font-family:var(--mono); color:#9A6406; background:#FEF6E7; padding:3px 8px; border-radius:999px;">заключва периода</span></div>
-    <div style="padding:20px;">
-      <div style="display:flex; justify-content:space-between; font-size:12.5px; color:#6c776f; padding:8px 0; border-bottom:1px solid #F4EEE0;"><span>Начислен ДДС (продажби)</span><span style="font-variant-numeric:tabular-nums; color:#20302B; font-weight:600;">3 420,00 €</span></div>
-      <div style="display:flex; justify-content:space-between; font-size:12.5px; color:#6c776f; padding:8px 0; border-bottom:1px solid #F4EEE0;"><span>Данъчен кредит (покупки)</span><span style="font-variant-numeric:tabular-nums; color:#20302B; font-weight:600;">2 160,00 €</span></div>
-      <div style="display:flex; justify-content:space-between; align-items:baseline; padding:12px 0 4px;"><span style="font-size:13px; font-weight:600; color:#123A33;">ДДС за внасяне</span><span style="font-family:var(--serif); font-size:24px; font-weight:500; color:#123A33; font-variant-numeric:tabular-nums;">1 260,00 €</span></div>
-      <div style="margin-top:14px; padding:13px; background:#FBF8F1; border:1px solid #F0EADC; border-radius:10px; font-size:12px; line-height:1.55; color:#5a6a63;">Подаваш декларацията за <strong style="color:#20302B;">май 2026</strong>: <strong style="color:#20302B;">1 260 € за внасяне</strong>. Това заключва периода.</div>
-      <div style="margin-top:14px; display:flex; gap:10px;"><span style="flex:1; text-align:center; padding:13px; background:#0E8650; color:#fff; border-radius:9px; font-size:13.5px; font-weight:600;">Потвърди и подай с КЕП</span></div>
-    </div>
-  </div>
-</div>`;
-
-const mediaReports = () => `<div data-reveal="left" data-feat-media style="position:relative;">
-  <div style="background:#fff; border:1px solid #EAE0CD; border-radius:18px; box-shadow:0 34px 80px rgba(18,30,26,.16); overflow:hidden;">
-    <div style="padding:18px 20px; border-bottom:1px solid #F0EADC; display:flex; align-items:center; justify-content:space-between;"><span style="font-size:13px; font-weight:600; color:#123A33;">Отчет за приходи и разходи</span><span style="font-size:11px; color:#9aa49e; font-family:var(--mono);">2026 · на живо</span></div>
-    <div style="padding:22px 20px;">
-      <div style="display:flex; align-items:flex-end; gap:10px; height:120px; margin-bottom:18px;"><div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;"><div style="width:100%; height:54px; background:#E4DBC9; border-radius:5px 5px 0 0;"></div><span style="font-size:9px; color:#9aa49e;">Q1</span></div><div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;"><div style="width:100%; height:78px; background:#C9B98F; border-radius:5px 5px 0 0;"></div><span style="font-size:9px; color:#9aa49e;">Q2</span></div><div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;"><div style="width:100%; height:66px; background:#D9CDB6; border-radius:5px 5px 0 0;"></div><span style="font-size:9px; color:#9aa49e;">Q3</span></div><div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;"><div style="width:100%; height:104px; background:#123A33; border-radius:5px 5px 0 0;"></div><span style="font-size:9px; color:#9aa49e;">Q4</span></div></div>
-      <div style="display:flex; justify-content:space-between; font-size:12.5px; color:#6c776f; padding:8px 0; border-bottom:1px solid #F4EEE0;"><span>Приходи</span><span style="font-variant-numeric:tabular-nums; color:#0E8650; font-weight:600;">+ 84 200,00 €</span></div>
-      <div style="display:flex; justify-content:space-between; font-size:12.5px; color:#6c776f; padding:8px 0; border-bottom:1px solid #F4EEE0;"><span>Разходи</span><span style="font-variant-numeric:tabular-nums; color:#20302B; font-weight:600;">− 51 680,00 €</span></div>
-      <div style="display:flex; justify-content:space-between; align-items:baseline; padding:10px 0 0;"><span style="font-size:13px; font-weight:600; color:#123A33;">Резултат</span><span style="font-family:var(--serif); font-size:22px; font-weight:500; color:#0E8650; font-variant-numeric:tabular-nums;">32 520,00 €</span></div>
-    </div>
-  </div>
-</div>`;
-
-const securityBand = () => `
-<section id="security" style="position:relative; padding:clamp(72px,9vh,120px) clamp(20px,5vw,72px); background:#123A33; color:#F4EFE4; overflow:hidden; border-top:1px solid #E4DBC9;">
-  <div style="position:absolute; top:-80px; right:6%; width:420px; height:420px; border-radius:50%; background:radial-gradient(circle, rgba(233,201,140,.12), transparent 70%); pointer-events:none; animation:glowPulse 12s ease-in-out infinite;"></div>
-  <div style="position:relative; max-width:1180px; margin:0 auto;">
-    <div data-reveal style="max-width:640px; margin-bottom:48px;"><div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#E9C98C; margin-bottom:16px;">Сигурност по дизайн</div><h2${TH('Built to protect your money<br>and your peace of mind.')} style="font-family:var(--serif); font-weight:400; font-size:clamp(30px,3.8vw,48px); line-height:1.08; letter-spacing:-.02em; color:#F4EFE4; margin:0;">Създадено да пази парите ти<br>и спокойствието ти.</h2></div>
-    <div data-4col style="display:grid; grid-template-columns:repeat(4,1fr); gap:18px;">
-      ${secCard(I.shieldP, 'Неизменен ledger', 'Само сторниращи записи. Нищо не се изтрива тихо.')}
-      ${secCard(I.ledger, 'Хеширан одит', 'Append-only следа за всяко действие.', 80)}
-      ${secCard(I.globe, 'Поверителност', 'Нулево задържане на данни от AI.', 160)}
-      ${secCard(I.roles, 'Роли и достъп', 'Собственик, счетоводител, одобряващ, четец.', 240)}
-    </div>
-    <div data-reveal style="margin-top:28px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:18px 22px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:14px;"><span style="font-size:13px; color:#9fc3b8;">Принципът, който не нарушаваме:</span><span style="font-size:14px; font-weight:600; color:#E9C98C;">AI предлага · човек одобрява · ledger-ът е неизменен · всичко е одитирано.</span></div>
-  </div>
-</section>`;
-const secCard = (ic, t, d, delay) => `<div data-reveal${delay ? ` data-reveal-delay="${delay}"` : ''} class="lift-g" style="background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:26px; transition:transform .5s var(--ease), background .3s;"><div style="color:#86f0bd; margin-bottom:16px;">${ic}</div><h3 style="font-size:15px; font-weight:600; margin:0 0 8px;">${t}</h3><p style="font-size:13px; line-height:1.6; color:#9fc3b8; margin:0;">${d}</p></div>`;
-
-const CAPS = [
-  ['Препрати по имейл', 'Изпрати фактура на личния си адрес — влиза директно в опашката.'],
-  ['Категоризиране на разходи', 'AI предлага сметка и тип ДДС; ти потвърждаваш с клик.', 60],
-  ['Одобрение накуп', 'Чистите документи с висока увереност — на един клик.', 120],
-  ['Напомняния за срокове', 'ДДС и плащания — спокойно, навреме, без изненади.'],
-  ['AI асистент', 'Обяснява термини и сочи източници — но никога не подава вместо теб.', 60],
-  ['Покани счетоводител', 'Работиш сам — или даваш достъп с роля, когато поискаш.', 120],
+const FEATURE_ROWS = [
+  ['capture', '01', 'Capture', 'Every document in, checked and kept.', ['PDF, JPG/PNG and XML invoices, by upload', 'File type and size validation, malware-scan hook', 'Immutable storage with versions; trash with restore', 'Every upload is written to the audit trail'], () => `<div class="canvas" aria-hidden="true">${frUpload()}</div>`, 'white'],
+  ['extraction', '02', 'Extraction', 'Fields read with confidence, facts checked by rules.', ['Field-by-field values with confidence and origin', 'UIC checksum, VAT number, IBAN mod-97, base + VAT = total', 'Diagnostics: why a field is empty or was rejected', 'XML parsed natively; scans via an EU document-AI provider (beta)'], () => `<div class="canvas" aria-hidden="true"><div class="rv-grid"><div class="ui"><div class="ui-h"><b>Extracted data</b><span class="conf ok">overall 94%</span></div><div class="ui-fields one"><div class="ui-group">Supplier</div><div class="ui-field"><div><b>Name</b><strong>Softuer Prima EOOD</strong></div><span class="conf ok">94%</span></div><div class="ui-field"><div><b>UIC</b><strong>204117823</strong></div><span class="conf ok">checked</span></div><div class="ui-group">Amounts</div><div class="ui-field flag"><div><b>Tax base</b><strong>190.00 €</strong></div><span class="conf warn">71%</span></div><div class="ui-field"><div><b>VAT 20%</b><strong>38.00 €</strong></div><span class="conf ok">checked</span></div><div class="ui-field"><div><b>Total</b><strong>228.00 €</strong></div><span class="conf ok">checked</span></div></div></div><div>${frPaper('net')}</div></div><span class="callout" style="left:22px;bottom:22px"><i></i> 190.00 + 38.00 = 228.00 · verified by rule</span></div>`, 'white'],
+  ['review', '03', 'Review and approve', 'The decision stays with a person.', ['Queue ordered by what needs attention', 'Source document next to the fields; weak fields flagged', 'Correct fields, add missing ones, regenerate the suggestion', 'Approve or reject; only a user with the right role can'], () => `<div class="canvas" aria-hidden="true"><div class="two">${frDecision('review')}${frSuggestion()}</div></div>`, 'white'],
+  ['ledger', '04', 'Ledger and periods', 'Balanced, append-only, closeable.', ['Double-entry balance enforced in the database', 'No edits or deletes; corrections are reversing entries', 'Lock a period; posting into it is refused', 'Journal with every entry, line and source document'], () => `<div class="canvas" aria-hidden="true"><div class="stack">${frJournal()}${frPeriods()}</div></div>`, 'warm'],
+  ['invoicing', '05', 'Invoicing', 'Issue, number, send.', ['Sequential numbering per series and year', 'Proformas, credit and debit notes, conversion to invoice', 'Catalogue of products and services with VAT codes', 'PDF generated on issue; email delivery (PDF attachment planned)'], () => `<div class="canvas" aria-hidden="true"><div class="ui"><div class="ui-h"><b>Invoices</b><span class="ui-btn ink">New document</span></div><table class="ui-table"><tr><th>Number</th><th>Customer</th><th class="hide-sm">Date</th><th class="hide-sm">Status</th><th class="r">Amount</th></tr><tr><td class="m">2026-0031</td><td class="s">Delta Consult OOD</td><td class="hide-sm">28.09.2026</td><td class="hide-sm"><span class="pill ok">issued</span></td><td class="r">1 800.00 €</td></tr><tr><td class="m">2026-0030</td><td class="s">Beta EOOD</td><td class="hide-sm">22.09.2026</td><td class="hide-sm"><span class="pill ok">issued</span></td><td class="r">360.00 €</td></tr><tr><td class="m">PF-0012</td><td class="s">Gamma AD</td><td class="hide-sm">20.09.2026</td><td class="hide-sm"><span class="pill neu">proforma</span></td><td class="r">2 400.00 €</td></tr><tr><td class="m">CN-0003</td><td class="s">Beta EOOD</td><td class="hide-sm">18.09.2026</td><td class="hide-sm"><span class="pill warn">credit note</span></td><td class="r">-120.00 €</td></tr></table></div></div>`, 'warm'],
+  ['banking', '06', 'Bank, receivables, payables', 'Matched, never auto-booked.', ['CSV/XLSX statement import with row-level duplicate detection', 'Ranked match suggestions; you confirm each one', 'Payments and reversals posted to the ledger', 'Open items and ageing for receivables and payables'], () => `<div class="canvas" aria-hidden="true"><div class="stack">${frBankMatch()}<div class="two">${frAR()}<div class="ui ui-w"><div class="wt">Payables <span>View all →</span></div><div class="big">6 380.00 €</div><div class="kv"><span>Current</span><b>4 180.00 €</b></div><div class="kv"><span>Overdue · 3 documents</span><b class="warn">2 200.00 €</b></div></div></div></div></div>`, 'warm'],
+  ['vat', '07', 'VAT and SAF-T', 'Bulgarian VAT, from the ledger.', ['Purchase and sales registers per period', 'Period summary: output, input, payable or refundable', 'Treatments: 20%, 9%, 0%, exempt, reverse charge, intra-EU', 'VIES dataset; SAF-T dataset, validation and XML export (beta)'], () => `<div class="canvas tint" aria-hidden="true"><div class="stack">${frVatKpis()}${frSaft()}</div></div>`, 'tint'],
+  ['reports', '08', 'Reports', 'Figures that trace to a line.', ['Trial balance and general ledger', 'Profit and loss, balance sheet', 'Revenue and expenses by month, cash flow', 'CSV export of every report'], () => `<div class="canvas tint" aria-hidden="true">${frTB()}</div>`, 'tint'],
+  ['assistant', '09', 'AI Accountant', 'Explains. Never posts.', ['Fixed questions about VAT, receivables, payables and results', 'Citations to the journal, registers and documents', 'Confidence level; abstains when data is missing', 'Read-only identity; every question is audited'], () => `<div class="canvas tint" aria-hidden="true">${frAssistant()}</div>`, 'tint'],
 ];
-const capabilities = () => `
-<section style="position:relative; padding:clamp(72px,9vh,120px) clamp(20px,5vw,72px); border-top:1px solid #E4DBC9;">
-  <div style="max-width:1180px; margin:0 auto;">
-    <div data-reveal style="text-align:center; max-width:620px; margin:0 auto 48px;">${lab('И още')}<h2 style="font-family:var(--serif); font-weight:400; font-size:clamp(30px,3.8vw,48px); line-height:1.08; letter-spacing:-.02em; color:#123A33; margin:0;">Дребните неща, които пестят часове.</h2></div>
-    <div data-3col style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px;">
-      ${CAPS.map(([t, d, delay]) => `<div data-reveal${delay ? ` data-reveal-delay="${delay}"` : ''} class="lift" style="background:#FBF8F1; border:1px solid #EAE0CD; border-radius:14px; padding:24px;"><h3 style="font-size:15px; font-weight:600; color:#123A33; margin:0 0 7px;">${t}</h3><p style="font-size:13px; line-height:1.6; color:#5a6a63; margin:0;">${d}</p></div>`).join('')}
-    </div>
-  </div>
-</section>`;
 
-const featuresCta = () => `
-<section style="position:relative; padding:clamp(90px,12vh,150px) clamp(20px,5vw,72px); overflow:hidden; text-align:center; background:#FBF8F1; border-top:1px solid #E4DBC9;">
-  <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:760px; height:420px; max-width:90vw; background:radial-gradient(ellipse, rgba(201,163,91,.16), transparent 70%); pointer-events:none; animation:glowPulse 9s ease-in-out infinite;"></div>
-  <div data-reveal style="position:relative;"><h2${TH('Try every feature,<br>free.')} style="font-family:var(--serif); font-weight:400; font-size:clamp(36px,5vw,64px); line-height:1.05; letter-spacing:-.025em; color:#123A33; margin:0 0 18px;">Опитай всяка функция,<br>безплатно.</h2><p style="font-size:18px; color:#5a6a63; margin:0 0 34px;">7 дни. Без банкова карта. Без ангажимент.</p><div style="display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;">${btnDark('/register', 'Започни безплатно', true)}${btnOut('/pricing', 'Виж цените', true)}</div></div>
-</section>`;
-
-const featuresBody = () => pageHero('Функции · Features', 'Всичко за финансите ти,<br>на едно <span style="font-style:italic; color:#A9854E;">спокойно</span> място.', 'От заснет документ до подадена декларация — всяка стъпка е автоматизирана от AI и потвърдена от теб. Ето какво можеш.', btnDark('/register', 'Започни безплатно') + btnOut('/pricing', 'Виж цените'), 'Everything for your finances,<br>in one <span style="font-style:italic; color:#A9854E;">calm</span> place.', 'From a snapped document to a filed return — every step automated by AI and confirmed by you. Here is what you can do.')
-  + featRow(true, false, 'extract', featText('01 · Capture', 'AI извличане, на което<br>можеш да стъпиш.', 'Снимка, PDF или XML — AI разчита всяко поле и предлага осчетоводяване срещу националния сметкоплан. Всяка стойност носи оценка на увереност, а детерминираните проверки имат думата.', [['Увереност за всяко поле', '🟢 високо, 🟠 средно, 🔴 ниско, винаги с процент.', 'Confidence per field', '🟢 high, 🟠 medium, 🔴 low, always with a percentage.'], ['Детерминирани проверки', 'ЕИК, VIES, IBAN и Основа + ДДС = Общо.', 'Deterministic checks', 'company ID, VIES, IBAN and Base + VAT = Total.'], ['Винаги „защо?“', 'всяко предложение обяснява себе си и сочи източник.', 'Always “why?”', 'every suggestion explains itself and cites a source.']], 'AI extraction you<br>can rely on.', 'A photo, PDF or XML — AI reads every field and proposes the posting against the national chart of accounts. Every value carries a confidence score, and deterministic checks have the final say.'), mediaExtract())
-  + featRow(false, true, 'invoicing', featText('02 · Invoicing', 'Фактури, които изглеждат професионално.', 'Издавай фактури, проформи и кредитни известия с последователна номерация и чист PDF. Нето, ДДС и общо се смятат на живо — в EUR, с BGN като отправна стойност.', [['Последователна номерация', 'без пропуски, без дубли.', 'Sequential numbering', 'no gaps, no duplicates.'], ['Двувалутно', 'EUR функционална, BGN до 8 август 2026.', 'Dual-currency', 'EUR functional, BGN until 8 August 2026.'], ['Кредитни и дебитни известия', 'свързани с оригинала.', 'Credit and debit notes', 'linked to the original.']], 'Invoices that look professional.', 'Issue invoices, proformas and credit notes with sequential numbering and a clean PDF. Net, VAT and total are calculated live — in EUR, with BGN as the reference value.'), mediaInvoice())
-  + featRow(true, false, 'vat', featText('03 · VAT &amp; НАП', 'ДДС, готово за подаване.', 'Дневниците за покупки и продажби и справка-декларацията се попълват сами от осчетоводените документи. Преди да подадеш, виждаш точно какво ще се случи — и подписваш с КЕП.', [['Дневници покупки и продажби', 'автоматично от ledger-а.', 'Purchase & sales ledgers', 'automatically from the ledger.'], ['Клетки на НАП', 'съпоставени и проверени.', 'NRA cells', 'mapped and checked.'], ['Ти подаваш, не AI', 'потвърждение и подпис с КЕП.', 'You file, not AI', 'confirmation and e-signature.']], 'VAT, ready to file.', 'The purchase and sales ledgers and the VAT return fill themselves from posted documents. Before you submit, you see exactly what will happen — and sign with your e-signature.'), mediaVat())
-  + featRow(false, true, 'reports', featText('04 · Reports', 'Отчети, които разбираш.', 'ОПР, баланс и оборотна ведомост — на живо, винаги актуални и проследими до документа. Виж как стои бизнесът ти, без да чакаш края на месеца.', [['ОПР, баланс, оборотна ведомост', 'на живо.', 'P&L, balance sheet, trial balance', 'live.'], ['Проследимост', 'всяко число води до документа зад него.', 'Traceability', 'every number leads to the document behind it.'], ['Експорт', 'за теб или за счетоводителя ти.', 'Export', 'for you or your accountant.']], 'Reports you understand.', 'P&L, balance sheet, trial balance — live, always current and traceable to the document. See how your business stands without waiting for month-end.'), mediaReports())
-  + securityBand() + capabilities() + featuresCta();
-
-/* ---- PRICING page -------------------------------------------------------- */
-const planFeat = (t, off) => `<div style="display:flex; gap:10px; align-items:flex-start; font-size:13.5px; color:${off ? '#8a948e' : '#3a4843'};"><span style="color:${off ? '#C5CEDA' : '#16A463'};">✓</span> ${t}</div>`;
-const pricingTiers = () => `
-<section style="position:relative; padding:150px clamp(20px,5vw,72px) 50px; overflow:hidden; text-align:center;">
-  <div style="position:absolute; top:-100px; left:50%; transform:translateX(-50%); width:680px; height:540px; max-width:95vw; background:radial-gradient(ellipse, rgba(201,163,91,.14), transparent 66%); pointer-events:none; animation:glowPulse 11s ease-in-out infinite;"></div>
-  ${eyebrow('Цени · Pricing')}
-  <h1 data-reveal data-reveal-delay="80"${TH('Transparent pricing,<br>no <span style="font-style:italic; color:#A9854E;">surprises.</span>')} style="position:relative; font-family:var(--serif); font-weight:400; font-size:clamp(40px,5.6vw,76px); line-height:1.04; letter-spacing:-.025em; color:#123A33; margin:0 auto 22px; max-width:820px;">Прозрачни цени,<br>без <span style="font-style:italic; color:#A9854E;">изненади.</span></h1>
-  <p data-reveal data-reveal-delay="160" style="position:relative; font-size:clamp(16px,1.4vw,19px); line-height:1.65; color:#4a5a53; max-width:540px; margin:0 auto 34px;">Една ясна абонаментна цена. Без такси за документ, без скрити условия. Започни безплатно за 7 дни.</p>
-  <div data-reveal data-reveal-delay="220" style="position:relative; display:inline-flex; align-items:center; gap:12px;"><div style="display:flex; align-items:center; background:#fff; border:1px solid #E4DBC9; border-radius:999px; padding:5px; box-shadow:0 6px 18px rgba(18,30,26,.06);"><button data-bill="month" style="padding:9px 20px; border:none; background:#123A33; color:#F4EFE4; border-radius:999px; font-size:13.5px; font-weight:600; cursor:pointer;">Месечно</button><button data-bill="year" style="padding:9px 20px; border:none; background:transparent; color:#5a6a63; border-radius:999px; font-size:13.5px; font-weight:600; cursor:pointer;">Годишно</button></div><span style="font-size:12px; font-weight:600; color:#0E8650; background:#ECFBF3; padding:6px 12px; border-radius:999px;">− 20% годишно</span></div>
-</section>
-<section style="position:relative; padding:8px clamp(20px,5vw,72px) clamp(64px,8vh,100px);">
-  <div data-tiers style="max-width:1120px; margin:0 auto; display:grid; grid-template-columns:repeat(3,1fr); gap:20px; align-items:stretch;">
-    <div data-reveal class="lift" style="background:#fff; border:1px solid #EAE0CD; border-radius:20px; padding:32px; display:flex; flex-direction:column;">
-      <div style="font-family:var(--serif); font-size:24px; color:#123A33; margin-bottom:6px;">Старт</div><p style="font-size:13px; color:#6c776f; margin:0 0 22px;">За самонаети и фрийлансъри.</p>
-      <div style="display:flex; align-items:baseline; gap:4px; margin-bottom:4px;"><span style="font-family:var(--serif); font-size:52px; font-weight:500; color:#123A33; font-variant-numeric:tabular-nums;"><span data-price data-m="9" data-a="7">9</span> €</span><span style="font-size:14px; color:#8a948e;">/мес</span></div>
-      <div style="font-size:11px; color:#9aa49e; margin-bottom:24px;">без ДДС</div>
-      <a href="/register?plan=starter" class="j-out" style="text-align:center; padding:13px; border:1px solid #C9BCA1; color:#123A33; border-radius:999px; font-size:14px; font-weight:600; margin-bottom:24px;">Започни безплатно</a>
-      <div style="display:flex; flex-direction:column; gap:13px;">${planFeat('До 50 документа на месец')}${planFeat('AI извличане и осчетоводяване')}${planFeat('Фактуриране и PDF')}${planFeat('1 фирма · 1 потребител')}${planFeat('Имейл поддръжка', true)}</div>
-    </div>
-    <div data-reveal data-reveal-delay="100" style="position:relative; background:#123A33; border:1px solid #123A33; border-radius:20px; padding:34px 32px; display:flex; flex-direction:column; color:#F4EFE4; box-shadow:0 30px 64px rgba(18,58,51,.26); overflow:hidden;">
-      <div style="position:absolute; top:-50px; right:-30px; width:240px; height:240px; border-radius:50%; background:radial-gradient(circle,rgba(233,201,140,.16),transparent 70%); pointer-events:none;"></div>
-      <div style="position:relative; display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;"><span style="font-family:var(--serif); font-size:24px; color:#F4EFE4;">Бизнес</span><span style="font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:#123A33; background:#E9C98C; padding:5px 10px; border-radius:999px;">Най-избиран</span></div>
-      <p style="position:relative; font-size:13px; color:#9fc3b8; margin:0 0 22px;">За малки фирми и ЕООД.</p>
-      <div style="position:relative; display:flex; align-items:baseline; gap:4px; margin-bottom:4px;"><span style="font-family:var(--serif); font-size:52px; font-weight:500; color:#F4EFE4; font-variant-numeric:tabular-nums;"><span data-price data-m="19" data-a="15">19</span> €</span><span style="font-size:14px; color:#9fc3b8;">/мес</span></div>
-      <div style="position:relative; font-size:11px; color:#86b0a4; margin-bottom:24px;">без ДДС</div>
-      <a href="/register?plan=business" data-magnetic class="j-gold" style="position:relative; text-align:center; padding:13px; background:#E9C98C; color:#123A33; border-radius:999px; font-size:14px; font-weight:600; margin-bottom:24px;">Започни безплатно</a>
-      <div style="position:relative; display:flex; flex-direction:column; gap:13px;"><div style="display:flex; gap:10px; font-size:13.5px; color:#dceae4;"><span style="color:#86f0bd;">✓</span> До 200 документа на месец</div><div style="display:flex; gap:10px; font-size:13.5px; color:#dceae4;"><span style="color:#86f0bd;">✓</span> Всичко от Старт, плюс:</div><div style="display:flex; gap:10px; font-size:13.5px; color:#dceae4;"><span style="color:#86f0bd;">✓</span> ДДС дневници и декларация (НАП)</div><div style="display:flex; gap:10px; font-size:13.5px; color:#dceae4;"><span style="color:#86f0bd;">✓</span> Отчети на живо · ОПР, баланс, ОВ</div><div style="display:flex; gap:10px; font-size:13.5px; color:#dceae4;"><span style="color:#86f0bd;">✓</span> 1 фирма · до 3 потребители</div><div style="display:flex; gap:10px; font-size:13.5px; color:#dceae4;"><span style="color:#86f0bd;">✓</span> Приоритетна поддръжка</div></div>
-    </div>
-    <div data-reveal data-reveal-delay="200" class="lift" style="background:#fff; border:1px solid #EAE0CD; border-radius:20px; padding:32px; display:flex; flex-direction:column;">
-      <div style="font-family:var(--serif); font-size:24px; color:#123A33; margin-bottom:6px;">Про</div><p style="font-size:13px; color:#6c776f; margin:0 0 22px;">За онлайн магазини и много фирми.</p>
-      <div style="display:flex; align-items:baseline; gap:4px; margin-bottom:4px;"><span style="font-family:var(--serif); font-size:52px; font-weight:500; color:#123A33; font-variant-numeric:tabular-nums;"><span data-price data-m="39" data-a="31">39</span> €</span><span style="font-size:14px; color:#8a948e;">/мес</span></div>
-      <div style="font-size:11px; color:#9aa49e; margin-bottom:24px;">без ДДС</div>
-      <a href="/register?plan=premium" class="j-out" style="text-align:center; padding:13px; border:1px solid #C9BCA1; color:#123A33; border-radius:999px; font-size:14px; font-weight:600; margin-bottom:24px;">Започни безплатно</a>
-      <div style="display:flex; flex-direction:column; gap:13px;">${planFeat('Неограничени документи')}${planFeat('Всичко от Бизнес, плюс:')}${planFeat('Много фирми · до 10 потребители')}${planFeat('Роли и достъп · одобряващ, четец')}${planFeat('Експорт и API')}${planFeat('Посветена поддръжка', true)}</div>
-    </div>
-  </div>
-  <p data-reveal style="text-align:center; font-size:13px; color:#8a948e; margin:28px auto 0; max-width:560px;">Всички цени са в евро, без ДДС. Без скрити такси и без такса за документ.</p>
-</section>`;
-
-const customPlan = () => `
-<section style="position:relative; padding:0 clamp(20px,5vw,72px) clamp(56px,7vh,90px);">
-  <div data-reveal="scale" style="position:relative; max-width:1120px; margin:0 auto; background:#123A33; border-radius:24px; overflow:hidden; box-shadow:0 34px 80px rgba(18,58,51,.26);">
-    <div style="position:absolute; top:-90px; right:-40px; width:420px; height:420px; border-radius:50%; background:radial-gradient(circle, rgba(233,201,140,.2), transparent 68%); pointer-events:none; animation:glowPulse 12s ease-in-out infinite;"></div>
-    <div style="position:absolute; inset:0; background:radial-gradient(120% 100% at 0% 100%, rgba(22,164,99,.12), transparent 55%); pointer-events:none;"></div>
-    <div data-2col style="position:relative; display:grid; grid-template-columns:1.25fr .75fr; gap:40px; align-items:center; padding:clamp(32px,4vw,52px);">
-      <div>
-        <div style="display:inline-flex; align-items:center; gap:9px; padding:7px 14px; border:1px solid rgba(233,201,140,.4); border-radius:999px; background:rgba(233,201,140,.08); margin-bottom:22px;"><span style="width:6px; height:6px; border-radius:50%; background:#E9C98C;"></span><span style="font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#E9C98C;">Индивидуален · Custom</span></div>
-        <h2${TH('For larger teams and<br>specific requirements.')} style="font-family:var(--serif); font-weight:400; font-size:clamp(28px,3.4vw,42px); line-height:1.08; letter-spacing:-.02em; color:#F4EFE4; margin:0 0 14px;">За по-големи екипи и<br>специфични изисквания.</h2>
-        <p style="font-size:15.5px; line-height:1.65; color:#bcd0c9; margin:0 0 24px; max-width:480px;">Голям обем документи, много дружества, собствени роли и интеграции. Изграждаме план, който пасва точно на счетоводството ти.</p>
-        <div style="display:flex; flex-wrap:wrap; gap:10px;">${['Неограничени дружества', 'SSO и собствени роли', 'Миграция на данни', 'Посветен мениджър & SLA'].map((t) => `<span style="display:inline-flex; align-items:center; gap:7px; font-size:12.5px; color:#dceae4; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); padding:8px 13px; border-radius:999px;"><span style="color:#86f0bd;">✓</span> ${t}</span>`).join('')}</div>
-      </div>
-      <div style="background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); border-radius:18px; padding:30px; text-align:center;"><div style="font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:#9fc3b8; margin-bottom:8px;">Цена</div><div style="font-family:var(--serif); font-size:34px; font-weight:500; color:#F4EFE4; margin-bottom:6px;">По договаряне</div><p style="font-size:12.5px; color:#9fc3b8; margin:0 0 22px;">Спокоен разговор, ясна оферта.</p><a href="/contact" data-magnetic class="j-gold" style="display:flex; align-items:center; justify-content:center; gap:9px; padding:15px; background:#E9C98C; color:#123A33; border-radius:999px; font-size:15px; font-weight:600; margin-bottom:12px;">Свържи се с нас <span>→</span></a><a href="/contact" style="display:block; font-size:13px; font-weight:500; color:#cfe0da; text-decoration:underline; text-underline-offset:3px;">Заяви оферта</a></div>
-    </div>
-  </div>
-</section>`;
-
-const cmpRow = (label, cells, alt) => `<div style="display:grid; grid-template-columns:1.6fr 1fr 1fr 1fr; align-items:center; padding:15px 22px; border-bottom:1px solid #F0EADC;${alt ? ' background:#FCFAF5;' : ''}"><span style="font-size:13.5px; color:#3a4843;">${label}</span>${cells.map((c) => `<span style="text-align:center; font-size:13px; color:${c === '—' ? '#C5CEDA' : c === '✓' ? '#16A463' : '#20302B'};">${c}</span>`).join('')}</div>`;
-const comparison = () => `
-<section style="position:relative; padding:clamp(64px,8vh,110px) clamp(20px,5vw,72px); background:#FBF8F1; border-top:1px solid #E4DBC9;">
-  <div style="max-width:1000px; margin:0 auto;">
-    <div data-reveal style="text-align:center; margin-bottom:44px;">${lab('Сравнение')}<h2 style="font-family:var(--serif); font-weight:400; font-size:clamp(30px,3.8vw,46px); line-height:1.08; letter-spacing:-.02em; color:#123A33; margin:0;">Какво влиза във всеки план.</h2></div>
-    <div data-reveal data-cmp style="background:#fff; border:1px solid #EAE0CD; border-radius:18px; overflow:hidden; box-shadow:0 18px 50px rgba(18,30,26,.07);">
-      <div style="display:grid; grid-template-columns:1.6fr 1fr 1fr 1fr; align-items:center; padding:18px 22px; background:#123A33; color:#F4EFE4;"><span style="font-size:13px; font-weight:600;">Функция</span><span style="font-size:13px; font-weight:600; text-align:center;">Старт</span><span style="font-size:13px; font-weight:600; text-align:center; color:#E9C98C;">Бизнес</span><span style="font-size:13px; font-weight:600; text-align:center;">Про</span></div>
-      ${cmpRow('Документи на месец', ['50', '200', '∞'])}
-      ${cmpRow('AI извличане и осчетоводяване', ['✓', '✓', '✓'], true)}
-      ${cmpRow('Фактуриране и PDF', ['✓', '✓', '✓'])}
-      ${cmpRow('ДДС дневници и декларация (НАП)', ['—', '✓', '✓'], true)}
-      ${cmpRow('Отчети на живо · ОПР, баланс, ОВ', ['—', '✓', '✓'])}
-      ${cmpRow('Брой фирми', ['1', '1', 'Много'], true)}
-      ${cmpRow('Потребители', ['1', '3', '10'])}
-      ${cmpRow('Роли и достъп', ['—', '—', '✓'], true)}
-      ${cmpRow('Експорт и API', ['—', '—', '✓'])}
-      ${cmpRow('Поддръжка', ['Имейл', 'Приоритетна', 'Посветена'], true)}
-    </div>
-  </div>
-</section>`;
-
-const PRICE_FAQ = [
-  ['Има ли такса за документ?', `Не. Плащаш една ясна месечна цена според плана. Всеки план включва месечен обем документи — без скрити такси на брой.`,
-    'Is there a per-document fee?', 'No. You pay one clear monthly price by plan. Each plan includes a monthly document volume — no hidden per-item fees.'],
-  ['Мога ли да сменя плана?', 'По всяко време — нагоре или надолу. Промяната влиза веднага, а разликата се изравнява пропорционално.',
-    'Can I change my plan?', 'Anytime — up or down. The change takes effect immediately and the difference is prorated.'],
-  ['Какво включва безплатният период?', '7 дни пълен достъп до плана Бизнес, без банкова карта. Ако не продължиш, нищо не се таксува.',
-    'What does the free trial include?', '7 days of full access to the Business plan, no card required. If you do not continue, nothing is charged.'],
-  ['Мога ли да фактурирам в евро?', `Да. ${BRAND} е изцяло в евро — фактури, отчети и декларации са в една валута, без обърквания.`,
-    'Can I invoice in euro?', `Yes. ${BRAND} is fully in euro — invoices, reports and returns are in a single currency, no confusion.`],
+const BG_POINTS = [
+  [I.checkc, 'UIC and VAT number checks', 'Checksum for the UIC (EIK), VAT-number format, IBAN mod-97 — decided by validators before any AI output.'],
+  [I.vat, 'Bulgarian VAT treatments', '20% standard, 9% reduced, 0%, exempt, reverse charge, intra-EU, export and import, resolved as of the tax-event date.'],
+  [I.book, 'Registers per period', 'Purchase and sales registers and the period summary built from posted entries; VIES dataset for intra-EU supplies.'],
+  [I.invoice, 'Invoices the Bulgarian way', 'Sequential numbering per series and year; proformas, credit and debit notes; PDFs typeset in Cyrillic.'],
+  [I.xml, 'SAF-T for the NRA', 'Dataset, validation and XML export in beta; binding to the official schema is planned.'],
+  [I.scan, 'OCR restricted to EU regions', 'When OCR for scans is enabled, the document-AI provider is limited to EU Azure regions by configuration (beta).'],
 ];
-const pricingBody = () => pricingTiers() + customPlan() + comparison() + faqSplit(PRICE_FAQ, 'Ясно и предвидимо.', false, 'Clear and predictable.') + finalCta();
+const bgStrip = () => `
+<section class="section bg-ink on-ink" id="bulgaria">
+  <div class="wrap">
+    <div class="split"><div class="sec-head"><span class="eyebrow">Made for Bulgarian requirements</span><h2 class="h2">European product. <span class="dim">Bulgarian accounting, built in.</span></h2></div><p class="lead">Acco is not a generic ledger with a translation layer. The checks, VAT treatments, registers and exports follow Bulgarian rules, so the work it prepares is the work your accountant expects.</p></div>
+    <div class="grid-h three rows2">${BG_POINTS.map(([ic, t, d]) => `<div>${ic}<b>${t}</b><p>${d}</p></div>`).join('')}</div>
+  </div>
+</section>`;
 
-/* ---- CONTACT page -------------------------------------------------------- */
-const contactInfo = (ic, label, value, green) => `<div style="display:flex; gap:14px; align-items:center;"><span style="flex:none; width:42px; height:42px; border-radius:12px; background:#FBF8F1; border:1px solid #EAE0CD; color:${green ? '#16A463' : '#A9854E'}; display:flex; align-items:center; justify-content:center;">${ic}</span><div><div style="font-size:11px; color:#8a948e;">${label}</div><div style="font-size:15px; font-weight:600; color:#20302B;">${value}</div></div></div>`;
-const fieldInput = (name, label, type, ph, full) => `<div style="display:flex; flex-direction:column; gap:8px;${full ? ' margin-bottom:18px;' : ''}"><label style="font-size:12.5px; font-weight:600; color:#3a4843;">${label}</label><input data-field="${name}" type="${type}" placeholder="${ph}" class="fld" style="width:100%; padding:14px 16px; border:1px solid #DCD2BE; border-radius:11px; background:#FCFAF5; font-family:inherit; font-size:15px; color:#20302B;"><span data-err="${name}" style="display:none; font-size:12px; color:#CB2A2A;"></span></div>`;
+const featuresBody = () => `
+${pageHero('Product', 'Everything Acco does, <span class="dim">in the order the work happens.</span>', 'Nine chapters, each showing the real screen. Planned work is listed separately and labelled.', `<a class="btn btn-ink" href="/register">Get started ${I.arrow}</a><a class="btn btn-out" href="/#how">How it works</a>`,
+  `<ol class="chapters">${FEATURE_ROWS.map(([id, n, t]) => `<li><a href="#${id}"><span class="k">${n}</span>${t}</a></li>`).join('')}</ol>`)}
+${['white', 'warm', 'tint'].map((bg) => `<section class="section-sm${bg === 'warm' ? ' bg-warm hairline-top' : bg === 'tint' ? ' bg-tint hairline-top' : ''}"><div class="wrap">${FEATURE_ROWS.filter((r) => r[6] === bg).map(([id, n, t, sub, items, frag]) => `<div class="frow" id="${id}"><div class="frow-text"><span class="k">${n} · ${t}</span><h2>${sub}</h2><ul>${items.map((i) => `<li>${i}</li>`).join('')}</ul></div><div data-reveal>${frag()}</div></div>`).join('')}</div></section>`).join('')}
+${bgStrip()}
+${status()}
+${cta('See the product on your own invoices.', 'Create an account, upload a document and see the suggested posting: upload, review, approve, post.')}`;
+
+const pricingBody = () => `
+${pageHero('Pricing', 'Controlled access now. <span class="dim">Public pricing at launch.</span>', 'Acco is opening to a limited number of companies while we validate extraction and the VAT process on real documents. We publish plans when they are final, not before.',
+  `<a class="btn btn-ink" href="/register">Create an account ${I.arrow}</a><a class="btn btn-out" href="/features">See the product</a>`)}
+<section class="section-sm"><div class="wrap">
+  <div class="access" data-reveal>
+    <div>
+      <span class="eyebrow">Early access</span>
+      <h2>The full product, during controlled access.</h2>
+      <p class="price">Controlled access <small>pricing announced at launch · no card required</small></p>
+      <ul class="checks">
+        <li>${I.check}<span>Document capture, extraction, review and approval</span></li>
+        <li>${I.check}<span>Immutable ledger, journal, accounting periods</span></li>
+        <li>${I.check}<span>Invoicing, banking, receivables and payables</span></li>
+        <li>${I.check}<span>VAT registers, reports, SAF-T (beta)</span></li>
+        <li>${I.check}<span>AI Accountant with citations</span></li>
+        <li>${I.check}<span>EUR functional currency, hash-chained audit trail</span></li>
+      </ul>
+    </div>
+    <div>
+      <span class="eyebrow">How access works</span>
+      <ol class="steps-v">
+        <li><span class="n">1</span><div><b>Create an account</b><span>Registration is open. Set up your company with its UIC and VAT status.</span></div></li>
+        <li><span class="n">2</span><div><b>Upload your first invoice</b><span>Review the extracted fields, approve the suggested treatment, post. On your own documents.</span></div></li>
+        <li><span class="n">3</span><div><b>Keep the books</b><span>Invoices, bank statements, VAT registers and reports, with every posting approved by you.</span></div></li>
+        <li><span class="n">4</span><div><b>Pricing at launch</b><span>Early-access companies see the plans first and keep their data either way.</span></div></li>
+      </ol>
+    </div>
+  </div>
+</div></section>
+<section class="section-sm bg-warm hairline-top"><div class="wrap">
+  <div class="split"><div class="sec-head"><span class="eyebrow">What access means</span><h2 class="h2 h2-sm">Three things you can count on during early access.</h2></div></div>
+  <div class="grid-h three">
+    <div>${I.layers}<b>The real product, not a demo</b><p>Your company, your documents, your ledger. Everything you post stays yours; nothing is reset at launch.</p></div>
+    <div>${I.user}<b>Your data, your decisions</b><p>Human approval on every posting, an immutable ledger and a hash-chained audit trail apply from day one.</p></div>
+    <div>${I.cal}<b>No surprises at launch</b><p>Plans are published when they are final. Early-access companies see them first and keep their ledger, documents and history.</p></div>
+  </div>
+</div></section>
+<section class="section-sm"><div class="wrap">
+  <div class="split last"><div class="sec-head"><span class="eyebrow">Who it is for</span><h2 class="h2 h2-sm">Sole traders, small companies and the accountants who serve them.</h2></div><p class="lead">If you receive and issue invoices in Bulgaria, file VAT monthly and want to see what was posted and why, Acco is built for you. Accountants can join a client's company with their own role.</p></div>
+</div></section>
+${faqSection([FAQS[3], FAQS[1]])}
+${cta('Want to see Acco on your own documents?', 'Create an account and upload your first invoice. The decision, as always, is yours.')}`;
+
+const faqSection = (groups) => `<section class="section-sm"><div class="wrap-narrow">${faqList(groups, false)}</div></section>`;
+
+const aboutBody = () => `
+${pageHero('About', 'Why Acco exists.', 'Because the owner of a small business should not have to choose between running it and fighting invoices, VAT and deadlines.')}
+<section class="section-sm"><div class="wrap story">
+  <div class="story-text">
+    <p class="prose-lg">Manual data entry is slow and mistakes are expensive. Software can do the routine — reading, proposing, explaining — but it must never decide on money or on the state on a person's behalf.</p>
+    <p class="body">That rule is built into Acco at every level: in the capability-limited identity the AI runs under, in the roles that gate approval and posting, in the database that refuses an unbalanced or back-dated entry, and in the audit trail that records who did what.</p>
+  </div>
+  <div class="canvas" aria-hidden="true" data-reveal>${frAudit()}</div>
+</div></section>
+<section class="section bg-ink on-ink"><div class="wrap">
+  <h2 class="statement">Software should assist. <span class="dim">It should not silently decide.</span></h2>
+  <div class="defs">
+    <div><span class="tag-k"><i class="i-auto"></i> Deterministic first</span><h3>Rules before models</h3><p>Verifiable facts — UIC, VAT number, IBAN, totals, double-entry balance — are decided by validators. A model may read, classify and suggest; it does not get a vote on a checksum.</p></div>
+    <div><span class="tag-k"><i class="i-human"></i> A person decides</span><h3>Approval is a human act</h3><p>Nothing is posted and nothing is filed without explicit approval by a user with the right role. The AI identity cannot post, lock a period, issue an invoice or change permissions.</p></div>
+    <div><span class="tag-k"><i class="i-ai"></i> Traceable</span><h3>Every figure has a source</h3><p>Every number leads to a journal line and a document; every action leads to a hash-chained audit record. Explanations cite what they used and abstain when the data is not there.</p></div>
+  </div>
+</div></section>
+<section class="section-sm"><div class="wrap">
+  <div class="split"><div class="sec-head"><span class="eyebrow">What it takes off your desk</span><h2 class="h2 h2-sm">Less typing. Less guessing. Fewer surprises at month end.</h2></div><p class="lead">The repetitive part of bookkeeping — reading invoices, finding the right account, computing VAT, matching bank lines — is prepared for you. The part that needs judgement stays visible, and stays yours.</p></div>
+  <div class="grid-h three">
+    <div>${I.scan}<b>Reading and typing</b><p>Fields are extracted with confidence; identifiers and totals are verified; you correct what is flagged instead of retyping everything.</p></div>
+    <div>${I.spark}<b>Finding the treatment</b><p>Accounts, expense category and VAT treatment are proposed from rules and per-supplier memory, with the reason shown.</p></div>
+    <div>${I.bank}<b>Reconciling</b><p>Bank lines are matched to invoices with a ranked suggestion; you confirm, the ledger records.</p></div>
+  </div>
+</div></section>
+<section class="section-sm bg-warm hairline-top"><div class="wrap-narrow">
+  <div class="sec-head"><span class="eyebrow">What Acco does not do</span><h2 class="h2 h2-sm">Some things are deliberately missing.</h2></div>
+  <ul class="status-list">
+    <li><div><b>No automatic posting</b><span class="d">Every posting is approved by a person, in the review screen.</span></div><span class="tag planned">By design</span></li>
+    <li><div><b>No silent changes to records</b><span class="d">Posted entries are never edited. Corrections are new, reversing entries.</span></div><span class="tag planned">By design</span></li>
+    <li><div><b>No generated numbers</b><span class="d">The assistant explains figures from the ledger and cites them; it does not produce its own.</span></div><span class="tag planned">By design</span></li>
+    <li><div><b>No filing on your behalf</b><span class="d">Registers and exports are prepared for you to file. Direct submission to the NRA is intentionally out of scope.</span></div><span class="tag planned">By design</span></li>
+  </ul>
+</div></section>
+${cta()}`;
+
+const faqBody = () => `
+${pageHero('FAQ', 'Questions, answered plainly.', 'About documents, VAT, control and access.')}
+<section class="section-sm"><div class="wrap faq-layout">
+  <nav class="faq-nav" aria-label="FAQ sections">${FAQS.map((g, i) => `<a href="#faq-${i}">${g[0]}<span>${g[1].length}</span></a>`).join('')}<a class="faq-nav-contact" href="/contact">Contact ${I.arrow}</a></nav>
+  <div>${FAQS.map((g, gi) => `<div class="faq-group" id="faq-${gi}"><h2 class="faq-h">${g[0]}</h2><div class="faq">${g[1].map(([q, a], i) => `<details${gi === 0 && i === 0 ? ' open' : ''}><summary>${q}</summary><p>${a}</p></details>`).join('')}</div></div>`).join('')}</div>
+</div></section>
+${cta()}`;
+
 const contactBody = () => `
-<section id="contact" style="position:relative; padding:150px clamp(20px,5vw,72px) clamp(72px,9vh,120px); scroll-margin-top:90px; overflow:hidden;">
-  <div style="position:absolute; top:8%; left:-8%; width:480px; height:480px; border-radius:50%; background:radial-gradient(circle, rgba(201,163,91,.1), transparent 66%); pointer-events:none; animation:glowPulse 13s ease-in-out infinite;"></div>
-  <div data-2col style="position:relative; max-width:1120px; margin:0 auto; display:grid; grid-template-columns:.85fr 1.15fr; gap:56px; align-items:start;">
-    <div data-reveal="left">
-      <div style="font-size:11px; letter-spacing:.13em; text-transform:uppercase; color:#A9854E; margin-bottom:16px;">Контакти · Get in touch</div>
-      <h1${TH("Let's talk about<br>your business.")} style="font-family:var(--serif); font-weight:400; font-size:clamp(30px,3.8vw,50px); line-height:1.06; letter-spacing:-.02em; color:#123A33; margin:0 0 18px;">Да поговорим за<br>твоя бизнес.</h1>
-      <p style="font-size:16px; line-height:1.7; color:#4a5a53; margin:0 0 34px; max-width:400px;">Кажи ни с какво се занимаваш и какво ти трябва. Връщаме се с ясен отговор — обикновено до един работен ден.</p>
-      <div style="display:flex; flex-direction:column; gap:20px;">${contactInfo(I.mail, 'Имейл', `<a href="mailto:${EMAIL}" style="color:inherit">${EMAIL}</a>`)}${contactInfo(I.phone, 'Телефон', '+359 2 555 0100')}${contactInfo(I.clock, 'Отговор', 'До 1 работен ден', true)}</div>
-    </div>
-    <div data-reveal="right" data-reveal-delay="120" style="position:relative;">
-      <form data-contact-form novalidate style="background:#fff; border:1px solid #EAE0CD; border-radius:22px; padding:clamp(26px,3vw,40px); box-shadow:0 30px 70px rgba(18,30,26,.1);">
-        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:18px; margin-bottom:18px;">${fieldInput('name', 'Пълно име', 'text', 'Иван Петров')}${fieldInput('email', 'Имейл', 'email', 'ivan@firma.bg')}</div>
-        ${fieldInput('phone', 'Телефон', 'tel', '+359 88 123 4567', true)}
-        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;"><label style="font-size:12.5px; font-weight:600; color:#3a4843;">Как можем да помогнем?</label><textarea data-field="message" rows="5" placeholder="Разкажи ни накратко за бизнеса си и какво търсиш…" class="fld" style="width:100%; padding:14px 16px; border:1px solid #DCD2BE; border-radius:11px; background:#FCFAF5; font-family:inherit; font-size:15px; color:#20302B; resize:vertical; min-height:130px;"></textarea><span data-err="message" style="display:none; font-size:12px; color:#CB2A2A;"></span></div>
-        <label style="display:flex; gap:12px; align-items:flex-start; cursor:pointer; margin-bottom:24px;"><span data-checkbox style="flex:none; width:22px; height:22px; border:1.5px solid #C9BCA1; border-radius:6px; background:#FCFAF5; display:flex; align-items:center; justify-content:center; margin-top:1px;"><svg data-check-icon width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="opacity:0; transition:opacity .2s;"><path d="M20 6 9 17l-5-5"/></svg></span><input data-field="consent" type="checkbox" style="position:absolute; opacity:0; width:0; height:0;"><span style="font-size:12.5px; line-height:1.6; color:#6c776f;">Съгласен съм личните ми данни да бъдат обработени единствено с цел обратна връзка. Данните не се предоставят на трети страни.</span></label>
-        <span data-err="consent" style="display:none; font-size:12px; color:#CB2A2A; margin-bottom:14px;"></span>
-        <button type="submit" data-magnetic class="j-dark" style="width:100%; display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:16px; background:#123A33; color:#F4EFE4; border:none; border-radius:999px; font-family:inherit; font-size:15.5px; font-weight:600; cursor:pointer; box-shadow:0 14px 30px rgba(18,58,51,.22);">Изпрати запитване <span>→</span></button>
-      </form>
-      <div data-contact-success style="display:none; background:#fff; border:1px solid #C9E8D5; border-radius:22px; padding:48px 40px; text-align:center; box-shadow:0 30px 70px rgba(18,30,26,.1);"><div style="width:64px; height:64px; margin:0 auto 22px; border-radius:50%; background:#ECFBF3; color:#16A463; display:flex; align-items:center; justify-content:center;"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div><h3 style="font-family:var(--serif); font-weight:500; font-size:26px; color:#123A33; margin:0 0 10px;">Благодарим!</h3><p style="font-size:15px; line-height:1.65; color:#5a6a63; margin:0;">Получихме запитването ти и ще се свържем до един работен ден.</p></div>
-    </div>
+${pageHero('Contact', 'A public contact channel <span class="dim">is being set up.</span>', 'Direct contact requests are temporarily unavailable while the public contact channel is being configured. No address is published until it is verified and monitored. Until then, the product itself is the fastest way in.')}
+<section class="section-sm"><div class="wrap contact">
+  <aside class="contact-side">
+    <div><b>Status</b><span>Contact channel: being configured. This page will carry the verified address once it is live.</span></div>
+    <div><b>Who Acco is for</b><span>Sole traders and small companies in Bulgaria that receive and issue invoices; accountants who want to run client books in Acco.</span></div>
+    <div><b>Legal</b><span>Privacy, terms, cookies and GDPR pages are linked in the footer (currently in Bulgarian).</span></div>
+  </aside>
+  <div class="contact-paths">
+    <a class="path" href="/register">${I.user}<div><b>Create an account</b><span>Registration is open during controlled access. Set up the company and upload your first invoice.</span></div>${I.arrow}</a>
+    <a class="path" href="/login">${I.lock}<div><b>Sign in</b><span>Already have a company in Acco? Continue where you left off.</span></div>${I.arrow}</a>
+    <a class="path" href="/features">${I.layers}<div><b>See the product</b><span>Nine chapters, each showing the real screen, in the order the work happens.</span></div>${I.arrow}</a>
+    <a class="path" href="/faq">${I.cite}<div><b>Read the FAQ</b><span>Documents, VAT, control and access, answered plainly.</span></div>${I.arrow}</a>
   </div>
-</section>`;
+</div></section>`;
 
-/* ---- ABOUT / AUDIENCE / BLOG / RESOURCES --------------------------------- */
-const audienceCard = (ic, t, d, delay) => `<div data-reveal${delay ? ` data-reveal-delay="${delay}"` : ''} class="lift" style="background:#FBF8F1; border:1px solid #EAE0CD; border-radius:16px; padding:28px;"><div style="width:46px; height:46px; border-radius:12px; background:#FAF3E4; color:#A9854E; display:flex; align-items:center; justify-content:center; margin-bottom:16px;">${ic}</div><h3 style="font-family:var(--serif); font-weight:500; font-size:20px; color:#123A33; margin:0 0 7px;">${t}</h3><p style="font-size:13.5px; line-height:1.6; color:#5a6a63; margin:0;">${d}</p></div>`;
-const aboutBody = () => pageHero('За нас · About', `Защо създадохме <span style="font-style:italic; color:#A9854E;">${BRAND}</span>.`, 'Вярваме, че собственикът на малък бизнес не трябва да избира между това да върти бизнеса си и да се бори с фактури и ДДС.', btnDark('/register', 'Започни безплатно') + btnOut('/pricing', 'Виж цените'), `Why we built <span style="font-style:italic; color:#A9854E;">${BRAND}</span>.`, 'We believe a small-business owner should not have to choose between running the business and fighting invoices and VAT.')
-  + `<section style="position:relative; padding:clamp(40px,5vh,70px) clamp(20px,5vw,72px) clamp(64px,8vh,110px);"><div data-deep-grid style="max-width:1180px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:48px;">
-      <div data-reveal="left" class="lift" style="background:#123A33; color:#F4EFE4; border-radius:20px; padding:36px; overflow:hidden; position:relative; transition:transform .5s var(--ease), box-shadow .5s;"><div style="position:absolute; top:-50px; right:-40px; width:240px; height:240px; border-radius:50%; background:radial-gradient(circle,rgba(233,201,140,.16),transparent 70%);"></div><div style="position:relative;"><div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#E9C98C; margin-bottom:14px;">Нашата мисия</div><h2 style="font-family:var(--serif); font-weight:400; font-size:28px; line-height:1.15; color:#F4EFE4; margin:0 0 14px;">Счетоводство, което всеки разбира.</h2><p style="font-size:15px; line-height:1.7; color:#bcd0c9; margin:0;">Да направим счетоводството разбираемо и автоматично за малките фирми, фрийлансърите и самонаетите в България — с AI, който върши рутината, и човек, който решава важното.</p></div></div>
-      <div data-reveal="right" data-reveal-delay="120" class="lift" style="background:#fff; border:1px solid #EAE0CD; border-radius:20px; padding:36px;"><div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#A9854E; margin-bottom:14px;">За кого е</div><h2 style="font-family:var(--serif); font-weight:400; font-size:28px; line-height:1.15; color:#123A33; margin:0 0 14px;">За хора, които искат контрол.</h2><p style="font-size:15px; line-height:1.7; color:#4a5a53; margin:0;">За самонаети, фрийлансъри и малки фирми, които искат да управляват финансите на бизнеса си сами, без да плащат на счетоводител. Платформата говори български, мисли в евро и спазва изискванията на НАП.</p></div>
-    </div></section>`
-  + `<section style="position:relative; padding:0 clamp(20px,5vw,72px) clamp(72px,9vh,120px);"><div style="max-width:1180px; margin:0 auto;">${secHeadC('За кого е', 'Създадено за хора като теб.', '')}<div data-4col style="display:grid; grid-template-columns:repeat(4,1fr); gap:18px;">${audienceCard(I.user, 'Самонаети', 'Фактури, ДДС и отчети за минути.')}${audienceCard(I.spark, 'Фрийлансъри', 'Следи приходите без счетоводител.', 60)}${audienceCard(I.store, 'Малки фирми и ЕООД', 'Пълно счетоводство, самостоятелно.', 120)}${audienceCard(I.cart, 'Онлайн магазини', 'Много документи, обработени бързо.', 180)}</div></div></section>`
-  + stats() + finalCta();
-
-const BLOG = [
-  ['blog-1.jpg', 'ДДС', 'ДДС за начинаещи: как да подадете първата си справка-декларация без грешки'],
-  ['blog-2.jpg', 'Счетоводство', 'Неизменяема главна книга: защо сторното е по-добро от изтриването'],
-  ['blog-3.jpg', 'Бизнес растеж', '5 признака, че е време да автоматизирате счетоводството си'],
-  ['blog-4.jpg', 'Данъци', 'Данъчен календар 2026: ключовите срокове за всеки собственик'],
-  ['blog-5.jpg', 'Съответствие', 'Преходът към евро: какво да очаквате'],
-];
-const blogBody = () => pageHero('Блог · Blog', 'От блога.', 'Практични статии за счетоводство, ДДС и растеж на бизнеса.', '', 'From the blog.', 'Practical articles on accounting, VAT and business growth.')
-  + `<section style="position:relative; padding:0 clamp(20px,5vw,72px) clamp(72px,9vh,120px);"><div style="max-width:1180px; margin:0 auto;"><div data-3col style="display:grid; grid-template-columns:repeat(3,1fr); gap:18px;">${BLOG.map(([img, cat, t], i) => `<a data-reveal${i ? ` data-reveal-delay="${(i % 3) * 80}"` : ''} class="lift" href="/contact" style="background:#fff; border:1px solid #EAE0CD; border-radius:18px; overflow:hidden; display:flex; flex-direction:column;"><div style="aspect-ratio:16/10; background:#EFE7D6; overflow:hidden;"><img src="/landing/assets/img/${img}" alt="" loading="lazy" width="640" height="400" style="width:100%; height:100%; object-fit:cover;"></div><div style="padding:24px;"><div style="font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#A9854E; margin-bottom:10px;">${cat}</div><h3 style="font-family:var(--serif); font-weight:500; font-size:19px; line-height:1.3; color:#123A33; margin:0;">${t}</h3></div></a>`).join('')}</div></div></section>`
-  + finalCta();
-
-const RES = [
-  [I.book, 'Ръководства', 'Стъпка по стъпка през ДДС, фактури и осчетоводяване.'],
-  [I.cal, 'Данъчен календар', 'Всички срокове за ДДС и данъци за 2026.'],
-  [I.file, 'Шаблони', 'Готови шаблони за фактури, протоколи и справки.'],
-  [I.life, 'Помощен център', 'База знания и отговори на често задавани въпроси.'],
-  [I.chart, 'Контролни списъци', 'Месечни и годишни чеклисти за изряден бизнес.'],
-  [I.spark, 'Видео уроци', 'Кратки видеа как да свършите всяка задача.'],
-];
-const resCard = (ic, t, d, delay) => `<div data-reveal${delay ? ` data-reveal-delay="${delay}"` : ''} class="lift" style="background:#FBF8F1; border:1px solid #EAE0CD; border-radius:16px; padding:28px;"><div style="width:46px; height:46px; border-radius:12px; background:#FAF3E4; color:#A9854E; display:flex; align-items:center; justify-content:center; margin-bottom:16px;">${ic}</div><h3 style="font-family:var(--serif); font-weight:500; font-size:20px; color:#123A33; margin:0 0 7px;">${t}</h3><p style="font-size:13.5px; line-height:1.6; color:#5a6a63; margin:0;">${d}</p></div>`;
-const resourcesBody = () => pageHero('Ресурси · Resources', 'Ресурси, които работят за теб.', 'Ръководства, шаблони и инструменти за счетоводство, ДДС и данъци.', '', 'Resources that work for you.', 'Guides, templates and tools for accounting, VAT and taxes.')
-  + `<section style="position:relative; padding:0 clamp(20px,5vw,72px) clamp(72px,9vh,120px);"><div style="max-width:1180px; margin:0 auto;"><div data-3col style="display:grid; grid-template-columns:repeat(3,1fr); gap:18px;">${RES.map(([ic, t, d], i) => resCard(ic, t, d, (i % 3) * 80)).join('')}</div></div></section>`
-  + finalCta();
-
-const faqBody = () => pageHero('Въпроси · FAQ', 'Често задавани въпроси.', 'Отговори за безплатния период, сигурността, ДДС, фактурите и работата без счетоводител.', '', 'Frequently asked questions.', 'Answers about the free trial, security, VAT, invoices and working without an accountant.')
-  + faqSplit(FAQS, 'Често задавани въпроси.', false, 'Frequently asked questions.') + finalCta();
-
-const homeBody = () => homeHero() + integrations() + beforeAfter() + how() + bento() + deepDive() + stats() + testimonials() + faqSplit(FAQS, 'Често задавани въпроси.', false, 'Frequently asked questions.') + finalCta();
-
-/* ---- pages --------------------------------------------------------------- */
-const crumbs = (items) => ({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: items.map((it, i) => ({ '@type': 'ListItem', position: i + 1, name: it.n, item: SITE + it.u })) });
-
+const org = { '@context': 'https://schema.org', '@type': 'Organization', name: BRAND, url: SITE, logo: `${SITE}/landing/assets/app-icon.svg` };
 const PAGES = [
-  { key: '/', file: 'index.html', url: '/',
-    title: `Счетоводство без счетоводител · ${BRAND} · за малки фирми и самонаети`,
-    desc: `Води си счетоводството сам. ${BRAND} автоматизира фактури, ДДС, разходи и отчети с AI — за самонаети, фрийлансъри и малки фирми в България.`,
-    jsonld: { '@context': 'https://schema.org', '@type': 'WebSite', name: BRAND, url: SITE },
-    body: homeBody() },
-  { key: '/features', file: 'features.html', url: '/features', title: `Функции · ${BRAND}`,
-    desc: 'AI извличане, фактуриране, ДДС и НАП, отчети, разходи и сигурен архив — всичко, за да водите счетоводството си сами.',
-    jsonld: crumbs([{ n: 'Начало', u: '/' }, { n: 'Функции', u: '/features' }]),
-    body: featuresBody() },
-  { key: '/pricing', file: 'pricing.html', url: '/pricing', title: `Цени и планове · ${BRAND}`,
-    desc: 'Прозрачни планове Старт, Бизнес, Про и Индивидуален. 7-дневен безплатен период, без банкова карта.',
-    jsonld: crumbs([{ n: 'Начало', u: '/' }, { n: 'Цени', u: '/pricing' }]),
-    body: pricingBody() },
-  { key: '/about', file: 'about.html', url: '/about', title: `За нас · ${BRAND}`,
-    desc: `Защо създадохме ${BRAND} — автоматизирано счетоводство за самонаети, фрийлансъри и малки фирми в България.`,
-    jsonld: crumbs([{ n: 'Начало', u: '/' }, { n: 'За нас', u: '/about' }]),
-    body: aboutBody() },
-  { key: '/blog', file: 'blog.html', url: '/blog', title: `Блог · счетоводство, ДДС и данъци · ${BRAND}`,
-    desc: 'Практични статии за счетоводство, ДДС, данъци и растеж на бизнеса в България.',
-    jsonld: crumbs([{ n: 'Начало', u: '/' }, { n: 'Блог', u: '/blog' }]),
-    body: blogBody() },
-  { key: '/resources', file: 'resources.html', url: '/resources', title: `Ресурси · ръководства и шаблони · ${BRAND}`,
-    desc: 'Ръководства, шаблони, данъчен календар и помощен център за счетоводство и ДДС в България.',
-    jsonld: crumbs([{ n: 'Начало', u: '/' }, { n: 'Ресурси', u: '/resources' }]),
-    body: resourcesBody() },
-  { key: '/faq', file: 'faq.html', url: '/faq', title: `Често задавани въпроси · ${BRAND}`,
-    desc: 'Отговори за безплатния период, сигурността, ДДС, фактури и работа без счетоводител.',
-    jsonld: { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: FAQS.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
-    body: faqBody() },
-  { key: '/contact', file: 'contact.html', url: '/contact', title: `Контакти · ${BRAND}`,
-    desc: `Свържете се с екипа на ${BRAND} — въпроси, демо и поддръжка на български.`,
-    jsonld: crumbs([{ n: 'Начало', u: '/' }, { n: 'Контакти', u: '/contact' }]),
-    body: contactBody() },
+  { key: '/', file: 'index.html', url: '/', title: `${BRAND} · Accounting that prepares the work. You approve it.`,
+    desc: 'Acco reads invoices, proposes the accounting treatment and VAT, and posts to an immutable ledger only after a person approves. EUR, Bulgarian VAT built in.',
+    jsonld: { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: BRAND, applicationCategory: 'BusinessApplication', operatingSystem: 'Web', url: SITE, inLanguage: 'en', description: 'Accounting software for Bulgarian businesses: document extraction, human review, immutable ledger, VAT and reports.' },
+    body: () => hero() + facts() + matrix() + flow() + storyReview() + statement() + storyMoney() + storyTax() + ai() + control() + status() + faqHome() + cta() },
+  { key: '/features', file: 'features.html', url: '/features', title: `Product · ${BRAND}`, desc: 'What Acco does today: capture, extraction, review, immutable ledger, invoicing, banking, VAT, reports and the AI Accountant.', jsonld: org, body: featuresBody },
+  { key: '/pricing', file: 'pricing.html', url: '/pricing', title: `Pricing · ${BRAND}`, desc: 'Acco is in controlled access; pricing will be published at launch. Request early access.', jsonld: org, body: pricingBody },
+  { key: '/about', file: 'about.html', url: '/about', title: `About · ${BRAND}`, desc: 'Why Acco exists: deterministic before AI, a person decides, full traceability.', jsonld: org, body: aboutBody },
+  { key: '/faq', file: 'faq.html', url: '/faq', title: `FAQ · ${BRAND}`, desc: 'Frequently asked questions about documents, VAT, control and access.', jsonld: org, body: faqBody },
+  { key: '/contact', file: 'contact.html', url: '/contact', title: `Contact · ${BRAND}`, desc: 'How to reach Acco during controlled access. A public contact channel is being set up.', jsonld: org, body: contactBody },
 ];
 
 for (const p of PAGES) {
-  writeFileSync(join(OUT, p.file), head(p) + nav(p.key) + p.body + footer(), 'utf8');
-  console.log('wrote landing/' + p.file);
+  writeFileSync(join(OUT, p.file), head(p) + nav(p.key) + p.body() + footer(), 'utf8');
 }
-
-const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${PAGES.map((p) => `  <url><loc>${SITE}${p.url}</loc><changefreq>weekly</changefreq><priority>${p.url === '/' ? '1.0' : '0.7'}</priority></url>`).join('\n')}
-</urlset>`;
-writeFileSync(join(PUB, 'sitemap.xml'), sitemap, 'utf8');
-writeFileSync(join(PUB, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /admin\n\nSitemap: ${SITE}/sitemap.xml\n`, 'utf8');
-console.log('wrote sitemap.xml + robots.txt');
+writeFileSync(join(PUB, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${PAGES.map((p) => `  <url><loc>${SITE}${p.url}</loc></url>`).join('\n')}\n</urlset>\n`, 'utf8');
+writeFileSync(join(PUB, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /dashboard\nDisallow: /login\nDisallow: /register\nSitemap: ${SITE}/sitemap.xml\n`, 'utf8');
+console.log(`built ${PAGES.length} pages → ${OUT}`);

@@ -3,15 +3,18 @@
 import * as React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Loader2, SlidersHorizontal, Save } from 'lucide-react';
+import { Loader2, Save, SlidersHorizontal } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { Endpoints } from '@/lib/api/endpoints';
 import { ApiError } from '@/lib/api/client';
 import { useLang } from '@/lib/i18n';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Select } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { EmptyState, TableSkeleton } from '@/components/app/states';
 
 type Mapping = { role: string; accountId: string | null; code: string; accountName: string | null; isDefault: boolean };
 type AccountNode = { id: string; code: string; name: string; isPostable?: boolean; children?: AccountNode[] };
@@ -76,57 +79,70 @@ export function AccountMappingsTab() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <SlidersHorizontal className="h-4 w-4 text-muted-foreground" /> {t('Счетоводни сметки', 'Accounting accounts')}
-        </CardTitle>
+        <CardTitle>{t('Счетоводни сметки', 'Accounting accounts')}</CardTitle>
         <CardDescription>
-          {t('Сметките, които системата използва при автоматичното осчетоводяване на фактури и покупки.',
-             'The accounts the system uses when auto-posting invoices and purchases.')}
+          {t('Сметките, които системата предлага при осчетоводяване на фактури и покупки. Всяко предложение се одобрява ръчно.',
+             'The accounts the system proposes when posting invoices and purchases. Every proposal is approved by a person.')}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="p-0">
         {loading ? (
-          <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> {t('Зареждане…', 'Loading…')}
-          </div>
+          <TableSkeleton rows={6} cols={3} />
         ) : accounts.length === 0 ? (
-          <p className="py-6 text-sm text-muted-foreground">
-            {t('Няма сметки в сметкоплана. Първо добавете сметки.', 'No accounts in the chart of accounts yet.')}
-          </p>
+          <EmptyState
+            compact
+            icon={SlidersHorizontal}
+            title={t('Няма сметки в сметкоплана', 'No accounts in the chart of accounts')}
+            description={t('Първо добавете сметки, за да ги свържете с роли.', 'Add accounts first to map them to roles.')}
+          />
         ) : (
           <>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {ROLES.map((r) => {
-                const current = (mapQ.data as Mapping[] | undefined)?.find((m) => m.role === r.role);
-                return (
-                  <div key={r.role} className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm">{t(r.bg, r.en)}</Label>
-                      {current?.isDefault && <Badge variant="neutral">{t('по подразбиране', 'default')}</Badge>}
-                    </div>
-                    <select
-                      value={draft[r.role] ?? ''}
-                      onChange={(e) => setDraft((d) => ({ ...d, [r.role]: e.target.value }))}
-                      className="h-11 w-full rounded-lg border border-input bg-card px-3 text-sm shadow-sm transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/15"
-                    >
-                      <option value="" disabled>{t('— изберете сметка —', '— select account —')}</option>
-                      {accounts.map((a) => (
-                        <option key={a.id} value={a.id}>{a.code} · {a.name}</option>
-                      ))}
-                    </select>
-                    <p className="text-xs text-muted-foreground">{t(r.hintBg, r.hintEn)}</p>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex items-center justify-between border-t border-border pt-4">
-              <p className="text-xs text-muted-foreground">
-                {incomplete ? t('Изберете сметка за всяка роля.', 'Pick an account for every role.') : ''}
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('Роля', 'Role')}</TableHead>
+                  <TableHead className="w-[45%] min-w-[16rem]">{t('Сметка', 'Account')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {ROLES.map((r) => {
+                  const current = (mapQ.data as Mapping[] | undefined)?.find((m) => m.role === r.role);
+                  const id = `map-${r.role}`;
+                  return (
+                    <TableRow key={r.role} className="hover:bg-transparent">
+                      <TableCell className="py-3 align-top">
+                        <label htmlFor={id} className="flex flex-wrap items-center gap-2 font-medium text-foreground">
+                          {t(r.bg, r.en)}
+                          {current?.isDefault && <Badge variant="neutral">{t('по подразбиране', 'default')}</Badge>}
+                        </label>
+                        <p className="t-caption mt-0.5">{t(r.hintBg, r.hintEn)}</p>
+                      </TableCell>
+                      <TableCell className="py-3 align-top">
+                        <Select
+                          id={id}
+                          value={draft[r.role] ?? ''}
+                          onChange={(e) => setDraft((d) => ({ ...d, [r.role]: e.target.value }))}
+                          aria-invalid={!draft[r.role] || undefined}
+                        >
+                          <option value="" disabled>{t('— изберете сметка —', '— select account —')}</option>
+                          {accounts.map((a) => (
+                            <option key={a.id} value={a.id}>{a.code} · {a.name}</option>
+                          ))}
+                        </Select>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+            <CardFooter className="justify-between gap-3">
+              <p className={cn('text-[13px]', incomplete ? 'text-warning' : 'text-muted-foreground')}>
+                {incomplete ? t('Изберете сметка за всяка роля.', 'Pick an account for every role.') : t('Всички роли са свързани.', 'All roles are mapped.')}
               </p>
               <Button onClick={() => save.mutate()} disabled={save.isPending || incomplete}>
-                {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} {t('Запази', 'Save')}
+                {save.isPending ? <Loader2 className="animate-spin" /> : <Save />} {t('Запази', 'Save')}
               </Button>
-            </div>
+            </CardFooter>
           </>
         )}
       </CardContent>

@@ -7,6 +7,7 @@ import { Endpoints } from '@/lib/api/endpoints';
 import { ApiError } from '@/lib/api/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Notice } from '@/components/app/states';
 import { dateBG } from '@/lib/format';
 
 /**
@@ -40,20 +41,20 @@ export function ViesStatusBadge({ counterpartyId, showRefresh = false, showDate 
   return (
     <span className="inline-flex items-center gap-2">
       {q.isLoading ? (
-        <Badge variant="neutral">…</Badge>
+        <Badge variant="neutral"><Loader2 className="h-3 w-3 animate-spin" /> VIES</Badge>
       ) : !hasVat ? (
-        <Badge variant="neutral">Без ДДС №</Badge>
+        <Badge variant="outline">Без ДДС №</Badge>
       ) : s?.status === 'valid' ? (
-        <Badge variant="success"><BadgeCheck className="mr-1 h-3 w-3" /> Валиден ДДС{s.stale ? ' (изтекъл)' : ''}</Badge>
+        <Badge variant="success"><BadgeCheck className="h-3 w-3" /> Валиден ДДС{s.stale ? ' (изтекъл)' : ''}</Badge>
       ) : s?.status === 'invalid' ? (
-        <Badge variant="destructive"><BadgeX className="mr-1 h-3 w-3" /> Невалиден ДДС</Badge>
+        <Badge variant="destructive"><BadgeX className="h-3 w-3" /> Невалиден ДДС</Badge>
       ) : (
-        <Badge variant="warning"><BadgeHelp className="mr-1 h-3 w-3" /> Непроверен</Badge>
+        <Badge variant="warning"><BadgeHelp className="h-3 w-3" /> Непроверен</Badge>
       )}
-      {showDate && s?.checkedAt && <span className="text-xs text-muted-foreground">{dateBG(s.checkedAt)}</span>}
+      {showDate && s?.checkedAt && <span className="t-caption tabular-nums">{dateBG(s.checkedAt)}</span>}
       {showRefresh && hasVat && (
-        <Button size="icon" variant="ghost" title="Обнови VIES проверката" disabled={refresh.isPending} onClick={() => refresh.mutate()}>
-          {refresh.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+        <Button size="icon-sm" variant="ghost" title="Обнови VIES проверката" aria-label="Обнови VIES проверката" disabled={refresh.isPending} onClick={() => refresh.mutate()}>
+          {refresh.isPending ? <Loader2 className="animate-spin" /> : <RefreshCw />}
         </Button>
       )}
     </span>
@@ -69,8 +70,8 @@ export function ViesInvoiceWarning({ counterpartyId }: { counterpartyId?: string
   });
   if (!counterpartyId || q.data?.status !== 'invalid') return null;
   return (
-    <p className="flex items-center gap-1.5 rounded-md border border-destructive/30 bg-destructive-soft px-3 py-2 text-xs text-destructive">
-      <AlertTriangle className="h-4 w-4 shrink-0" /> ДДС номерът на този клиент е невалиден според VIES. Проверете преди издаване на фактура за ЕС.
-    </p>
+    <Notice tone="destructive" icon={AlertTriangle} title="Невалиден ДДС номер според VIES">
+      Проверете данните на клиента преди издаване на фактура за ЕС.
+    </Notice>
   );
 }
