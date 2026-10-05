@@ -3,17 +3,11 @@
 import * as React from 'react';
 import { useLang } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import { AccoMarkTile } from './acco-mark';
 
-/** Acco brand mark — forest rounded square with brass bars (matches the site). */
+/** Acco brand mark: forest-green tile with the "a" + check (same mark as the public site). */
 export function AccoMark({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 34 34" className={cn('h-8 w-8 shrink-0', className)} fill="none" role="img" aria-label="Acco">
-      <rect width="34" height="34" rx="9" fill="#123A33" />
-      <rect x="9" y="17" width="3.4" height="8" rx="1.7" fill="#D9B978" />
-      <rect x="15.3" y="13" width="3.4" height="12" rx="1.7" fill="#D9B978" />
-      <rect x="21.6" y="9" width="3.4" height="16" rx="1.7" fill="#E9C98C" />
-    </svg>
-  );
+  return <AccoMarkTile className={cn('h-8 w-8 shrink-0', className)} />;
 }
 
 /** Acco brand lockup: mark + Newsreader wordmark + tagline. */

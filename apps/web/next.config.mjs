@@ -10,8 +10,11 @@ const nextConfig = {
     const pages = ['features', 'pricing', 'about', 'faq', 'contact'];
     return {
       beforeFiles: [
+        // Bulgarian (default) at the root, English under /en. Same generator, same files.
         { source: '/', destination: '/landing/index.html' },
         ...pages.map((p) => ({ source: `/${p}`, destination: `/landing/${p}.html` })),
+        { source: '/en', destination: '/landing/en/index.html' },
+        ...pages.map((p) => ({ source: `/en/${p}`, destination: `/landing/en/${p}.html` })),
       ],
     };
   },

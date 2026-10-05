@@ -1,16 +1,9 @@
 import { cn } from '@/lib/utils';
+import { AccoMarkTile } from './acco-mark';
 
-/** App icon — blue rounded square with bar-chart + check (design-system mark). */
+/** App icon — Acco mark (forest-green tile, white "a" with check). */
 export function AppIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 96 96" className={cn('h-9 w-9', className)} role="img" aria-label="Счетоводство">
-      <rect width="96" height="96" rx="22" fill="#2F7BE0" />
-      <rect x="26" y="54" width="11" height="18" rx="3" fill="#FFFFFF" />
-      <rect x="42.5" y="42" width="11" height="30" rx="3" fill="#FFFFFF" />
-      <rect x="59" y="26" width="11" height="46" rx="3" fill="#FFFFFF" opacity="0.92" />
-      <path d="M30 35.5 L37 42 L52 24" stroke="#FFFFFF" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.55" />
-    </svg>
-  );
+  return <AccoMarkTile className={cn('h-9 w-9', className)} label="Счетоводство" />;
 }
 
 /** Full brand lockup: icon + wordmark + tagline. */

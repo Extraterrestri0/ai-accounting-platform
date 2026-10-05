@@ -5,6 +5,14 @@ import { Providers } from './providers';
 export const metadata: Metadata = {
   title: 'Счетоводство · AI Accounting',
   description: 'Bulgarian-first AI accounting platform — upload, review, post, report.',
+  icons: {
+    icon: [
+      { url: '/landing/assets/app-icon.svg', type: 'image/svg+xml' },
+      { url: '/landing/assets/icons/favicon-32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: '/landing/assets/icons/apple-touch-icon.png',
+  },
+  manifest: '/landing/assets/icons/site.webmanifest',
 };
 
 /* Set the theme class on <html> before paint to avoid a flash and any hydration
