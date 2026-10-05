@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Inject, Param, Post, Query } from '@nestjs/common';
 import { REVIEW_SERVICE, type IReviewService } from '../application/review.service.interface';
 import { RequirePermission, PERMISSIONS } from '../../identity';
-import type { ApproveDto, RejectDto, CorrectionDto, EditReviewDto, AssignDto, CommentDto } from './dto/reviews.dto';
+import type { ApproveDto, RejectDto, CorrectionDto, EditReviewDto, AssignDto, CommentDto, PostingDateDto } from './dto/reviews.dto';
 import type { ReviewStatus } from '../domain/review/models';
 
 /** Review Queue endpoints. Decisions require REVIEW_APPROVE (human) — enforced by the global guard + DB. */
@@ -24,7 +24,11 @@ export class ReviewsController {
   detail(@Param('documentId') documentId: string) { return this.reviews.getDetail(documentId); }
 
   @Post(':id/approve') @RequirePermission(PERMISSIONS.REVIEW_APPROVE)
-  approve(@Param('id') id: string, @Body() dto: ApproveDto) { return this.reviews.approve(id, dto.comment); }
+  approve(@Param('id') id: string, @Body() dto: ApproveDto) { return this.reviews.approve(id, dto.comment, dto.postingDate); }
+
+  // Confirm/correct the accounting posting date before posting (persisted on the review package).
+  @Post(':id/posting-date') @RequirePermission(PERMISSIONS.REVIEW_APPROVE)
+  setPostingDate(@Param('id') id: string, @Body() dto: PostingDateDto) { return this.reviews.setPostingDate(id, dto.postingDate); }
 
   @Post(':id/reject') @RequirePermission(PERMISSIONS.REVIEW_APPROVE)
   reject(@Param('id') id: string, @Body() dto: RejectDto) { return this.reviews.reject(id, dto.reason); }

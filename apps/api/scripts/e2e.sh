@@ -40,6 +40,9 @@ echo "▶ 5/7 backend unit/integration suite (jest)"; npm test
 echo "▶ 6/7 end-to-end MVP workflow (real services · live PostgreSQL)"
 npx ts-node --compiler-options "$TS_OPTS" test/e2e/e2e-workflow.ts
 
+echo "▶ 6b/7 posting-date e2e (human-confirmed date persisted → ledger; fail-closed; locked period)"
+npx ts-node --compiler-options "$TS_OPTS" test/e2e/posting-date-e2e.ts
+
 echo "▶ 7/7 SAF-T v2 pipeline e2e (build→render→XSD→storage→download→audit)"
 STORAGE_DRIVER=local DOC_STORAGE_DIR="${DOC_STORAGE_DIR:-/tmp/saft-e2e-storage}" \
   npx ts-node --compiler-options "$TS_OPTS" test/e2e/saft-v2-e2e.ts

@@ -1,7 +1,25 @@
--- Local DEV seed. Run as the superuser/owner (RLS bypassed for seeding).
--- Creates: demo tenant + company, chart of accounts, a VAT code, a counterparty,
--- and a real login user (email: demo@demo.bg / password: Demo1234!).
--- Idempotent: ON CONFLICT DO NOTHING / UPSERT on the credential.
+-- =====================================================================
+-- DEV-ONLY SEED — NEVER run against a production/real database.
+-- Creates a demo tenant + company, chart of accounts, a VAT code, a
+-- counterparty, and a PREDICTABLE login (demo@demo.bg / Demo1234!).
+-- Because the credential is predictable, this file is fail-closed: it
+-- refuses to run unless the caller explicitly opts in with
+--     psql -v allow_dev_seed=1 -f scripts/seed-dev.sql
+-- Production deployment (infra/deploy-sofia.sh) does NOT run this file.
+-- Run as the superuser/owner (RLS bypassed for seeding). Idempotent.
+-- =====================================================================
+
+-- ---- fail-closed guard: abort before any write unless explicitly opted in ----
+\if :{?allow_dev_seed}
+\else
+  \set allow_dev_seed 0
+\endif
+\if :allow_dev_seed
+\else
+  \warn '*** REFUSED: seed-dev.sql is a DEV-ONLY seed that creates predictable credentials.'
+  \warn '*** It will NOT run without an explicit opt-in. Re-run with:  psql -v allow_dev_seed=1 -f scripts/seed-dev.sql'
+  \quit
+\endif
 
 -- ---- tenants & companies ----
 INSERT INTO tenants(id,name) VALUES

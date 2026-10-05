@@ -4,7 +4,8 @@
 # Idempotent: safe to re-run. Fetch + run with a single short line:
 #   curl -fsSL https://raw.githubusercontent.com/Extraterrestri0/ai-accounting-platform/<sha>/infra/deploy-sofia.sh -o deploy.sh && bash deploy.sh
 # Brings up the full stack (db,redis,minio,api,worker,web,caddy) with HTTPS,
-# generates production secrets once, seeds the demo company, installs a backup cron.
+# generates production secrets once, installs a backup cron. Does NOT seed any
+# demo/predictable account — the first user registers through the app.
 # =====================================================================
 set -euo pipefail
 
@@ -73,8 +74,12 @@ for i in $(seq 1 60); do
 done
 echo -n "    HEALTH: "; curl -s "https://${APP_HOST}/api/health/ready" 2>/dev/null || echo "(not ready yet — see logs)"; echo
 
-echo "==> 8/8 seed demo company + nightly backup cron"
-sudo $DC exec -T db psql -U app_owner -d accounting < apps/api/scripts/seed-dev.sql >/dev/null 2>&1 || echo "    (seed skipped — maybe already seeded)"
+echo "==> 8/8 nightly backup cron"
+# SECURITY: production deployment NEVER runs the dev/demo seed. apps/api/scripts/seed-dev.sql
+# creates a PREDICTABLE demo login and is intentionally not invoked here — it is a manual,
+# opt-in, dev-only tool (it refuses to run without `-v allow_dev_seed=1`). On a real deployment
+# the first user registers through the app (POST /api/auth/register), which creates a tenant
+# admin with their own password; no predictable credential ever exists in production.
 cat > ~/mgi-delta/backup.sh <<'BK'
 #!/usr/bin/env bash
 set -euo pipefail; cd ~/mgi-delta; D=~/mgi-backups; mkdir -p "$D"; TS=$(date -u +%Y%m%dT%H%M%SZ); O="$D/accounting-$TS.dump"
@@ -87,6 +92,6 @@ chmod +x ~/mgi-delta/backup.sh
 echo ""
 echo "============================================================"
 if [ -n "$ok" ]; then echo " ✅ ГОТОВО → https://${APP_HOST}"; else echo " ⚠ Стекът е стартиран, но health още не отговаря — изчакай 1-2 мин и пробвай URL-а."; fi
-echo "    Вход: demo@demo.bg / Demo1234!"
+echo "    Регистрация на първия акаунт: отвори https://${APP_HOST}/register (без демо достъп в продукция)."
 echo "    Логове: cd ~/mgi-delta && sudo docker compose -f docker-compose.deploy.yml logs -f api caddy"
 echo "============================================================"

@@ -88,7 +88,17 @@ export default function ReviewDetailPage() {
   });
   const suggest = useMutation({ mutationFn: () => Endpoints.generateSuggestion(id), onSuccess: () => { toast.success('Генерирано предложение'); invalidate(); }, onError: errToast });
   const startReview = useMutation({ mutationFn: () => Endpoints.createReview(id), onSuccess: () => { toast.success('Прегледът е започнат'); invalidate(); }, onError: errToast });
-  const approve = useMutation({ mutationFn: () => Endpoints.approveReview(pkg.id), onSuccess: () => { toast.success('Одобрено'); invalidate(); }, onError: errToast });
+  // Posting date (Дата за осчетоводяване): human-confirmed accounting date. Proposed from the
+  // extracted document date; posting is refused server-side if it is not confirmed.
+  const [postingDate, setPostingDate] = React.useState('');
+  React.useEffect(() => {
+    const proposed = reviewQ.data?.proposedPostingDate ?? reviewQ.data?.package?.approvedPostingDate ?? '';
+    setPostingDate((cur) => (cur ? cur : proposed));
+  }, [reviewQ.data?.proposedPostingDate, reviewQ.data?.package?.approvedPostingDate]);
+  const confirmedPostingDate: string | undefined = reviewQ.data?.package?.approvedPostingDate;
+
+  const approve = useMutation({ mutationFn: () => Endpoints.approveReview(pkg.id, undefined, postingDate || undefined), onSuccess: () => { toast.success('Одобрено'); invalidate(); }, onError: errToast });
+  const savePostingDate = useMutation({ mutationFn: () => Endpoints.setReviewPostingDate(pkg.id, postingDate), onSuccess: () => { toast.success('Датата за осчетоводяване е запазена'); invalidate(); }, onError: errToast });
   const reject = useMutation({ mutationFn: () => Endpoints.rejectReview(pkg.id, 'Отхвърлено от ревюъра'), onSuccess: () => { toast.success('Отхвърлено'); invalidate(); }, onError: errToast });
   const post = useMutation({ mutationFn: () => Endpoints.postReview(pkg.id), onSuccess: () => { toast.success('Осчетоводено в главната книга'); invalidate(); }, onError: errToast });
   const setCategory = useMutation({
@@ -299,7 +309,13 @@ export default function ReviewDetailPage() {
                 )}
                 {(status === 'pending' || status === 'in_review' || status === 'corrections_requested') && (
                   <>
-                    <Button variant="success" className="w-full" onClick={() => approve.mutate()} disabled={approve.isPending}>
+                    <label className="block space-y-1">
+                      <span className="text-xs font-medium text-muted-foreground">Дата за осчетоводяване</span>
+                      <Input type="date" value={postingDate} onChange={(e) => setPostingDate(e.target.value)} className="h-9" />
+                      <span className="text-[11px] text-muted-foreground">Потвърдете датата, с която документът влиза в главната книга. Осчетоводяването изисква потвърдена дата.</span>
+                    </label>
+                    <Button variant="success" className="w-full" onClick={() => approve.mutate()} disabled={approve.isPending || !postingDate}
+                      title={!postingDate ? 'Потвърдете датата за осчетоводяване' : undefined}>
                       {approve.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Одобри
                     </Button>
                     <Button variant="outline" className="w-full" onClick={() => reject.mutate()} disabled={reject.isPending}>
@@ -309,8 +325,21 @@ export default function ReviewDetailPage() {
                 )}
                 {status === 'approved' && !journalEntryId && (
                   <>
-                    <Button variant="success" className="w-full" onClick={() => post.mutate()} disabled={post.isPending || !hasPostingLines}
-                      title={!hasPostingLines ? 'Няма осчетоводни редове' : undefined}>
+                    {!confirmedPostingDate && (
+                      <label className="block space-y-1">
+                        <span className="text-xs font-medium text-muted-foreground">Дата за осчетоводяване</span>
+                        <div className="flex gap-2">
+                          <Input type="date" value={postingDate} onChange={(e) => setPostingDate(e.target.value)} className="h-9" />
+                          <Button variant="outline" size="sm" onClick={() => savePostingDate.mutate()} disabled={!postingDate || savePostingDate.isPending}>Запази</Button>
+                        </div>
+                        <span className="text-[11px] text-muted-foreground">Потвърдете датата, преди да осчетоводите.</span>
+                      </label>
+                    )}
+                    {confirmedPostingDate && (
+                      <p className="text-xs text-muted-foreground">Дата за осчетоводяване: <span className="font-medium text-foreground">{confirmedPostingDate}</span></p>
+                    )}
+                    <Button variant="success" className="w-full" onClick={() => post.mutate()} disabled={post.isPending || !hasPostingLines || !confirmedPostingDate}
+                      title={!hasPostingLines ? 'Няма осчетоводни редове' : !confirmedPostingDate ? 'Потвърдете датата за осчетоводяване' : undefined}>
                       {post.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <BookOpenCheck className="h-4 w-4" />} Осчетоводи
                     </Button>
                     {!hasPostingLines && (

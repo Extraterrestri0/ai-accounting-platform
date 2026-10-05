@@ -6,6 +6,7 @@ import { PERIOD_SERVICE, type IAccountingPeriodService } from '../../periods';
 import { REVIEW_SERVICE, type IReviewService } from './review.service.interface';
 import { PostingRepository } from '../infrastructure/posting.repository';
 import { validatePosting, PostingValidationError } from '../domain/posting/validation';
+import { parsePostingDate } from '../domain/posting/date';
 import type { PostedPurchaseDetail, PostingLineInput, PostingOutcome, PostingRequest } from '../domain/posting/models';
 import type { IPostingService } from './posting.service.interface';
 
@@ -57,15 +58,17 @@ export class PostingService implements IPostingService {
   async postFromReview(reviewPackageId: string): Promise<PostingOutcome> {
     const { tenantId, companyId } = this.scope();
     const userId = this.requireHuman();
-    // Compliance gate (Task 4.3): no purchase approvals/postings into a locked period.
-    await this.periods.assertOpen(new Date().toISOString().slice(0, 10), 'Posting');
 
     // 1) Load the approved review + resolve lines + create the posting_request (own txn; no nesting with the ledger).
-    const prep = await this.db.run<{ requestId: string; documentId: string | null | undefined; lines: PostingLineInput[] }>(async (db) => {
+    const prep = await this.db.run<{ requestId: string; documentId: string | null | undefined; lines: PostingLineInput[]; postingDate: string }>(async (db) => {
       const detail = await this.reviews.getDetail((await this.reviewDocId(db, reviewPackageId)));
       if (detail.package.id !== reviewPackageId) throw new PostingError('Review package mismatch.');
       if (detail.package.status !== 'approved') throw new PostingError(`Review package ${reviewPackageId} is not approved (status ${detail.package.status}).`);
       if (await this.repo.hasPostedForReview(db, reviewPackageId)) throw new DuplicatePostingError('This review has already been posted.');
+
+      // Posting date: HUMAN-confirmed value only. No fallback to today's date — fail closed if absent.
+      const postingDate = parsePostingDate(detail.package.approvedPostingDate);
+      if (!postingDate) throw new PostingError('No confirmed posting date. Set and confirm the posting date in Review before posting.');
 
       const approvedLines = (detail.package.approvedPosting as ApprovedLine[] | undefined)
         ?? ((detail.suggestion as { suggestedPosting?: ApprovedLine[] } | null)?.suggestedPosting);
@@ -80,12 +83,22 @@ export class PostingService implements IPostingService {
       }
       validatePosting(lines); // friendly pre-check; the ledger re-validates authoritatively
       const requestId = await this.repo.createRequest(db, tenantId, companyId, { reviewPackageId, documentId: detail.package.documentId ?? undefined, requestedBy: userId, kind: 'post', lines });
-      return { requestId, documentId: detail.package.documentId, lines };
+      return { requestId, documentId: detail.package.documentId, lines, postingDate };
     }).catch((e) => { throw toHttpError(e) as Error; });
+
+    // Period gate on the CONFIRMED date (own context, outside the prep txn). The ledger re-asserts
+    // this authoritatively; a confirmed date in a locked period fails closed — it is NEVER moved to
+    // today's/the current/an open period. A failed gate marks the request failed, like any post error.
+    try {
+      await this.periods.assertOpen(prep.postingDate, 'Posting');
+    } catch (e) {
+      await this.db.run((db) => this.repo.setRequestStatus(db, prep.requestId, 'failed', (e as Error).message));
+      throw e;
+    }
 
     // 2) Post through the ledger (its OWN transaction: balance + immutability + audit enforced there).
     try {
-      const input: PostEntryInput = { postingDate: new Date().toISOString().slice(0, 10), description: 'Posted from approved review', sourceType: 'review', sourceRef: reviewPackageId, currency: 'EUR', lines: prep.lines };
+      const input: PostEntryInput = { postingDate: prep.postingDate, description: 'Posted from approved review', sourceType: 'review', sourceRef: reviewPackageId, currency: 'EUR', lines: prep.lines };
       const entry = await this.ledger.postEntry(input);
       // 3) Record the result + flip the request + audit as the human poster.
       return await this.db.run(async (db) => {

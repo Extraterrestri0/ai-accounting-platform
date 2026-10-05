@@ -1,6 +1,7 @@
 import { Controller, Get, Inject, Put, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { STORAGE_SERVICE, type StorageService } from '../application/storage.port';
+import { verifyStorageSignature } from '../infrastructure/signed-url';
 
 /**
  * DEV-ONLY local object storage transport. In production the client uploads
@@ -37,10 +38,21 @@ export class DevStorageController {
     return { ok: true, bytes: data.length };
   }
 
-  /** Serve bytes for the viewer (excluded from auth middleware; signed URL). */
+  /**
+   * Serve bytes for the viewer. This route is excluded from the auth middleware so the
+   * sandboxed <iframe>/<img> can load it without a bearer token, so the HMAC signature in
+   * the URL (exp+sig, issued by getDownloadUrl) is the access control: an unsigned, forged,
+   * or expired request gets 404 (same shape as a missing object — no key-existence oracle).
+   * Path traversal is additionally refused by the storage adapter.
+   */
   @Get('*')
   async get(@Req() req: Request, @Res() res: Response): Promise<void> {
     const key = this.keyFrom(req);
+    const query = (req.query ?? {}) as Record<string, string | undefined>;
+    if (!verifyStorageSignature(key, query.exp, query.sig)) {
+      res.status(404).json({ statusCode: 404, message: 'Object not found' });
+      return;
+    }
     try {
       const buf = await this.storage.readObject(key);
       const ext = key.split('.').pop()?.toLowerCase() ?? '';

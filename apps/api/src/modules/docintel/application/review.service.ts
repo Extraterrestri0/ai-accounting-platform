@@ -9,6 +9,7 @@ import { SuggestionRepository } from '../infrastructure/suggestion.repository';
 import type { ReviewDetail, ReviewerDashboard, ReviewPackage, ReviewStatus } from '../domain/review/models';
 import type { EditInput, IReviewService, ListQueueQuery } from './review.service.interface';
 import { nextStatus } from '../domain/review/workflow';
+import { parsePostingDate } from '../domain/posting/date';
 
 // 422 (not a bare Error): the user-safe reason must reach the UI, never a generic 500.
 export class ReviewError extends UnprocessableEntityException {}
@@ -74,8 +75,13 @@ export class ReviewService implements IReviewService {
     for (const [key, valueText] of Object.entries(corrected)) {
       byKey.set(key, { key, valueText, confidence: 1, validationStatus: 'valid', source: 'human' });
     }
+    // Posting date offered to the reviewer to confirm: the already-confirmed value if set,
+    // else the extracted/corrected tax-event date, else the invoice date. Never today's date.
+    const fieldVal = (k: string): string | undefined => byKey.get(k)?.valueText;
+    const proposedPostingDate = pkg.approvedPostingDate
+      ?? parsePostingDate(fieldVal('tax_event_date')) ?? parsePostingDate(fieldVal('invoice_date')) ?? undefined;
     return {
-      package: pkg, documentDownloadUrl: downloadUrl,
+      package: pkg, documentDownloadUrl: downloadUrl, proposedPostingDate,
       extraction: { overallConfidence: review.overallConfidence, fields: Array.from(byKey.values()), flags: review.flags, diagnostics: review.diagnostics },
       suggestion, comments, actions,
     };
@@ -98,16 +104,25 @@ export class ReviewService implements IReviewService {
     });
   }
 
-  private async decide(packageId: string, status: ReviewStatus, actionType: 'approve' | 'reject' | 'request_correction', payload: Record<string, unknown>, suggestionStatus?: 'accepted' | 'rejected'): Promise<ReviewPackage> {
+  private async decide(packageId: string, status: ReviewStatus, actionType: 'approve' | 'reject' | 'request_correction', payload: Record<string, unknown>, suggestionStatus?: 'accepted' | 'rejected', postingDate?: string): Promise<ReviewPackage> {
     const { tenantId, companyId } = this.scope();
     const userId = this.requireHuman();
+    // A posting date supplied at approval must be a valid calendar date (never silently dropped).
+    let confirmedDate: string | undefined;
+    if (postingDate !== undefined) {
+      const parsed = parsePostingDate(postingDate);
+      if (!parsed) throw new ReviewError('Posting date must be a valid date (YYYY-MM-DD).');
+      confirmedDate = parsed;
+    }
     return this.db.run(async (db) => {
       const pkg = await this.repo.getById(db, packageId);
       if (!pkg) throw new ReviewError(`Review package ${packageId} not found.`);
       const currentSuggestion = status === 'approved' && pkg.accountingSuggestionId
         ? await this.suggestions.getCurrent(db, pkg.documentId)
         : null;
-      const approved = currentSuggestion ? { accountId: undefined, posting: currentSuggestion.suggestedPosting } : undefined;
+      const approved = (currentSuggestion || confirmedDate)
+        ? { accountId: undefined, posting: currentSuggestion?.suggestedPosting, postingDate: confirmedDate }
+        : undefined;
       const resolved = nextStatus(actionType, pkg.status); void resolved;
       await this.repo.setDecision(db, packageId, status, userId, approved);
       await this.repo.addAction(db, tenantId, companyId, { packageId, actionType, actorId: userId, payload });
@@ -122,9 +137,28 @@ export class ReviewService implements IReviewService {
     });
   }
 
-  approve(packageId: string, comment?: string): Promise<ReviewPackage> { return this.decide(packageId, 'approved', 'approve', comment ? { comment } : {}, 'accepted'); }
+  approve(packageId: string, comment?: string, postingDate?: string): Promise<ReviewPackage> {
+    return this.decide(packageId, 'approved', 'approve', comment ? { comment } : {}, 'accepted', postingDate);
+  }
   reject(packageId: string, reason: string): Promise<ReviewPackage> { return this.decide(packageId, 'rejected', 'reject', { reason }, 'rejected'); }
   requestCorrection(packageId: string, note: string): Promise<ReviewPackage> { return this.decide(packageId, 'needs_correction', 'request_correction', { note }); }
+
+  /** Persist the human-confirmed posting date during review (correction before approval/posting). */
+  async setPostingDate(packageId: string, postingDate: string): Promise<ReviewPackage> {
+    const { tenantId, companyId } = this.scope();
+    const userId = this.requireHuman();
+    const parsed = parsePostingDate(postingDate);
+    if (!parsed) throw new ReviewError('Posting date must be a valid date (YYYY-MM-DD).');
+    return this.db.run(async (db) => {
+      const pkg = await this.repo.getById(db, packageId);
+      if (!pkg) throw new ReviewError(`Review package ${packageId} not found.`);
+      await this.repo.setPostingDate(db, packageId, parsed);
+      await this.repo.addAction(db, tenantId, companyId, { packageId, actionType: 'edit', actorId: userId, payload: { postingDate: parsed } });
+      await this.audit.append(db, { companyId, actorType: 'user', actorId: userId, action: 'docintel.review_posting_date_set', entityType: 'review_package', entityId: packageId, after: { postingDate: parsed } });
+      const updated = await this.repo.getById(db, packageId);
+      return updated!;
+    });
+  }
 
   async edit(packageId: string, input: EditInput): Promise<ReviewPackage> {
     const { tenantId, companyId } = this.scope();
@@ -133,7 +167,13 @@ export class ReviewService implements IReviewService {
       const pkg = await this.repo.getById(db, packageId);
       if (!pkg) throw new ReviewError(`Review package ${packageId} not found.`);
       const accountId = input.accountCode ? await this.suggestions.accountIdByCode(db, input.accountCode) : undefined;
-      await this.repo.setDecision(db, packageId, pkg.status, userId, { accountId: accountId ?? undefined, vatCodeId: input.vatCodeId, posting: input.posting });
+      let postingDate: string | undefined;
+      if (input.postingDate !== undefined) {
+        const parsed = parsePostingDate(input.postingDate);
+        if (!parsed) throw new ReviewError('Posting date must be a valid date (YYYY-MM-DD).');
+        postingDate = parsed;
+      }
+      await this.repo.setDecision(db, packageId, pkg.status, userId, { accountId: accountId ?? undefined, vatCodeId: input.vatCodeId, posting: input.posting, postingDate });
       await this.repo.addAction(db, tenantId, companyId, { packageId, actionType: 'edit', actorId: userId, payload: { ...input } });
       await this.audit.append(db, { companyId, actorType: 'user', actorId: userId, action: 'docintel.review_edit', entityType: 'review_package', entityId: packageId, before: { account: pkg.approvedAccountId }, after: { ...input } });
       const updated = await this.repo.getById(db, packageId);

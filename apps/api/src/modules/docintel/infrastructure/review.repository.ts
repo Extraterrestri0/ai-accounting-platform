@@ -2,15 +2,25 @@ import { Injectable } from '@nestjs/common';
 import type { ScopedClient } from '../../../platform';
 import type { ReviewActionLog, ReviewActionType, ReviewComment, ReviewerDashboard, ReviewPackage, ReviewQueueItem, ReviewStatus } from '../domain/review/models';
 
+/** pg returns a `date` column as a JS Date (UTC midnight); normalize to a plain YYYY-MM-DD string. */
+const toIsoDate = (v: unknown): string | undefined => {
+  if (v == null) return undefined;
+  if (v instanceof Date) return v.toISOString().slice(0, 10);
+  const s = String(v);
+  return s.length >= 10 ? s.slice(0, 10) : s;
+};
+
 interface PkgRow {
   id: string; document_id: string; extraction_id: string | null; accounting_suggestion_id: string | null;
   status: ReviewStatus; assigned_reviewer_id: string | null; approved_account_id: string | null;
-  approved_vat_code_id: string | null; approved_posting: unknown; decided_by: string | null; decided_at: string | null; created_at: string;
+  approved_vat_code_id: string | null; approved_posting: unknown; approved_posting_date: string | null;
+  decided_by: string | null; decided_at: string | null; created_at: string;
 }
 const mapPkg = (r: PkgRow): ReviewPackage => ({
   id: r.id, documentId: r.document_id, extractionId: r.extraction_id ?? undefined, accountingSuggestionId: r.accounting_suggestion_id ?? undefined,
   status: r.status, assignedReviewerId: r.assigned_reviewer_id ?? undefined, approvedAccountId: r.approved_account_id ?? undefined,
   approvedVatCodeId: r.approved_vat_code_id ?? undefined, approvedPosting: r.approved_posting ?? undefined,
+  approvedPostingDate: toIsoDate(r.approved_posting_date),
   decidedBy: r.decided_by ?? undefined, decidedAt: r.decided_at ?? undefined, createdAt: r.created_at,
 });
 
@@ -43,14 +53,21 @@ export class ReviewRepository {
     await db.query(`UPDATE review_packages SET corrected_fields = corrected_fields || $2::jsonb, updated_at=now() WHERE id=$1`,
       [packageId, JSON.stringify(fields)]);
   }
-  async setDecision(db: ScopedClient, id: string, status: ReviewStatus, decidedBy: string, approved?: { accountId?: string; vatCodeId?: string; posting?: unknown }): Promise<void> {
+  async setDecision(db: ScopedClient, id: string, status: ReviewStatus, decidedBy: string, approved?: { accountId?: string; vatCodeId?: string; posting?: unknown; postingDate?: string }): Promise<void> {
     await db.query(
       `UPDATE review_packages SET status=$2, decided_by=$3, decided_at=now(),
          approved_account_id=COALESCE($4, approved_account_id),
          approved_vat_code_id=COALESCE($5, approved_vat_code_id),
-         approved_posting=COALESCE($6, approved_posting), updated_at=now()
+         approved_posting=COALESCE($6, approved_posting),
+         approved_posting_date=COALESCE($7::date, approved_posting_date), updated_at=now()
        WHERE id=$1`,
-      [id, status, decidedBy, approved?.accountId ?? null, approved?.vatCodeId ?? null, approved?.posting ? JSON.stringify(approved.posting) : null]);
+      [id, status, decidedBy, approved?.accountId ?? null, approved?.vatCodeId ?? null,
+       approved?.posting ? JSON.stringify(approved.posting) : null, approved?.postingDate ?? null]);
+  }
+
+  /** Persist only the human-confirmed posting date (used when setting it without a decision change). */
+  async setPostingDate(db: ScopedClient, id: string, postingDate: string): Promise<void> {
+    await db.query(`UPDATE review_packages SET approved_posting_date=$2::date, updated_at=now() WHERE id=$1`, [id, postingDate]);
   }
   async assign(db: ScopedClient, id: string, reviewerId: string): Promise<void> {
     await db.query(`UPDATE review_packages SET assigned_reviewer_id=$2, updated_at=now() WHERE id=$1`, [id, reviewerId]);
