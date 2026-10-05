@@ -19,7 +19,7 @@ const OUT = join(__dir, '..', 'public', 'landing');
 const PUB = join(__dir, '..', 'public');
 const SITE = 'https://app.185-52-207-143.sslip.io'; // temporary public host until a real domain is configured
 const BRAND = 'Acco';
-const V = 'v=50';
+const V = 'v=51';
 mkdirSync(join(OUT, 'en'), { recursive: true });
 
 /* ---- icons --------------------------------------------------------------- */

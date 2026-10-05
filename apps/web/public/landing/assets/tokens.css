@@ -23,10 +23,12 @@
   --ink: #0C1210;
   --ink-2: #2A312E;
   --text: #4B534F;
-  --muted: #656D69;
-  --faint: #6B726E;   /* ≥4.7:1 on white and warm surfaces — small text stays AA */
+  --muted: #5A615D;   /* secondary content: 6.4:1 on white, 5.9 warm, 5.7 tint */
+  --faint: #5F6662;   /* decorative labels only (mono numbers, meta): 5.9:1 on white */
+  --dim: #4F5753;     /* second phrase of split-colour headlines: 7.4:1 on white */
   --on-ink: #F4F5F3;
   --on-ink-muted: rgba(244,245,243,.66);
+  --on-ink-dim: rgba(244,245,243,.62);  /* headline phrase / notes on ink: 7.1:1 */
 
   /* brand (tonal steps of #1C6B4E) */
   --brand-900: #0F3B2C;
