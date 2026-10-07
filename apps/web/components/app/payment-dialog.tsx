@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Loader2, Undo2, Wallet, History } from 'lucide-react';
 import { Endpoints } from '@/lib/api/endpoints';
 import { ApiError } from '@/lib/api/client';
+import { newIdempotencyKey } from '@/lib/idempotency';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,9 +44,21 @@ export function PaymentDialog({
   const [notes, setNotes] = React.useState('');
   const [auditOpen, setAuditOpen] = React.useState<string | null>(null);
 
+  // Idempotency keys for this dialog session, one per distinct payload (type/id/amount/currency/date).
+  // A ref survives re-renders, so an in-flight or retried request never gets a new key; keeping EVERY
+  // payload's key (not just the last) means editing the amount and back again still reuses the
+  // original key, so a request whose response was lost can never be posted twice. The map is reset
+  // when a new document opens; the dialog closes on success, so a later payment gets a fresh key.
+  const idemKeys = React.useRef<Map<string, string>>(new Map());
+  const idempotencyKeyFor = (fingerprint: string): string => {
+    let key = idemKeys.current.get(fingerprint);
+    if (!key) { key = newIdempotencyKey(); idemKeys.current.set(fingerprint, key); }
+    return key;
+  };
+
   // Prefill the amount with the full outstanding balance each time a new item opens.
   React.useEffect(() => {
-    if (item) { setAmount(item.outstanding); setPaymentDate(today()); setReference(''); setNotes(''); }
+    if (item) { setAmount(item.outstanding); setPaymentDate(today()); setReference(''); setNotes(''); idemKeys.current = new Map(); }
   }, [item?.documentId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const historyQ = useQuery({
@@ -61,17 +74,24 @@ export function PaymentDialog({
   };
 
   const record = useMutation({
-    mutationFn: () => Endpoints.recordPayment({
-      documentType: item!.documentType, documentId: item!.documentId,
-      amount, paymentDate, currency: item!.currency,
-      reference: reference || undefined, notes: notes || undefined,
-    }),
+    mutationFn: () => {
+      const body = {
+        documentType: item!.documentType, documentId: item!.documentId,
+        amount, paymentDate, currency: item!.currency,
+        reference: reference || undefined, notes: notes || undefined,
+      };
+      // Fingerprint the fields the backend keys idempotency on (type/id/amount/currency/date).
+      const key = idempotencyKeyFor(`${item!.documentType}|${item!.documentId}|${amount}|${item!.currency}|${paymentDate}`);
+      return Endpoints.recordPayment(body, key);
+    },
     onSuccess: () => { toast.success('Плащането е отчетено'); refresh(); onOpenChange(false); },
     onError: (e) => toast.error('Грешка', { description: e instanceof ApiError ? e.message : '' }),
   });
 
   const reverse = useMutation({
-    mutationFn: (id: string) => Endpoints.reversePayment(id, 'Сторниране от потребител'),
+    // One key per payment being reversed (same map as payments): a retry or double-click of the same
+    // reversal reuses it; the server also locks the payment, so a second reversal is refused anyway.
+    mutationFn: (id: string) => Endpoints.reversePayment(id, 'Сторниране от потребител', idempotencyKeyFor(`reverse|${id}`)),
     onSuccess: () => { toast.success('Плащането е сторнирано'); refresh(); },
     onError: (e) => toast.error('Грешка', { description: e instanceof ApiError ? e.message : '' }),
   });

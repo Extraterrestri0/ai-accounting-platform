@@ -1,6 +1,7 @@
-import { BadRequestException, Body, Controller, Get, Inject, Param, Post, Query, UseFilters } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Headers, Inject, Param, Post, Query, UseFilters } from '@nestjs/common';
 import { PAYMENT_SERVICE, type IPaymentService } from '../application/payment.service.interface';
 import { RequirePermission, PERMISSIONS } from '../../identity';
+import { requireIdempotencyKey } from '../../../platform';
 import { PaymentsErrorFilter } from './payments-error.filter';
 import type { RecordPaymentDto, ReversePaymentDto } from './dto/payments.dto';
 import type { DocumentType } from '../domain/models';
@@ -14,19 +15,21 @@ export class PaymentsController {
   constructor(@Inject(PAYMENT_SERVICE) private readonly payments: IPaymentService) {}
 
   @Post() @RequirePermission(PERMISSIONS.PAYMENT_RECORD)
-  record(@Body() dto: RecordPaymentDto) {
+  record(@Body() dto: RecordPaymentDto, @Headers('idempotency-key') idempotencyKey?: string) {
     if (!dto || !DOC_TYPES.includes(dto.documentType)) throw new BadRequestException('documentType must be sales_invoice or purchase_invoice.');
     if (!dto.documentId) throw new BadRequestException('documentId is required.');
     if (dto.amount == null || Number(dto.amount) <= 0) throw new BadRequestException('A positive amount is required.');
+    const key = requireIdempotencyKey(idempotencyKey); // retry-safe financial write — fail closed without it
     return this.payments.recordPayment({
       documentType: dto.documentType, documentId: dto.documentId, amount: dto.amount,
       paymentDate: dto.paymentDate, currency: dto.currency, reference: dto.reference, notes: dto.notes,
-    });
+    }, { key });
   }
 
   @Post(':id/reverse') @RequirePermission(PERMISSIONS.PAYMENT_REVERSE)
-  reverse(@Param('id') id: string, @Body() dto: ReversePaymentDto) {
-    return this.payments.reversePayment(id, dto?.reason ?? '');
+  reverse(@Param('id') id: string, @Body() dto: ReversePaymentDto, @Headers('idempotency-key') idempotencyKey?: string) {
+    const key = requireIdempotencyKey(idempotencyKey); // retry-safe financial write — fail closed without it
+    return this.payments.reversePayment(id, dto?.reason ?? '', { key });
   }
 
   @Get() @RequirePermission(PERMISSIONS.PAYMENT_READ)

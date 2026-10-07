@@ -83,6 +83,11 @@ export class BankingRepository {
     const r = await db.query<TxnRowDb>(`${TXN} WHERE id=$1`, [id]);
     return r.rows[0] ? mapTxn(r.rows[0]) : null;
   }
+  /** Row-lock the bank transaction FOR UPDATE inside the reconciliation transaction. */
+  async getTransactionForUpdate(db: ScopedClient, id: string): Promise<BankTransaction | null> {
+    const r = await db.query<TxnRowDb>(`${TXN} WHERE id=$1 FOR UPDATE`, [id]);
+    return r.rows[0] ? mapTxn(r.rows[0]) : null;
+  }
   async listTransactions(db: ScopedClient, companyId: string, f: { status?: string; bankAccountId?: string; statementId?: string }, limit: number, offset: number): Promise<BankTransaction[]> {
     const where = ['company_id=$1']; const params: unknown[] = [companyId];
     if (f.status) { params.push(f.status); where.push(`reconciliation_status=$${params.length}`); }
@@ -95,6 +100,18 @@ export class BankingRepository {
   }
   async markReconciled(db: ScopedClient, id: string, paymentId: string): Promise<void> {
     await db.query(`UPDATE bank_transactions SET reconciliation_status='reconciled', matched_payment_id=$2 WHERE id=$1`, [id, paymentId]);
+  }
+  /**
+   * Conditional, defensive settle of the bank transaction: flips to reconciled ONLY while it is
+   * still unreconciled. Returns the number of rows changed (0 → someone else already reconciled it
+   * inside a concurrent transaction). The caller treats 0 as a lost race and aborts.
+   */
+  async markReconciledIfUnreconciled(db: ScopedClient, id: string, paymentId: string): Promise<number> {
+    const r = await db.query(
+      `UPDATE bank_transactions SET reconciliation_status='reconciled', matched_payment_id=$2
+       WHERE id=$1 AND reconciliation_status='unreconciled'`,
+      [id, paymentId]);
+    return r.rowCount ?? 0;
   }
   async markIgnored(db: ScopedClient, id: string): Promise<void> {
     await db.query(`UPDATE bank_transactions SET reconciliation_status='ignored' WHERE id=$1`, [id]);

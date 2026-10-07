@@ -63,6 +63,37 @@ export class PaymentsRepository {
     await db.query(`UPDATE payments SET journal_entry_id = $2 WHERE id = $1`, [paymentId, journalEntryId]);
   }
 
+  /**
+   * Row-lock the settleable document FOR UPDATE inside the settlement transaction, so the
+   * outstanding-balance re-read and the new payment insert are serialized against any concurrent
+   * settlement of the same document (prevents double-pay). Receivables lock the invoice row;
+   * payables take an advisory lock on the purchase journal entry. Returns false if it does not exist.
+   */
+  async lockDocument(db: ScopedClient, documentType: DocumentType, documentId: string): Promise<boolean> {
+    if (documentType === 'sales_invoice') {
+      const r = await db.query(`SELECT 1 FROM invoices WHERE id = $1 FOR UPDATE`, [documentId]);
+      return (r.rowCount ?? 0) > 0;
+    }
+    // Payables are purchase JOURNAL ENTRIES. The ledger is immutable by GRANT (no UPDATE privilege,
+    // which SELECT ... FOR UPDATE requires), so serialize with a transaction-scoped exclusive
+    // advisory lock on the entry id instead (same key as the ledger's lockEntry: 'acco.je:<id>').
+    await db.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`acco.je:${documentId}`]);
+    const r = await db.query(`SELECT 1 FROM journal_entries WHERE id = $1`, [documentId]);
+    return (r.rowCount ?? 0) > 0;
+  }
+
+  /** Row-lock the payment FOR UPDATE inside the reversal transaction; false if it does not exist. */
+  async lockPayment(db: ScopedClient, paymentId: string): Promise<boolean> {
+    const r = await db.query(`SELECT 1 FROM payments WHERE id = $1 FOR UPDATE`, [paymentId]);
+    return (r.rowCount ?? 0) > 0;
+  }
+
+  /** Conditional flip active → reversed; returns rows changed (must be exactly 1). */
+  async markReversedIfActive(db: ScopedClient, paymentId: string): Promise<number> {
+    const r = await db.query(`UPDATE payments SET status = 'reversed' WHERE id = $1 AND status = 'active'`, [paymentId]);
+    return r.rowCount ?? 0;
+  }
+
   async markReversed(db: ScopedClient, originalId: string, reversedByPaymentId: string | null): Promise<void> {
     await db.query(
       `UPDATE payments SET status = 'reversed', reversed_by_payment_id = $2 WHERE id = $1`,

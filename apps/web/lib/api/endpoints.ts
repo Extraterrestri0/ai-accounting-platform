@@ -150,8 +150,10 @@ export const Endpoints = {
   payments: (p: { documentType?: ArApDocumentType; documentId?: string; counterpartyId?: string; page?: number; pageSize?: number } = {}) =>
     api<PaymentRow[]>(`/payments${qs(p)}`),
   payment: (id: string) => api<PaymentRow>(`/payments/${id}`),
-  recordPayment: (body: RecordPaymentBody) => api<PaymentRow>('/payments', { method: 'POST', body }),
-  reversePayment: (id: string, reason?: string) => api<PaymentRow>(`/payments/${id}/reverse`, { method: 'POST', body: { reason } }),
+  recordPayment: (body: RecordPaymentBody, idempotencyKey: string) =>
+    api<PaymentRow>('/payments', { method: 'POST', body, headers: { 'Idempotency-Key': idempotencyKey } }),
+  reversePayment: (id: string, reason: string | undefined, idempotencyKey: string) =>
+    api<PaymentRow>(`/payments/${id}/reverse`, { method: 'POST', body: { reason }, headers: { 'Idempotency-Key': idempotencyKey } }),
 
   // --- audit trail (Task 4.1) ---
   audit: (p: AuditFilterParams = {}) => api<AuditPage>(`/audit${qs(p as Record<string, string | number | undefined>)}`),

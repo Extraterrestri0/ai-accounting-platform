@@ -138,6 +138,17 @@ export class MasterDataService implements IMasterDataService {
   async getPostingAccounts(): Promise<Record<AccountRole, string>> {
     const { tenantId, companyId } = this.scope();
     const rows = await this.db.run((db) => this.accountMappings.list(db, tenantId, companyId));
+    return this.mergeRoles(rows);
+  }
+
+  /** Same resolution, but on a caller-owned transaction (used by the atomic settlement path). */
+  async getPostingAccountsTx(db: import('../../../platform').ScopedClient): Promise<Record<AccountRole, string>> {
+    const { tenantId, companyId } = this.scope();
+    const rows = await this.accountMappings.list(db, tenantId, companyId);
+    return this.mergeRoles(rows);
+  }
+
+  private mergeRoles(rows: { role: AccountRole; code: string }[]): Record<AccountRole, string> {
     const byRole = new Map(rows.map((r) => [r.role, r.code]));
     const out: Record<AccountRole, string> = { ...DEFAULT_ACCOUNT_CODES };
     for (const role of ACCOUNT_ROLES) { const code = byRole.get(role); if (code) out[role] = code; }

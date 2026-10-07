@@ -66,32 +66,49 @@ export class ReconciliationService implements IReconciliationService {
     return this.reconcile(transactionId, input.documentType, input.documentId, input.amount, BankEvents.ManualMatchConfirmed, { reason: 'Ръчно равнение' });
   }
 
-  private async reconcile(transactionId: string, documentType: MatchDocumentType, documentId: string, amount: string | number | undefined, action: string, meta: { confidence?: number; reason?: string }): Promise<ReconcileResult> {
-    const { companyId } = this.scope();
-    this.requireHuman();
-    const txn = await this.db.run((db) => this.repo.getTransaction(db, transactionId));
-    if (!txn) throw new BankTransactionNotFoundError(transactionId);
-    if (txn.reconciliationStatus !== 'unreconciled') throw new AlreadyReconciledError(transactionId);
+  /**
+   * One atomic transaction settles a bank line: lock the transaction row FOR UPDATE, re-check its
+   * status UNDER the lock, record the payment + ledger entry through payments.settleInTx (so the
+   * ledger posting and the bank-status flip commit together), then flip the bank transaction
+   * CONDITIONALLY (WHERE reconciliation_status='unreconciled') and require exactly one row changed.
+   * Two concurrent reconciliations of the same line serialize on the FOR UPDATE lock; the loser
+   * sees 'reconciled' after acquiring the lock and is rejected — no double settle. The payment
+   * idempotency key is derived from the transaction id (operation 'bank.reconcile'), so a retried
+   * reconcile of the same line replays the original payment rather than posting a second one.
+   */
+  private reconcile(transactionId: string, documentType: MatchDocumentType, documentId: string, amount: string | number | undefined, action: string, meta: { confidence?: number; reason?: string }): Promise<ReconcileResult> {
+    const { tenantId, companyId } = this.scope();
+    const userId = this.requireHuman();
 
-    // Inbound settles a receivable; outbound settles a payable.
-    const expected: MatchDocumentType = txn.transactionType === 'inbound' ? 'sales_invoice' : 'purchase_invoice';
-    if (documentType !== expected) throw new DirectionMismatchError();
+    return this.db.run(async (db): Promise<ReconcileResult> => {
+      // 1) Lock the bank transaction row for the duration of this transaction.
+      const txn = await this.repo.getTransactionForUpdate(db, transactionId);
+      if (!txn) throw new BankTransactionNotFoundError(transactionId);
+      // 2) Re-check status UNDER the lock — a concurrent winner will have set it to reconciled.
+      if (txn.reconciliationStatus !== 'unreconciled') throw new AlreadyReconciledError(transactionId);
 
-    const payAmount = amount != null ? String(amount) : Math.abs(Number(txn.amount)).toFixed(2);
+      // Inbound settles a receivable; outbound settles a payable.
+      const expected: MatchDocumentType = txn.transactionType === 'inbound' ? 'sales_invoice' : 'purchase_invoice';
+      if (documentType !== expected) throw new DirectionMismatchError();
 
-    // Reuse the EXISTING PaymentService — it posts to the ledger and closes the AR/AP item.
-    const payment = await this.payments.recordPayment({
-      documentType, documentId, amount: payAmount,
-      paymentDate: txn.valueDate ?? txn.bookingDate, currency: txn.currency,
-      reference: txn.reference ?? `Bank ${transactionId.slice(0, 8)}`, notes: 'Банково равнение',
-    });
+      const payAmount = amount != null ? String(amount) : Math.abs(Number(txn.amount)).toFixed(2);
 
-    await this.db.run(async (db) => {
-      await this.repo.markReconciled(db, transactionId, payment.id);
+      // 3) Record the payment + ledger entry on THIS transaction (atomic with the bank flip below).
+      const payment = await this.payments.settleInTx(db, {
+        documentType, documentId, amount: payAmount,
+        paymentDate: txn.valueDate ?? txn.bookingDate, currency: txn.currency,
+        reference: txn.reference ?? `Bank ${transactionId.slice(0, 8)}`, notes: 'Банково равнение',
+      }, { tenantId, companyId, userId }, { operation: 'bank.reconcile', key: transactionId });
+
+      // 4) Flip the bank transaction CONDITIONALLY and verify exactly one row changed.
+      const changed = await this.repo.markReconciledIfUnreconciled(db, transactionId, payment.id);
+      if (changed !== 1) throw new AlreadyReconciledError(transactionId);
+
       await this.audit.append(db, { companyId, ...this.actor(), action, entityType: 'bank_transaction', entityId: transactionId, after: { paymentId: payment.id, documentType, documentId, amount: payAmount, confidence: meta.confidence, reason: meta.reason } });
+
+      const fresh = (await this.repo.getTransaction(db, transactionId))!;
+      return { transaction: fresh, payment };
     });
-    const fresh = (await this.db.run((db) => this.repo.getTransaction(db, transactionId)))!;
-    return { transaction: fresh, payment };
   }
 
   async rejectMatch(transactionId: string, reason?: string): Promise<BankTransaction> {

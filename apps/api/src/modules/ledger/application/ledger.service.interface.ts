@@ -15,8 +15,13 @@ export interface PostEntryInput {
  * event commit atomically. Corrections are reversing entries (no edit/delete).
  */
 export interface ILedgerService extends ApplicationService {
-  postEntry(input: PostEntryInput): Promise<JournalEntry>;
-  reverseEntry(entryId: string, reason: string): Promise<JournalEntry>;
+  postEntry(input: PostEntryInput, idem?: { key: string }): Promise<JournalEntry>;
+  /** Post on a caller-owned transaction — the atomic settlement path (payments/banking). */
+  postInTx(db: import('../../../platform').ScopedClient, input: PostEntryInput): Promise<JournalEntry>;
+  reverseEntry(entryId: string, reason: string, idem?: { key: string }): Promise<JournalEntry>;
+  /** Reverse on a caller-owned transaction (payment reversal path). allowSettlement lets the
+   *  payments workflow reverse its own settlement entry; the public API path never sets it. */
+  reverseInTx(db: import('../../../platform').ScopedClient, entryId: string, reason: string, opts?: { allowSettlement?: boolean }): Promise<JournalEntry>;
   getEntry(entryId: string): Promise<JournalEntry | null>;
   listEntries(limit?: number, offset?: number): Promise<JournalEntry[]>;
 }

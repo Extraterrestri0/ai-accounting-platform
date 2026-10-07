@@ -5,5 +5,7 @@ export * from './tenant-context/company-access.port';
 export * from './tenant-context/errors';
 export * from './database/database-context.service';
 export * from './database/scoped-client';
+export * from './database/idempotency.repository';
+export * from './http/idempotency-key';
 export * from './database/job-context.runner';
 export * from './database/pg-pool';

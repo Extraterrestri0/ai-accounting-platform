@@ -9,6 +9,8 @@ function makeService(findResult: any) {
     find: jest.fn(async () => findResult),
     list: jest.fn(async () => []),
     upsert: jest.fn(async () => undefined),
+    gateShared: jest.fn(async () => undefined),
+    gateExclusive: jest.fn(async () => undefined),
   };
   const audit: any = { append: jest.fn(async () => undefined) };
   const svc = new AccountingPeriodService(ctx, db, repo, audit);
@@ -58,5 +60,26 @@ describe('AccountingPeriodService — lock / unlock flow (Task 4.3)', () => {
   it('rejects an invalid month', async () => {
     const { svc } = makeService(null);
     await expect(svc.lockPeriod(2026, 13)).rejects.toThrow();
+  });
+});
+
+describe('AccountingPeriodService — period-gate serialization (Pass 1A)', () => {
+  it('assertOpenTx takes the SHARED gate lock BEFORE reading the period status', async () => {
+    const { svc, repo } = makeService(null);
+    await svc.assertOpenTx({} as any, '2026-05-10', 'Posting');
+    expect(repo.gateShared).toHaveBeenCalledWith(expect.anything(), 'c1', 2026, 5);
+    expect(repo.gateShared.mock.invocationCallOrder[0]).toBeLessThan(repo.find.mock.invocationCallOrder[0]);
+  });
+
+  it('assertOpenTx refuses a locked period (read after the gate)', async () => {
+    const { svc } = makeService({ status: 'locked' });
+    await expect(svc.assertOpenTx({} as any, '2026-05-10', 'Posting')).rejects.toBeInstanceOf(PeriodLockedError);
+  });
+
+  it('lockPeriod takes the EXCLUSIVE gate lock BEFORE writing locked', async () => {
+    const { svc, repo } = makeService(null);
+    await svc.lockPeriod(2026, 5);
+    expect(repo.gateExclusive).toHaveBeenCalledWith(expect.anything(), 'c1', 2026, 5);
+    expect(repo.gateExclusive.mock.invocationCallOrder[0]).toBeLessThan(repo.upsert.mock.invocationCallOrder[0]);
   });
 });

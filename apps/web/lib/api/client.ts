@@ -48,12 +48,14 @@ export interface RequestOptions {
   company?: boolean;
   /** Skip auth header (login). */
   anonymous?: boolean;
+  /** Extra request headers (e.g. Idempotency-Key for retry-safe financial writes). */
+  headers?: Record<string, string>;
   signal?: AbortSignal;
 }
 
 export async function api<T = unknown>(path: string, opts: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, company = true, anonymous = false, signal } = opts;
-  const headers: Record<string, string> = {};
+  const { method = 'GET', body, company = true, anonymous = false, headers: extra, signal } = opts;
+  const headers: Record<string, string> = { ...(extra ?? {}) };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (!anonymous) {
     const t = getToken();

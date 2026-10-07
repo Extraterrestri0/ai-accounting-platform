@@ -1,7 +1,9 @@
-import { Body, Controller, Get, Inject, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Inject, Param, Post, Query, UseFilters } from '@nestjs/common';
+import { LedgerConflictFilter } from './ledger-error.filter';
 import { LEDGER_SERVICE, type ILedgerService } from '../application/ledger.service.interface';
 import { PostEntryDto, ReverseEntryDto } from './dto/post-entry.dto';
 import { RequirePermission, PERMISSIONS } from '../../identity';
+import { requireIdempotencyKey } from '../../../platform';
 
 /**
  * Ledger API — the only HTTP surface that writes journal entries. Every route is
@@ -15,11 +17,13 @@ export class LedgerController {
   constructor(@Inject(LEDGER_SERVICE) private readonly ledger: ILedgerService) {}
 
   @Post() @RequirePermission(PERMISSIONS.LEDGER_POST)
-  post(@Body() dto: PostEntryDto) { return this.ledger.postEntry(dto); }
+  post(@Body() dto: PostEntryDto, @Headers('idempotency-key') idempotencyKey?: string) {
+    return this.ledger.postEntry(dto, { key: requireIdempotencyKey(idempotencyKey) });
+  }
 
-  @Post(':id/reverse') @RequirePermission(PERMISSIONS.LEDGER_REVERSE)
-  reverse(@Param('id') id: string, @Body() dto: ReverseEntryDto) {
-    return this.ledger.reverseEntry(id, dto.reason);
+  @Post(':id/reverse') @RequirePermission(PERMISSIONS.LEDGER_REVERSE) @UseFilters(LedgerConflictFilter)
+  reverse(@Param('id') id: string, @Body() dto: ReverseEntryDto, @Headers('idempotency-key') idempotencyKey?: string) {
+    return this.ledger.reverseEntry(id, dto.reason, { key: requireIdempotencyKey(idempotencyKey) });
   }
 
   @Get(':id') @RequirePermission(PERMISSIONS.LEDGER_READ)

@@ -7,12 +7,15 @@ function makeService(txn: any, overrides: any = {}) {
   const audit: any = { append: jest.fn(async () => undefined) };
   const repo: any = {
     getTransaction: jest.fn(async () => txn),
+    getTransactionForUpdate: jest.fn(async () => txn),   // reconcile locks the row FOR UPDATE
     markReconciled: jest.fn(async () => undefined),
+    markReconciledIfUnreconciled: jest.fn(async () => 1), // conditional flip, 1 row changed
     markIgnored: jest.fn(async () => undefined),
     summary: jest.fn(async () => ({})),
     ...overrides.repo,
   };
-  const payments: any = { recordPayment: jest.fn(async () => ({ id: 'pay1', amount: '1200.00' })), ...overrides.payments };
+  // reconcile settles atomically on its own transaction via settleInTx (not recordPayment).
+  const payments: any = { settleInTx: jest.fn(async () => ({ id: 'pay1', amount: '1200.00' })), ...overrides.payments };
   const receivables: any = { getReceivables: jest.fn(async () => overrides.receivables ?? []) };
   const payables: any = { getPayables: jest.fn(async () => overrides.payables ?? []) };
   const svc = new ReconciliationService(ctx, db, repo, payments, receivables, payables, audit);
@@ -39,8 +42,13 @@ describe('ReconciliationService.confirmMatch (Task 3.2)', () => {
   it('records a payment via PaymentService and reconciles the transaction', async () => {
     const { svc, payments, repo, audit } = makeService(inboundTxn);
     const res = await svc.confirmMatch('tx1', { documentType: 'sales_invoice', documentId: 'r1', confidence: 0.98 });
-    expect(payments.recordPayment).toHaveBeenCalledWith(expect.objectContaining({ documentType: 'sales_invoice', documentId: 'r1', amount: '1200.00' }));
-    expect(repo.markReconciled).toHaveBeenCalledWith(expect.anything(), 'tx1', 'pay1');
+    expect(payments.settleInTx).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ documentType: 'sales_invoice', documentId: 'r1', amount: '1200.00' }),
+      expect.objectContaining({ tenantId: 't1', companyId: 'c1', userId: 'u1' }),
+      expect.objectContaining({ operation: 'bank.reconcile', key: 'tx1' }),
+    );
+    expect(repo.markReconciledIfUnreconciled).toHaveBeenCalledWith(expect.anything(), 'tx1', 'pay1');
     expect(audit.append).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ action: 'bank.match_confirmed' }));
     expect(res.payment.id).toBe('pay1');
   });
@@ -48,7 +56,7 @@ describe('ReconciliationService.confirmMatch (Task 3.2)', () => {
   it('rejects a direction mismatch (inbound must settle a receivable)', async () => {
     const { svc, payments } = makeService(inboundTxn);
     await expect(svc.confirmMatch('tx1', { documentType: 'purchase_invoice', documentId: 'p1' })).rejects.toBeInstanceOf(DirectionMismatchError);
-    expect(payments.recordPayment).not.toHaveBeenCalled();
+    expect(payments.settleInTx).not.toHaveBeenCalled();
   });
 
   it('refuses to re-reconcile an already reconciled transaction', async () => {
@@ -61,7 +69,12 @@ describe('ReconciliationService manual + reject (Task 3.2)', () => {
   it('manualMatch records a payment and audits a manual confirmation', async () => {
     const { svc, payments, audit } = makeService(outboundTxn);
     await svc.manualMatch('tx2', { documentType: 'purchase_invoice', documentId: 'p1' });
-    expect(payments.recordPayment).toHaveBeenCalledWith(expect.objectContaining({ documentType: 'purchase_invoice', documentId: 'p1', amount: '300.00' }));
+    expect(payments.settleInTx).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ documentType: 'purchase_invoice', documentId: 'p1', amount: '300.00' }),
+      expect.objectContaining({ tenantId: 't1', companyId: 'c1', userId: 'u1' }),
+      expect.objectContaining({ operation: 'bank.reconcile', key: 'tx2' }),
+    );
     expect(audit.append).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ action: 'bank.manual_match_confirmed' }));
   });
 
@@ -69,7 +82,7 @@ describe('ReconciliationService manual + reject (Task 3.2)', () => {
     const { svc, repo, payments, audit } = makeService(inboundTxn);
     await svc.rejectMatch('tx1', 'no matching invoice');
     expect(repo.markIgnored).toHaveBeenCalledWith(expect.anything(), 'tx1');
-    expect(payments.recordPayment).not.toHaveBeenCalled();
+    expect(payments.settleInTx).not.toHaveBeenCalled();
     expect(audit.append).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ action: 'bank.match_rejected' }));
   });
 });

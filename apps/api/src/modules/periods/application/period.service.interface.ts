@@ -12,6 +12,8 @@ import type { AccountingPeriod } from '../domain/models';
 export interface IAccountingPeriodService extends ApplicationService {
   /** Throw PeriodLockedError if the period containing this ISO date is locked. */
   assertOpen(dateISO: string, what?: string): Promise<void>;
+  /** Period gate inside a caller-owned transaction (same ScopedClient as the ledger write). */
+  assertOpenTx(db: import('../../../platform').ScopedClient, dateISO: string, what?: string): Promise<void>;
   /** Whether (year, month) is locked. */
   isPeriodLocked(year: number, month: number): Promise<boolean>;
   /** Lock a period (human action; audited). */

@@ -43,6 +43,10 @@ npx ts-node --compiler-options "$TS_OPTS" test/e2e/e2e-workflow.ts
 echo "▶ 6b/7 posting-date e2e (human-confirmed date persisted → ledger; fail-closed; locked period)"
 npx ts-node --compiler-options "$TS_OPTS" test/e2e/posting-date-e2e.ts
 
+echo "▶ 6c/7 financial-write integrity e2e (idempotency · concurrency · reversal invariant · fault rollback)"
+npx ts-node --compiler-options "$TS_OPTS" test/e2e/financial-integrity-e2e.ts
+TZ=Europe/Sofia npx ts-node --compiler-options "$TS_OPTS" test/e2e/financial-integrity-e2e.ts
+
 echo "▶ 7/7 SAF-T v2 pipeline e2e (build→render→XSD→storage→download→audit)"
 STORAGE_DRIVER=local DOC_STORAGE_DIR="${DOC_STORAGE_DIR:-/tmp/saft-e2e-storage}" \
   npx ts-node --compiler-options "$TS_OPTS" test/e2e/saft-v2-e2e.ts

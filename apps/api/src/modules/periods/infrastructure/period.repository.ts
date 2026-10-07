@@ -38,6 +38,22 @@ export class PeriodRepository {
     return r.rows.map((x) => mapRow(x, current));
   }
 
+  /**
+   * Period-gate serialization. An OPEN period is usually represented by the ABSENCE of a row, so a
+   * row lock cannot protect "check open → post". Instead every ledger write takes a transaction-scoped
+   * SHARED advisory lock on (company, year-month) before reading the status, and lockPeriod takes the
+   * EXCLUSIVE lock before writing 'locked'. Both are released at COMMIT/ROLLBACK. Result: a posting
+   * either commits before the lock is written, or it waits and then re-reads (READ COMMITTED, new
+   * statement snapshot) the committed 'locked' status and refuses. A hash collision between two
+   * companies only over-serializes; it can never let a post through.
+   */
+  async gateShared(db: ScopedClient, companyId: string, year: number, month: number): Promise<void> {
+    await db.query(`SELECT pg_advisory_xact_lock_shared(hashtext($1), $2)`, [`acco.period:${companyId}`, year * 100 + month]);
+  }
+  async gateExclusive(db: ScopedClient, companyId: string, year: number, month: number): Promise<void> {
+    await db.query(`SELECT pg_advisory_xact_lock(hashtext($1), $2)`, [`acco.period:${companyId}`, year * 100 + month]);
+  }
+
   /** Upsert the period to a status. On lock, stamp locked_by/at; on open, clear them. */
   async upsert(db: ScopedClient, tenantId: string, companyId: string, year: number, month: number, status: PeriodStatus, userId?: string): Promise<void> {
     const lockedBy = status === 'locked' ? (userId ?? null) : null;

@@ -28,8 +28,16 @@ export interface OutstandingBalance {
  * Reversal = a ledger reversing entry; the payment row is flagged, never deleted.
  */
 export interface IPaymentService extends ApplicationService {
-  recordPayment(input: RecordPaymentInput): Promise<Payment>;
-  reversePayment(paymentId: string, reason: string): Promise<Payment>;
+  recordPayment(input: RecordPaymentInput, idem: { key: string }): Promise<Payment>;
+  /** Atomic settlement on a caller-owned transaction (bank reconciliation reuses this). */
+  settleInTx(
+    db: import('../../../platform').ScopedClient,
+    input: RecordPaymentInput,
+    who: { tenantId: string; companyId: string; userId?: string },
+    idem: { operation: string; key: string },
+  ): Promise<Payment>;
+  /** Atomic reversal (one transaction). The HTTP API always supplies an idempotency key. */
+  reversePayment(paymentId: string, reason: string, idem?: { key: string }): Promise<Payment>;
   calculateOutstandingBalance(documentType: DocumentType, documentId: string): Promise<OutstandingBalance>;
   calculateOverdueDays(documentType: DocumentType, documentId: string, asOf?: string): Promise<number>;
   getPayment(paymentId: string): Promise<Payment | null>;

@@ -37,6 +37,17 @@ export class AccountingPeriodService implements IAccountingPeriodService {
     if (await this.isPeriodLocked(year, month)) throw new PeriodLockedError(year, month, what);
   }
 
+  /** In-transaction period gate: resolve on the caller's client so the check and the posting
+   *  commit atomically. Takes the SHARED period gate lock first (held to COMMIT), so a concurrent
+   *  lockPeriod cannot interleave between this check and the caller's ledger insert. */
+  async assertOpenTx(db: import('../../../platform').ScopedClient, dateISO: string, what = 'Operation'): Promise<void> {
+    const { companyId } = this.scope();
+    const { year, month } = ymOf(dateISO);
+    await this.repo.gateShared(db, companyId, year, month);
+    const row = await this.repo.find(db, companyId, year, month, this.current());
+    if (row?.status === 'locked') throw new PeriodLockedError(year, month, what);
+  }
+
   async isPeriodLocked(year: number, month: number): Promise<boolean> {
     const { companyId } = this.scope();
     const row = await this.db.run((db) => this.repo.find(db, companyId, year, month, this.current()));
@@ -48,6 +59,9 @@ export class AccountingPeriodService implements IAccountingPeriodService {
     const { tenantId, companyId } = this.scope();
     const userId = this.requireHuman();
     await this.db.run(async (db) => {
+      // EXCLUSIVE gate: waits for in-flight postings into this period to commit/roll back, and
+      // blocks new ones until this lock commits (they then see 'locked' and refuse).
+      await this.repo.gateExclusive(db, companyId, year, month);
       await this.repo.upsert(db, tenantId, companyId, year, month, 'locked', userId);
       await this.audit.append(db, {
         companyId, actorType: 'user', actorId: userId, action: PeriodEvents.PeriodLocked,

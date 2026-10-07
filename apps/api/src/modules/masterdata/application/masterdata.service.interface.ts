@@ -50,6 +50,7 @@ export interface IMasterDataService extends ApplicationService {
   getAccountMappings(): Promise<AccountMapping[]>;
   /** role → account CODE, merging explicit mappings over the canonical defaults — for the posting engine. */
   getPostingAccounts(): Promise<Record<AccountRole, string>>;
+  getPostingAccountsTx(db: import('../../../platform').ScopedClient): Promise<Record<AccountRole, string>>;
   /** Validate + upsert the provided role mappings; returns the full refreshed set. */
   updateAccountMappings(input: UpdateAccountMappingsInput): Promise<AccountMapping[]>;
   // product / service catalog
