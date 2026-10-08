@@ -14,8 +14,10 @@ import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import net from 'node:net';
+import http from 'node:http';
 import nextConfig, {
   buildHeaderRules, SECURITY_HEADERS, HSTS_HEADER, PRIVATE_NO_STORE, PUBLIC_REVALIDATE,
+  CSP_APP_REPORT_ONLY, CSP_LANDING_REPORT_ONLY,
 } from '../next.config.mjs';
 
 const WEB = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -49,10 +51,42 @@ test('A3: HSTS only in production, only for HTTPS-forwarded requests, no include
   assert.doesNotMatch(HSTS_HEADER.value, /includeSubDomains|preload/i);
 });
 
-test('A4: no Content-Security-Policy is introduced by this patch', () => {
+test('A4: no ENFORCING Content-Security-Policy anywhere (Report-Only only)', () => {
   for (const r of buildHeaderRules({ production: true })) {
-    assert.ok(!r.headers.some((h) => /content-security-policy/i.test(h.key)), r.source);
+    assert.ok(!r.headers.some((h) => h.key.toLowerCase() === 'content-security-policy'), r.source);
   }
+});
+
+test('A5: app policy on the fail-safe default rule; landing policy on every marketing rule (one entry each)', async () => {
+  const rules = buildHeaderRules({ production: true });
+  const csp = (r) => r.headers.filter((h) => h.key === 'Content-Security-Policy-Report-Only');
+  assert.deepEqual(csp(rules[0]).map((h) => h.value), [CSP_APP_REPORT_ONLY]);
+  const { beforeFiles } = await nextConfig.rewrites();
+  const marketing = [...beforeFiles.map((r) => r.source), '/landing/:path*', '/robots.txt', '/sitemap.xml'];
+  for (const src of marketing) {
+    const r = rules.find((x) => x.source === src && x.headers.some((h) => h.key === 'Cache-Control' && h.value === PUBLIC_REVALIDATE));
+    assert.ok(r, `marketing rule for ${src}`);
+    assert.deepEqual(csp(r).map((h) => h.value), [CSP_LANDING_REPORT_ONLY], src);
+    assert.ok(rules.indexOf(r) > 0, `${src} rule must come after the default rule to override it`);
+  }
+});
+
+test('A6: policy content matches the Pass 1B.2 audit (no eval, no reporting endpoint yet)', () => {
+  const dirs = (p) => Object.fromEntries(p.split(';').map((d) => d.trim().split(/\s+/)).map(([k, ...v]) => [k, v.join(' ')]));
+  const app = dirs(CSP_APP_REPORT_ONLY); const land = dirs(CSP_LANDING_REPORT_ONLY);
+  for (const p of [app, land]) {
+    assert.equal(p['default-src'], "'self'"); assert.equal(p['object-src'], "'none'");
+    assert.equal(p['base-uri'], "'self'"); assert.equal(p['form-action'], "'self'");
+    assert.equal(p['frame-ancestors'], "'none'"); assert.equal(p['connect-src'], "'self'");
+    assert.equal(p['report-uri'], undefined); assert.equal(p['report-to'], undefined);
+  }
+  for (const p of [CSP_APP_REPORT_ONLY, CSP_LANDING_REPORT_ONLY]) assert.doesNotMatch(p, /unsafe-eval|nonce-|strict-dynamic/);
+  assert.equal(app['script-src'], "'self' 'unsafe-inline'");
+  assert.equal(app['style-src'], "'self' 'unsafe-inline' https://fonts.googleapis.com");
+  assert.equal(app['font-src'], "'self' https://fonts.gstatic.com");
+  assert.equal(app['img-src'], "'self' data: blob:");
+  assert.equal(land['script-src'], "'self'");
+  assert.equal(land['font-src'], "'self'");
 });
 
 });
@@ -79,8 +113,20 @@ after(() => { server?.kill(); });
 const get = (p, headers = {}) => fetch(BASE + p, { redirect: 'manual', headers });
 const assertSecurityHeaders = (res, label) => {
   for (const h of SECURITY_HEADERS) assert.equal(res.headers.get(h.key), h.value, `${label}: ${h.key}`);
-  assert.equal(res.headers.get('content-security-policy'), null, `${label}: no CSP in this patch`);
+  assert.equal(res.headers.get('content-security-policy'), null, `${label}: no ENFORCING CSP`);
 };
+/** fetch() merges duplicate headers, so an exact value match also proves there is no duplicate. */
+const assertCsp = (res, expected, label) =>
+  assert.equal(res.headers.get('content-security-policy-report-only'), expected, `${label}: CSP-Report-Only`);
+/** Raw header lines for one request (node:http keeps duplicates separate in rawHeaders). */
+const rawHeaderCount = (p, name, headers = {}) => new Promise((resolve, reject) => {
+  http.get(BASE + p, { headers }, (res) => {
+    res.resume();
+    let n = 0;
+    for (let i = 0; i < res.rawHeaders.length; i += 2) if (res.rawHeaders[i].toLowerCase() === name) n++;
+    resolve(n);
+  }).on('error', reject);
+});
 
 /** All app-router routes from the build, with dynamic segments filled in. */
 function appRoutes() {
@@ -100,6 +146,7 @@ test('B1: every app route serves HTML with private, no-store + security headers'
     assert.match(res.headers.get('content-type') ?? '', /text\/html/, r);
     assert.equal(res.headers.get('cache-control'), PRIVATE_NO_STORE, `${r}: cache-control`);
     assertSecurityHeaders(res, r);
+    assertCsp(res, CSP_APP_REPORT_ONLY, r);
   }
 });
 
@@ -109,6 +156,8 @@ test('B2: client-navigation RSC payloads and prefetches are private, no-store to
     assert.equal(res.status, 200);
     assert.match(res.headers.get('content-type') ?? '', /text\/x-component/);
     assert.equal(res.headers.get('cache-control'), PRIVATE_NO_STORE);
+    assertCsp(res, CSP_APP_REPORT_ONLY, 'RSC');
+    assert.ok((await res.text()).length > 0, 'RSC payload still returned');
   }
 });
 
@@ -119,6 +168,7 @@ test('B3: every rewritten marketing URL still serves its landing file, publicly 
     assert.equal(res.status, 200, source);
     assert.equal(res.headers.get('cache-control'), PUBLIC_REVALIDATE, `${source}: cache-control`);
     assertSecurityHeaders(res, source);
+    assertCsp(res, CSP_LANDING_REPORT_ONLY, source);
     const body = await res.text();
     assert.equal(body, readFileSync(path.join(WEB, 'public', destination), 'utf8'), `${source}: rewrite target content`);
   }
@@ -130,6 +180,7 @@ test('B4: public landing assets stay publicly cacheable (revalidated, not no-sto
     assert.equal(res.status, 200, p);
     assert.equal(res.headers.get('cache-control'), PUBLIC_REVALIDATE, p);
     assertSecurityHeaders(res, p);
+    assertCsp(res, CSP_LANDING_REPORT_ONLY, p);
   }
 });
 
@@ -157,5 +208,25 @@ test('B7: unknown routes (404) are never cacheable and carry security headers', 
   assert.equal(res.status, 404);
   assert.match(res.headers.get('cache-control') ?? '', /no-store/);
   assertSecurityHeaders(res, '404');
+});
+
+test('B8: exactly ONE CSP-Report-Only header and NO enforcing CSP on raw responses (HTML, RSC, 404, assets)', async () => {
+  const html = await (await get('/login')).text();
+  const asset = (html.match(/\/_next\/static\/[^"']+\.js/) ?? [])[0];
+  const cases = [
+    ['/login'], ['/register'], ['/dashboard'], ['/review/test-id'], ['/auth/callback'],
+    ['/'], ['/en'], ['/features'], ['/en/pricing'], ['/landing/legal/privacy.html'],
+    ['/dashboard?_rsc=t', { RSC: '1' }], ['/dashboard?_rsc=t', { RSC: '1', 'Next-Router-Prefetch': '1' }],
+    ['/definitely-not-a-route'], [asset],
+    ['/login', { 'X-Forwarded-Proto': 'https' }], ['/', { 'X-Forwarded-Proto': 'https' }],
+  ];
+  for (const [p, h] of cases) {
+    assert.equal(await rawHeaderCount(p, 'content-security-policy-report-only', h), 1, `${p} ${JSON.stringify(h ?? {})}: report-only count`);
+    assert.equal(await rawHeaderCount(p, 'content-security-policy', h), 0, `${p}: enforcing CSP count`);
+  }
+});
+
+test('B9: 404 responses get the app policy (fail-safe default)', async () => {
+  assertCsp(await get('/definitely-not-a-route'), CSP_APP_REPORT_ONLY, '404');
 });
 });
