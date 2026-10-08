@@ -1,0 +1,21 @@
+# Single public host with automatic HTTPS (Let's Encrypt).
+# Same-origin design: the SPA is served at / and the API is proxied under /api/*
+# (prefix stripped), so there is no cross-origin / cross-site-cookie problem and
+# only one certificate / hostname is needed.
+#
+# {$APP_HOST} is injected from the environment (see docker-compose.deploy.yml).
+# Requires {$APP_HOST} to resolve to this server and ports 80/443 to be reachable.
+
+{$APP_HOST} {
+	encode zstd gzip
+
+	# API under /api/* -> api:3000 (the /api prefix is stripped before forwarding).
+	handle_path /api/* {
+		reverse_proxy api:3000
+	}
+
+	# Everything else -> the Next.js web server.
+	handle {
+		reverse_proxy web:3001
+	}
+}

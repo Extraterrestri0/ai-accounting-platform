@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuditModule } from '../audit';
+import { PeriodsModule } from '../periods';
 import { LedgerController } from './api/ledger.controller';
 import { LEDGER_SERVICE } from './application/ledger.service.interface';
 import { LedgerService } from './application/ledger.service';
@@ -11,7 +12,7 @@ import { JournalRepository } from './infrastructure/journal.repository';
  * Exposes ONLY LEDGER_SERVICE + events. Repositories are private.
  */
 @Module({
-  imports: [AuditModule],
+  imports: [AuditModule, PeriodsModule],
   controllers: [LedgerController],
   providers: [{ provide: LEDGER_SERVICE, useClass: LedgerService }, JournalRepository],
   exports: [LEDGER_SERVICE],

@@ -1,0 +1,138 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`SaftXmlBuilder (Phase 3) renders a stable golden document (snapshot) 1`] = `
+"<?xml version="1.0" encoding="UTF-8"?>
+<AuditFile xmlns="urn:saft:bg:shaped:v2">
+  <Header>
+    <AuditFileVersion>1.0.0-saft1</AuditFileVersion>
+    <AuditFileCountry>BG</AuditFileCountry>
+    <AuditFileDateCreated>2026-06-01</AuditFileDateCreated>
+    <SoftwareCompanyName>Счетоводство (MGI-Delta)</SoftwareCompanyName>
+    <ProductID>Счетоводство (MGI-Delta) 1.0.0-saft1</ProductID>
+    <Company>
+      <Name>Акме ООД</Name>
+      <RegistrationNumber>123456789</RegistrationNumber>
+      <TaxRegistrationNumber>BG123456789</TaxRegistrationNumber>
+    </Company>
+    <DefaultCurrencyCode>EUR</DefaultCurrencyCode>
+    <SelectionCriteria>
+      <PeriodStart>2026-05-01</PeriodStart>
+      <PeriodEnd>2026-05-31</PeriodEnd>
+      <Year>2026</Year>
+      <Month>5</Month>
+    </SelectionCriteria>
+  </Header>
+  <MasterFiles>
+    <GeneralLedgerAccounts>
+      <Account>
+        <AccountID>702</AccountID>
+        <AccountDescription>Приходи</AccountDescription>
+        <AccountType>revenue</AccountType>
+      </Account>
+    </GeneralLedgerAccounts>
+    <Customers>
+      <Customer>
+        <CustomerID>cust1</CustomerID>
+        <Name>Бета ЕООД</Name>
+        <TaxRegistrationNumber>BG999</TaxRegistrationNumber>
+        <Country>BG</Country>
+      </Customer>
+    </Customers>
+    <Suppliers>
+      <Supplier>
+        <SupplierID>sup1</SupplierID>
+        <Name>Vendor GmbH</Name>
+        <Country>DE</Country>
+      </Supplier>
+    </Suppliers>
+    <Products>
+      <Product>
+        <ProductCode>P1</ProductCode>
+        <Description>Услуга</Description>
+        <UnitOfMeasure>бр</UnitOfMeasure>
+        <TaxPercentage>20</TaxPercentage>
+        <ProductType>service</ProductType>
+        <StandardProductID>SVC</StandardProductID>
+      </Product>
+    </Products>
+    <TaxTable>
+      <TaxTableEntry>
+        <TaxCode>STD20</TaxCode>
+        <TaxPercentage>20</TaxPercentage>
+        <TaxType>standard</TaxType>
+        <TaxDirection>both</TaxDirection>
+        <StandardTaxCode>S</StandardTaxCode>
+      </TaxTableEntry>
+    </TaxTable>
+  </MasterFiles>
+  <GeneralLedgerEntries>
+    <NumberOfEntries>1</NumberOfEntries>
+    <Journal>
+      <Transaction>
+        <TransactionID>e1</TransactionID>
+        <TransactionNo>1</TransactionNo>
+        <Period>5</Period>
+        <TransactionDate>2026-05-10</TransactionDate>
+        <SourceType>invoice</SourceType>
+        <DocumentReference>INV-1</DocumentReference>
+        <Lines>
+          <Line>
+            <RecordID>1</RecordID>
+            <AccountID>411</AccountID>
+            <DebitAmount>120.00</DebitAmount>
+            <CreditAmount>0.00</CreditAmount>
+          </Line>
+          <Line>
+            <RecordID>2</RecordID>
+            <AccountID>702</AccountID>
+            <DebitAmount>0.00</DebitAmount>
+            <CreditAmount>100.00</CreditAmount>
+          </Line>
+          <Line>
+            <RecordID>3</RecordID>
+            <AccountID>4532</AccountID>
+            <DebitAmount>0.00</DebitAmount>
+            <CreditAmount>20.00</CreditAmount>
+          </Line>
+        </Lines>
+      </Transaction>
+    </Journal>
+  </GeneralLedgerEntries>
+  <SourceDocuments>
+    <SalesInvoices>
+      <Invoice>
+        <InvoiceNo>2026-0001</InvoiceNo>
+        <InvoiceDate>2026-05-10</InvoiceDate>
+        <CustomerName>Бета ЕООД</CustomerName>
+        <DocumentType>invoice</DocumentType>
+        <TaxCode>STD20</TaxCode>
+        <NetTotal>100.00</NetTotal>
+        <TaxPayable>20.00</TaxPayable>
+        <GrossTotal>120.00</GrossTotal>
+      </Invoice>
+    </SalesInvoices>
+    <PurchaseInvoices>
+      <Invoice>
+        <DocumentNo>#7</DocumentNo>
+        <DocumentDate>2026-05-12</DocumentDate>
+        <SupplierName>Vendor GmbH</SupplierName>
+        <SupplierID>sup1</SupplierID>
+        <NetTotal>200.00</NetTotal>
+        <TaxPayable>40.00</TaxPayable>
+        <GrossTotal>240.00</GrossTotal>
+        <ApprovalStatus>approved</ApprovalStatus>
+      </Invoice>
+    </PurchaseInvoices>
+    <Payments>
+      <Payment>
+        <PaymentDate>2026-05-15</PaymentDate>
+        <Amount>120.00</Amount>
+        <Direction>inbound</Direction>
+        <CounterpartyName>Бета ЕООД</CounterpartyName>
+        <ReconciliationStatus>reconciled</ReconciliationStatus>
+      </Payment>
+    </Payments>
+  </SourceDocuments>
+</AuditFile>
+"
+`;

@@ -8,6 +8,7 @@
 import { Pool } from 'pg';
 import { TenantContextService } from '../../src/platform/tenant-context/tenant-context.service';
 import { DatabaseContextService } from '../../src/platform/database/database-context.service';
+import { IdempotencyRepository } from '../../src/platform/database/idempotency.repository';
 import { JournalRepository } from '../../src/modules/ledger/infrastructure/journal.repository';
 import { AuditRepository } from '../../src/modules/audit/infrastructure/audit.repository';
 import { AuditService } from '../../src/modules/audit/application/audit.service';
@@ -34,7 +35,12 @@ beforeAll(() => {
   ctx = new TenantContextService();
   db = new DatabaseContextService(pool, ctx);
   audit = new AuditService(ctx, db, new AuditRepository());
-  ledger = new LedgerService(ctx, db, new JournalRepository(), audit);
+  // deps: journals, idempotency repo (no key passed here → never exercised), audit, then the
+  // period-lock guard (not under test → both gate methods are no-ops).
+  ledger = new LedgerService(
+    ctx, db, new JournalRepository(), new IdempotencyRepository(), audit,
+    { assertOpen: async () => undefined, assertOpenTx: async () => undefined } as any,
+  );
 });
 afterAll(async () => { await pool.end(); });
 

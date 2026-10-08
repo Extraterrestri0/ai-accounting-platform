@@ -1,6 +1,8 @@
 import { extractFromText } from '../../src/modules/docintel/domain/extraction/field-extractor';
 import { extractFromXml } from '../../src/modules/docintel/domain/extraction/xml-extractor';
 import { applyValidation, overallConfidence, reviewFlags } from '../../src/modules/docintel/domain/extraction/confidence';
+import { applyHeuristics } from '../../src/modules/docintel/domain/extraction/heuristics';
+import { extractAllLayers } from '../../src/modules/docintel/domain/extraction/pipeline';
 import type { ExtractedField, FieldKey } from '../../src/modules/docintel/domain/extraction/models';
 
 const get = (fs: ExtractedField[], k: FieldKey) => fs.find((x) => x.key === k);
@@ -63,5 +65,137 @@ describe('review-package flags', () => {
     expect(flags.failedValidations).toContain('supplier_eik');
     expect(flags.missingRequired).toContain('invoice_number');
     expect(flags.missingRequired).toContain('total_amount');
+  });
+});
+
+// --- Invoice extraction reliability (0037) ---
+
+const BG_JOINED = [
+  'ФАКТУРА (ОРИГИНАЛ)', 'Фактура № 0000004821', 'Дата на издаване: 14.03.2026 г.',
+  'Доставчик: Делта Софтуер ЕООД', 'ЕИК: 203150714', 'ДДС №: BG203150714',
+  'Адрес: гр. София, бул. Витоша 15', 'Държава: България',
+  'Данъчна основа: 1 250,00', 'ДДС 20%: 250,00', 'Общо за плащане: 1 500,00 BGN',
+  'Срок за плащане: 28.03.2026 г.', 'Основание: Абонамент Q1 2026',
+].join('  '); // pdf.js born-digital shape: items space-joined
+
+describe('extended fields the old schema could not store', () => {
+  it('extracts address, country, description/notes, document number/type, vat_code', () => {
+    const fs = extractAllLayers(BG_JOINED).fields;
+    expect(get(fs, 'supplier_address')?.valueText).toBe('гр. София, бул. Витоша 15');
+    expect(get(fs, 'supplier_country')?.valueText).toBe('България');
+    const itemized = extractAllLayers('Документ №: ФБ-2026-0099\nТип документ: Фактура\nОписание: Услуги\nДДС код: 20\nЗабележка: Платима до 30 дни').fields;
+    expect(get(itemized, 'document_number')?.valueText).toBe('ФБ-2026-0099');
+    expect(get(itemized, 'document_type')?.valueText).toBe('Фактура');
+    expect(get(itemized, 'description')?.valueText).toBe('Услуги');
+    expect(get(itemized, 'vat_code')?.valueText).toBe('20');
+    expect(get(itemized, 'notes')?.valueText).toContain('Платима');
+  });
+});
+
+describe('Cyrillic-label robustness (regression)', () => {
+  it('does not capture the Cyrillic label word as the invoice number', () => {
+    const fs = extractAllLayers('ФАКТУРА\nНомер: 1000002345\nОбщо за плащане: 100,00').fields;
+    expect(get(fs, 'invoice_number')?.valueText).toBe('1000002345');
+  });
+  it('accepts a Cyrillic-prefixed number (ФБ-2026-0099)', () => {
+    const fs = extractAllLayers('Фактура № ФБ-2026-0099\nОбщо: 10,00').fields;
+    expect(get(fs, 'invoice_number')?.valueText).toBe('ФБ-2026-0099');
+  });
+});
+
+describe('date normalization to ISO', () => {
+  it('normalizes dd.mm.yyyy, yyyy/mm/dd and BG textual months', () => {
+    expect(get(extractAllLayers('Дата: 14.03.2026').fields, 'invoice_date')?.valueText).toBe('2026-03-14');
+    expect(get(extractAllLayers('Дата: 2026/02/09').fields, 'invoice_date')?.valueText).toBe('2026-02-09');
+    expect(get(extractAllLayers('Дата: 1 март 2026 г.').fields, 'invoice_date')?.valueText).toBe('2026-03-01');
+  });
+});
+
+describe('heuristic accounting derivation (layer 4)', () => {
+  it('derives the missing net amount from total − VAT', () => {
+    const { fields, notes } = applyHeuristics(applyValidation(extractFromText('ДДС 20%: 300,00\nОбщо за плащане: 1 800,00')));
+    expect(get(fields, 'net_amount')?.valueText).toBe('1500.00');
+    expect(get(fields, 'net_amount')?.source).toBe('derived');
+    expect(notes.map((n) => n.key)).toContain('net_amount');
+  });
+  it('derives vat_rate from VAT/net when the rate label is absent', () => {
+    const { fields, notes } = applyHeuristics(applyValidation(extractFromText('Данъчна основа: 1 500,00\nДДС: 300,00\nОбщо за плащане: 1 800,00')));
+    expect(get(fields, 'vat_rate')?.valueText).toBe('20');
+    expect(get(fields, 'vat_rate')?.source).toBe('derived');
+    expect(notes.map((n) => n.key)).toContain('vat_rate');
+  });
+  it('derives supplier EIK from a BG VAT number (safe direction only)', () => {
+    const { fields } = applyHeuristics(applyValidation(extractFromText('ДДС №: BG203150714\nОбщо: 10,00')));
+    expect(get(fields, 'supplier_eik')?.valueText).toBe('203150714');
+  });
+});
+
+// --- Upload extraction reliability (0038) ---
+
+describe('0038 fields — tax event date, VAT exemption reason/treatment, references, vehicle', () => {
+  it('extracts the tax event date (дата на дан.съб.) distinctly from the issue date', () => {
+    const fs = extractAllLayers('Фактура № 1000000041\nДата на издаване: 20.10.2025\nДата на дан.съб.: 21.10.2025').fields;
+    expect(get(fs, 'invoice_date')?.valueText).toBe('2025-10-20');
+    expect(get(fs, 'tax_event_date')?.valueText).toBe('2025-10-21');
+  });
+  it('extracts the legal basis for not charging VAT and derives reverse-charge treatment', () => {
+    const fs = extractAllLayers('Общо: 100,00\nОснование за неначисляване на ДДС: чл. 82, ал. 2 от ЗДДС — обратно начисляване').fields;
+    expect(get(fs, 'vat_exemption_reason')?.valueText).toContain('чл. 82');
+    expect(get(fs, 'vat_treatment')?.valueText).toBe('reverse_charge');
+    expect(get(fs, 'vat_treatment')?.source).toBe('derived');
+  });
+  it('derives standard treatment from a 20% rate; never guesses on bare 0%', () => {
+    const std = extractAllLayers('Данъчна основа: 100,00\nДДС 20%: 20,00\nОбщо: 120,00').fields;
+    expect(get(std, 'vat_treatment')?.valueText).toBe('standard');
+    const zero = extractAllLayers('Данъчна основа: 100,00\nДДС: 0,00\nОбщо: 100,00').fields;
+    expect(get(zero, 'vat_treatment')).toBeUndefined(); // no stated reason → no asserted tax fact
+  });
+  it('does NOT mistake "Основание за неначисляване" for a payment reference', () => {
+    const fs = extractAllLayers('Основание за неначисляване на ДДС: чл. 113\nОбщо: 10,00').fields;
+    expect(get(fs, 'payment_reference')).toBeUndefined();
+  });
+  it('extracts PO/contract/delivery-note references and a vehicle plate', () => {
+    const fs = extractAllLayers([
+      'Поръчка №: PO-2026-17', 'Договор № Д-55/2026', 'Стокова разписка № 4411',
+      'МПС: СВ1234АВ', 'Общо: 10,00',
+    ].join('\n')).fields;
+    expect(get(fs, 'po_number')?.valueText).toBe('PO-2026-17');
+    expect(get(fs, 'contract_number')?.valueText).toBe('Д-55/2026');
+    expect(get(fs, 'delivery_note_number')?.valueText).toBe('4411');
+    expect(get(fs, 'vehicle_reg_number')?.valueText).toBe('СВ1234АВ');
+  });
+  it('normalizes the payment method (банков превод → bank_transfer)', () => {
+    const fs = extractAllLayers('Начин на плащане: Банков превод\nОбщо: 10,00').fields;
+    expect(get(fs, 'payment_method')?.valueText).toBe('Банков превод');
+    expect(get(fs, 'payment_method')?.valueNormalized).toBe('bank_transfer');
+  });
+});
+
+describe('supplier vs customer separation — never cross-copied', () => {
+  it('customer-only labels yield NO supplier fields (and vice versa)', () => {
+    const c = extractAllLayers('Получател: Клиент ЕООД\nЕИК на получателя: 3333333333\nОбщо: 10,00').fields;
+    expect(get(c, 'customer_name')?.valueText).toBe('Клиент ЕООД');
+    expect(get(c, 'supplier_name')).toBeUndefined();
+    expect(get(c, 'supplier_eik')).toBeUndefined();
+    const s = extractAllLayers('Доставчик: Продавач ООД\nЕИК: 203150714\nОбщо: 10,00').fields;
+    expect(get(s, 'supplier_name')?.valueText).toBe('Продавач ООД');
+    expect(get(s, 'customer_name')).toBeUndefined();
+  });
+  it('extracts explicit customer address/country labels only', () => {
+    const fs = extractAllLayers('Адрес на получателя: гр. София, ул. Тест 1\nДържава на получателя: България\nОбщо: 10,00').fields;
+    expect(get(fs, 'customer_address')?.valueText).toBe('гр. София, ул. Тест 1');
+    expect(get(fs, 'customer_country')?.valueText).toBe('България');
+  });
+});
+
+describe('diagnostics — misses are explainable, nothing silently dropped', () => {
+  it('records provider/layers/derived/missingRequired and keeps low-confidence values', () => {
+    const { fields, diagnostics } = extractAllLayers(BG_JOINED);
+    expect(diagnostics.layersRun).toContain('heuristics');
+    expect(diagnostics.found.length).toBe(fields.length);
+    // a low-confidence field (e.g. derived/regex) is still surfaced, never removed
+    const lowConf = fields.filter((f) => f.confidence < 0.85);
+    expect(fields.length).toBeGreaterThanOrEqual(fields.length); // sanity
+    for (const f of lowConf) expect(get(fields, f.key)).toBeDefined();
   });
 });

@@ -3,6 +3,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { PRINCIPAL_RESOLVER } from '../../platform';
 
 import { AuthController } from './api/auth.controller';
+import { IdentityController } from './api/identity.controller';
 import { RbacGuard } from './api/rbac.guard';
 import { IDENTITY_SERVICE } from './application/identity.service.interface';
 import { IdentityService } from './application/identity.service';
@@ -15,6 +16,7 @@ import { TokenService } from './infrastructure/token.service';
 import { UserAuthRepository } from './infrastructure/user-auth.repository';
 import { SessionRepository } from './infrastructure/session.repository';
 import { JwtPrincipalResolver } from './infrastructure/jwt-principal-resolver';
+import { GoogleOAuthService } from './infrastructure/google-oauth.service';
 
 /**
  * Identity context: authentication (login/MFA/refresh), RBAC, and the JWT-based
@@ -22,13 +24,13 @@ import { JwtPrincipalResolver } from './infrastructure/jwt-principal-resolver';
  * registered globally so @RequirePermission re-authorizes every protected route.
  */
 @Module({
-  controllers: [AuthController],
+  controllers: [AuthController, IdentityController],
   providers: [
     { provide: IDENTITY_SERVICE, useClass: IdentityService },
     { provide: AUTH_SERVICE, useClass: AuthService },
     { provide: PRINCIPAL_RESOLVER, useClass: JwtPrincipalResolver }, // replaces Task 003 stub
     { provide: APP_GUARD, useClass: RbacGuard },
-    RbacService, PasswordHasher, TotpService, TokenService, UserAuthRepository, SessionRepository,
+    RbacService, PasswordHasher, TotpService, TokenService, UserAuthRepository, SessionRepository, GoogleOAuthService,
   ],
   exports: [IDENTITY_SERVICE, AUTH_SERVICE, PRINCIPAL_RESOLVER, RbacService],
 })

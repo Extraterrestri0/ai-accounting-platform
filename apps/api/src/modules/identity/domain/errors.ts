@@ -4,6 +4,9 @@ export class InvalidCredentialsError extends Error {
 export class AccountLockedError extends Error {
   constructor() { super('Account temporarily locked after failed attempts.'); this.name = 'AccountLockedError'; }
 }
+export class EmailTakenError extends Error {
+  constructor() { super('An account with this email already exists.'); this.name = 'EmailTakenError'; }
+}
 export class MfaRequiredError extends Error {
   constructor() { super('MFA verification required.'); this.name = 'MfaRequiredError'; }
 }

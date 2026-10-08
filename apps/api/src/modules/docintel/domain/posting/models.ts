@@ -13,3 +13,22 @@ export interface PostingResult {
 export interface PostingOutcome {
   request: PostingRequest; journalEntryId?: string; entryNo?: number; lines?: PostingLineInput[]; status: PostingStatus; error?: string;
 }
+
+/**
+ * Read-model projection of a posted PURCHASE review, keyed by review package id.
+ * Lets read/aggregation contexts (e.g. SAF-T) enrich purchase documents WITHOUT
+ * touching docintel's private tables (review_packages, documents, accounting_suggestions).
+ */
+export interface PostedPurchaseDetail {
+  reviewPackageId: string;
+  supplierId?: string;
+  supplierName?: string;
+  classificationCategory?: string;
+  accountingSuggestion?: string;
+  approvalStatus?: string;
+  /** The supplier's own document number + source amounts, from the latest approved extraction. */
+  documentNumber?: string;
+  documentNet?: string;
+  documentVat?: string;
+  documentGross?: string;
+}

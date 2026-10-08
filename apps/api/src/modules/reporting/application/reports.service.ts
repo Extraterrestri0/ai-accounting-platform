@@ -3,12 +3,15 @@ import { createHash } from 'node:crypto';
 import { DatabaseContextService, TenantContextService } from '../../../platform';
 import { AUDIT_SERVICE, type IAuditService } from '../../audit';
 import { VAT_SERVICE, type IVatService } from '../../tax';
+import { MASTERDATA_SERVICE, type IMasterDataService } from '../../masterdata';
 import { ReportsRepository } from '../infrastructure/reports.repository';
-import { accountCard, balanceSheet, generalLedger, journalReport, profitAndLoss, trialBalance } from '../domain/reports/calculator';
-import type { AccountCard, BalanceSheet, GeneralLedgerAccount, InvoiceReportRow, JournalReportEntry, ProfitAndLoss, ReportType, TrialBalance } from '../domain/reports/models';
+import { accountCard, balanceSheet, cashFlow, expensesByMonth, generalLedger, journalReport, profitAndLoss, revenueByMonth, trialBalance } from '../domain/reports/calculator';
+import { ReportingEvents } from '../events';
+import type { AccountCard, BalanceSheet, CashFlowReport, GeneralLedgerAccount, InvoiceReportRow, JournalReportEntry, MonthlySeries, ProfitAndLoss, ReportType, TrialBalance } from '../domain/reports/models';
 import type { IReportsService, Period, VatReportResult } from './reports.service.interface';
 
 class ReportError extends Error {}
+const yearBounds = (year: number): Period => ({ from: `${year}-01-01`, to: `${year}-12-31` });
 
 @Injectable()
 export class ReportsService implements IReportsService {
@@ -18,6 +21,7 @@ export class ReportsService implements IReportsService {
     private readonly repo: ReportsRepository,
     @Inject(VAT_SERVICE) private readonly vat: IVatService,
     @Inject(AUDIT_SERVICE) private readonly audit: IAuditService,
+    @Inject(MASTERDATA_SERVICE) private readonly masterdata: IMasterDataService,
   ) {}
 
   private scope() {
@@ -26,7 +30,7 @@ export class ReportsService implements IReportsService {
     return { tenantId: c.tenantId, companyId: c.companyId, userId: c.userId };
   }
 
-  private async record(reportType: ReportType, params: unknown, periodStart: string | null, periodEnd: string | null, payload: unknown, snapshot: boolean): Promise<void> {
+  private async record(reportType: ReportType, params: unknown, periodStart: string | null, periodEnd: string | null, payload: unknown, snapshot: boolean, action: string = ReportingEvents.ReportGenerated): Promise<void> {
     const { tenantId, companyId, userId } = this.scope();
     await this.db.run(async (db) => {
       const runId = await this.repo.createRun(db, tenantId, companyId, reportType, params, userId);
@@ -34,7 +38,7 @@ export class ReportsService implements IReportsService {
         const checksum = createHash('sha256').update(JSON.stringify(payload)).digest('hex');
         await this.repo.saveSnapshot(db, tenantId, companyId, runId, reportType, periodStart, periodEnd, payload, checksum);
       }
-      await this.audit.append(db, { companyId, actorType: userId ? 'user' : 'system', actorId: userId, action: 'reporting.report_generated', entityType: 'report_run', entityId: runId, after: { reportType } });
+      await this.audit.append(db, { companyId, actorType: userId ? 'user' : 'system', actorId: userId, action, entityType: 'report_run', entityId: runId, after: { reportType, params } });
     });
   }
 
@@ -91,5 +95,35 @@ export class ReportsService implements IReportsService {
     const rows = await this.db.run((db) => this.repo.invoices(db, period.from, period.to));
     await this.record('invoice', period, period.from, period.to, rows, false);
     return rows;
+  }
+
+  // ---- Management reports (ledger-derived) ----
+  async revenueByMonth(year: number, currency = 'EUR'): Promise<MonthlySeries> {
+    this.scope();
+    const p = yearBounds(year);
+    const lines = await this.db.run((db) => this.repo.ledgerLines(db, p.from, p.to));
+    const result = revenueByMonth(lines, year, currency);
+    await this.record('revenue_by_month', { year, currency }, p.from, p.to, result, false, ReportingEvents.RevenueByMonthGenerated);
+    return result;
+  }
+
+  async expensesByMonth(year: number, currency = 'EUR'): Promise<MonthlySeries> {
+    this.scope();
+    const p = yearBounds(year);
+    const lines = await this.db.run((db) => this.repo.ledgerLines(db, p.from, p.to));
+    const result = expensesByMonth(lines, year, currency);
+    await this.record('expenses_by_month', { year, currency }, p.from, p.to, result, false, ReportingEvents.ExpensesByMonthGenerated);
+    return result;
+  }
+
+  async cashFlow(year: number, currency = 'EUR'): Promise<CashFlowReport> {
+    this.scope();
+    const p = yearBounds(year);
+    // Cash/bank account resolved via the configurable mapping (never hardcoded).
+    const accounts = await this.masterdata.getPostingAccounts();
+    const lines = await this.db.run((db) => this.repo.ledgerLines(db, p.from, p.to));
+    const result = cashFlow(lines, accounts.cash_bank, year, currency);
+    await this.record('cash_flow', { year, currency }, p.from, p.to, result, false, ReportingEvents.CashFlowGenerated);
+    return result;
   }
 }

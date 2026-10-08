@@ -1,0 +1,5 @@
+# Real inbound supplier invoices + filled ground truth are PRIVATE customer data.
+# Never commit them. Only this .gitignore and the README are tracked.
+*
+!.gitignore
+!README.md

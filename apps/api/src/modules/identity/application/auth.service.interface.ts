@@ -9,6 +9,8 @@ export interface LoginResult {
 
 export interface IAuthService extends ApplicationService {
   login(email: string, password: string): Promise<LoginResult>;
+  register(email: string, password: string, companyName: string): Promise<LoginResult>;
+  loginWithGoogle(email: string, name: string): Promise<LoginResult>;
   verifyMfa(mfaToken: string, code: string): Promise<LoginResult>;
   refresh(refreshToken: string): Promise<LoginResult>;
   logout(refreshToken: string): Promise<void>;

@@ -6,7 +6,9 @@ const cents = (s: string): bigint => {
   const sign = m[1] === '-' ? -1n : 1n;
   return sign * (BigInt(m[2]) * 100n + BigInt((m[3] ?? '').padEnd(2, '0')));
 };
-export class PostingValidationError extends Error {}
+export class PostingValidationError extends Error {
+  constructor(msg: string) { super(msg); this.name = 'PostingValidationError'; }
+}
 
 /** Deterministic pre-ledger validation: >=2 lines, positive amounts, balanced (Σdebit=Σcredit). */
 export function validatePosting(lines: PostingLineInput[]): void {

@@ -1,5 +1,5 @@
 /** Document upload domain models. */
-export type DocumentStatus = 'pending_upload' | 'uploaded' | 'scanning' | 'ready' | 'quarantined' | 'failed';
+export type DocumentStatus = 'pending_upload' | 'uploaded' | 'scanning' | 'ready' | 'quarantined' | 'failed' | 'trashed' | 'deleted';
 export type DetectedType = 'pdf' | 'png' | 'jpeg' | 'tiff' | 'xml';
 export type ScanStatus = 'pending' | 'clean' | 'infected' | 'error';
 

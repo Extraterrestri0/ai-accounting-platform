@@ -1,0 +1,42 @@
+================================================================
+ LOCAL DR DRILL  —  2026-06-07T22:00:24Z
+ source: postgres@127.0.0.1:5432/accounting   backup dir: /c/Users/Cody/pgdev/backups
+================================================================
+
+▶ PHASE 2 — real (local-equivalent) backup
+  pg_dump (custom format, compressed) → /c/Users/Cody/pgdev/backups/accounting-20260607T220024Z.dump
+  ✓ backup artifact exists (accounting-20260607T220024Z.dump)
+  integrity check (pg_restore --list)
+  ✓ dump integrity (pg_restore --list)
+  sha256=6a7c1fbb2f2ddaa93a799917cf2bb2300fe26b5ce05516841a77e7018fd4722d size=361367B
+  ✓ checksum manifest exists (accounting-20260607T220024Z.dump.manifest.json)
+  retention prune (local, > 14 days)
+  ✓ retention policy applied (pruned 0 expired local artifact(s))
+  REMAINS FOR CLOUD (not exercisable without AWS creds):
+    - encrypted upload to s3://$BACKUP_S3_BUCKET with --sse aws:kms (SSE-KMS)
+    - S3 versioned + Object-Lock retention prune (server-side)
+
+▶ PHASE 3 — restore drill (into clean DB: restore_drill)
+  re-verify sha256 against manifest
+  ✓ sha256 matches manifest
+  backup age (RPO proxy): 0 min
+  restore into clean DB  [timing RTO]
+NOTICE:  database "restore_drill" does not exist, skipping
+  pg_restore exit code: 0
+  restore time (RTO proxy): 1s
+  ✓ database restored + queryable
+  ✓ migrations consistent (source=34, restored=34)
+  ✓ app_user role exists
+  ✓ RLS enabled + forced on all tenant tables (0 unprotected)
+  ✓ audit chain valid for all tenants (0 broken)
+  ✓ company data readable (7 companies, 9 journal entries)
+  ✓ ledger balanced (0 unbalanced entries)
+  ✓ period locks readable (2 periods, 0 locked)
+  ✓ payments + banking readable (1 payments, 2 bank transactions)
+  ✓ SAF-T exports readable (1 exports)
+
+================================================================
+✅ LOCAL DR DRILL PASSED   (RPO≈0m, RTO≈1s)
+   artifact: /c/Users/Cody/pgdev/backups/accounting-20260607T220024Z.dump
+   sha256:   6a7c1fbb2f2ddaa93a799917cf2bb2300fe26b5ce05516841a77e7018fd4722d
+================================================================

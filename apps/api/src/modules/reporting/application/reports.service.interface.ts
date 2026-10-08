@@ -1,5 +1,5 @@
 import type { ApplicationService } from '../../../shared-kernel';
-import type { AccountCard, BalanceSheet, GeneralLedgerAccount, InvoiceReportRow, JournalReportEntry, ProfitAndLoss, TrialBalance } from '../domain/reports/models';
+import type { AccountCard, BalanceSheet, CashFlowReport, GeneralLedgerAccount, InvoiceReportRow, JournalReportEntry, MonthlySeries, ProfitAndLoss, TrialBalance } from '../domain/reports/models';
 
 export interface Period { from: string; to: string }
 export interface VatReportResult { outputVat: number; deductibleVat: number; vatPayable: number; vatRefundable: number; }
@@ -14,5 +14,10 @@ export interface IReportsService extends ApplicationService {
   balanceSheet(asOf: string, snapshot?: boolean): Promise<BalanceSheet>;
   vatReport(year: number, month: number): Promise<VatReportResult>;
   invoiceReport(period: Period): Promise<InvoiceReportRow[]>;
+
+  // ---- Management reports (Revenue/Expenses by Month, Cash Flow) ----
+  revenueByMonth(year: number, currency?: string): Promise<MonthlySeries>;
+  expensesByMonth(year: number, currency?: string): Promise<MonthlySeries>;
+  cashFlow(year: number, currency?: string): Promise<CashFlowReport>;
 }
 export const REPORTS_SERVICE = Symbol('Reporting.ReportsService');

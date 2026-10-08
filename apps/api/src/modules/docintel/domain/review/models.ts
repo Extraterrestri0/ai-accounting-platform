@@ -6,6 +6,7 @@ export interface ReviewPackage {
   id: string; documentId: string; extractionId?: string; accountingSuggestionId?: string;
   status: ReviewStatus; assignedReviewerId?: string;
   approvedAccountId?: string; approvedVatCodeId?: string; approvedPosting?: unknown;
+  approvedPostingDate?: string;   // human-confirmed accounting date (YYYY-MM-DD); posting is refused when absent
   decidedBy?: string; decidedAt?: string; createdAt: string;
 }
 export interface ReviewQueueItem {
@@ -19,7 +20,8 @@ export interface ReviewActionLog { id: string; actionType: ReviewActionType; act
 export interface ReviewDetail {
   package: ReviewPackage;
   documentDownloadUrl?: string;
-  extraction: { overallConfidence: number; fields: { key: string; valueText?: string; confidence: number; validationStatus: string }[]; flags: unknown };
+  proposedPostingDate?: string;   // extracted/edited date offered to the reviewer to confirm (not yet authoritative)
+  extraction: { overallConfidence: number; fields: { key: string; valueText?: string; confidence: number; validationStatus: string }[]; flags: unknown; diagnostics?: unknown };
   suggestion: unknown | null;     // AccountingSuggestion from the rules engine
   comments: ReviewComment[];
   actions: ReviewActionLog[];

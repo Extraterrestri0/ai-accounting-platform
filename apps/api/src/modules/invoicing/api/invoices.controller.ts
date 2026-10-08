@@ -26,6 +26,18 @@ export class InvoicesController {
   @Post(':id/issue') @RequirePermission(PERMISSIONS.INVOICE_ISSUE)
   issue(@Param('id') id: string) { return this.invoices.issueInvoice(id); }
 
+  @Post(':id/create-credit-note') @RequirePermission(PERMISSIONS.INVOICE_CREATE)
+  createCreditNote(@Param('id') id: string) { return this.invoices.createCreditNote(id); }
+
+  @Post(':id/create-debit-note') @RequirePermission(PERMISSIONS.INVOICE_CREATE)
+  createDebitNote(@Param('id') id: string) { return this.invoices.createDebitNote(id); }
+
+  @Post(':id/convert-to-invoice') @RequirePermission(PERMISSIONS.INVOICE_CREATE)
+  convertToInvoice(@Param('id') id: string) { return this.invoices.convertProformaToInvoice(id); }
+
+  @Get(':id/related-documents') @RequirePermission(PERMISSIONS.INVOICE_READ)
+  relatedDocuments(@Param('id') id: string) { return this.invoices.getRelatedDocuments(id); }
+
   @Post(':id/email') @RequirePermission(PERMISSIONS.INVOICE_SEND)
   email(@Param('id') id: string, @Body() dto: SendEmailDto) { return this.invoices.sendInvoiceEmail(id, dto.toEmail); }
 

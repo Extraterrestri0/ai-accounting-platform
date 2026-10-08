@@ -5,7 +5,7 @@ import { TotpService } from '../infrastructure/totp.service';
 import { TokenService } from '../infrastructure/token.service';
 import { UserAuthRepository } from '../infrastructure/user-auth.repository';
 import { SessionRepository } from '../infrastructure/session.repository';
-import { AccountLockedError, InvalidCredentialsError, MfaInvalidError } from '../domain/errors';
+import { AccountLockedError, EmailTakenError, InvalidCredentialsError, MfaInvalidError } from '../domain/errors';
 import type { IAuthService, LoginResult } from './auth.service.interface';
 
 const LOCK_THRESHOLD = 5;
@@ -42,6 +42,20 @@ export class AuthService implements IAuthService {
       return { status: 'mfa_required', mfaToken };
     }
     return this.issueSession(user.tenantId, user.id);
+  }
+
+  async register(email: string, password: string, companyName: string): Promise<LoginResult> {
+    const normalized = email.trim().toLowerCase();
+    const existing = await this.users.findForLogin(normalized);
+    if (existing) throw new EmailTakenError();
+    const passwordHash = await this.hasher.hash(password);
+    const { tenantId, userId } = await this.users.register(normalized, passwordHash, companyName);
+    return this.issueSession(tenantId, userId);
+  }
+
+  async loginWithGoogle(email: string, name: string): Promise<LoginResult> {
+    const { tenantId, userId } = await this.users.oauthUpsert(email.trim().toLowerCase(), name || email.split('@')[0]);
+    return this.issueSession(tenantId, userId);
   }
 
   async verifyMfa(mfaToken: string, code: string): Promise<LoginResult> {

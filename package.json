@@ -10,6 +10,7 @@
     "typecheck": "npm run typecheck --workspace apps/api && npm run typecheck --workspace apps/web",
     "lint": "npm run lint --workspace apps/api && npm run lint --workspace apps/web",
     "test": "npm run test --workspace apps/api",
+    "migrate:validate": "npm run migrate:validate --workspace apps/api",
     "e2e": "bash apps/api/scripts/e2e.sh",
     "docker:validate": "bash infra/docker-validate.sh"
   },

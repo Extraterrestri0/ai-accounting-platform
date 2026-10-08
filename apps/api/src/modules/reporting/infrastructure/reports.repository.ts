@@ -7,7 +7,7 @@ export class ReportsRepository {
   /** Read posted ledger lines (joined to account code/name/type) in a period. Read-only on the immutable ledger. */
   async ledgerLines(db: ScopedClient, from: string, to: string): Promise<LedgerLine[]> {
     const r = await db.query<{ entry_id: string; entry_no: number; posting_date: string; source_ref: string | null; code: string; name: string; type: LedgerLine['type']; direction: LedgerLine['direction']; amount: string; narrative: string | null }>(
-      `SELECT jl.entry_id, je.entry_no, je.posting_date, je.source_ref, a.code, a.name, a.type, jl.direction, jl.amount, jl.narrative
+      `SELECT jl.entry_id, je.entry_no, je.posting_date::text AS posting_date, je.source_ref, a.code, a.name, a.type, jl.direction, jl.amount, jl.narrative
          FROM journal_lines jl
          JOIN journal_entries je ON je.id = jl.entry_id
          JOIN accounts a ON a.id = jl.account_id

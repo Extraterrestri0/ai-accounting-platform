@@ -1,0 +1,52 @@
+{
+  // Debug configs. These build the API with sourcemaps first, so breakpoints
+  // land in the TypeScript source (the normal `build` task ships no sourcemaps).
+  // Datastores (Postgres/Redis) must already be running — use the
+  // "infra: start Postgres/Redis" tasks or "▶ Start Full Stack" first.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug: API",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/api",
+      "runtimeArgs": ["-r", "./scripts/load-env.js"],
+      "program": "${workspaceFolder}/apps/api/dist/main.js",
+      "preLaunchTask": "build: API (debug/sourcemaps)",
+      "outFiles": ["${workspaceFolder}/apps/api/dist/**/*.js"],
+      "sourceMaps": true,
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug: Worker",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/api",
+      "runtimeArgs": ["-r", "./scripts/load-env.js"],
+      "program": "${workspaceFolder}/apps/api/dist/worker.js",
+      "preLaunchTask": "build: API (debug/sourcemaps)",
+      "outFiles": ["${workspaceFolder}/apps/api/dist/**/*.js"],
+      "sourceMaps": true,
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug: Web (server-side)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Debug: API + Worker",
+      "configurations": ["Debug: API", "Debug: Worker"],
+      "stopAll": true
+    }
+  ]
+}

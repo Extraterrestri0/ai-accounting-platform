@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuditModule } from '../audit';
 import { LedgerModule } from '../ledger';
 import { TaxModule } from '../tax';
+import { MasterDataModule } from '../masterdata';
 import { InvoicingController } from './api/invoicing.controller';
 import { InvoicesController } from './api/invoices.controller';
 import { INVOICING_SERVICE } from './application/invoicing.service.interface';
@@ -15,6 +16,7 @@ import { PdfLibInvoiceGenerator } from './infrastructure/pdf-lib-invoice-generat
 import { SmtpEmailSender } from './infrastructure/smtp-email-sender';
 import { ResendEmailSender } from './infrastructure/resend-email-sender';
 import { DocIntelModule } from '../docintel';
+import { PeriodsModule } from '../periods';
 import { LogEmailSender } from './infrastructure/log-email-sender';
 
 /**
@@ -23,7 +25,7 @@ import { LogEmailSender } from './infrastructure/log-email-sender';
  * register. Issue/send/post are HUMAN-only — AI cannot issue, send, or post invoices.
  */
 @Module({
-  imports: [AuditModule, LedgerModule, TaxModule, DocIntelModule],
+  imports: [AuditModule, LedgerModule, TaxModule, DocIntelModule, MasterDataModule, PeriodsModule],
   controllers: [InvoicingController, InvoicesController],
   providers: [
     { provide: INVOICING_SERVICE, useClass: InvoicingService },

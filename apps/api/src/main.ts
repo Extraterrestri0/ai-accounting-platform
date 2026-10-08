@@ -24,7 +24,7 @@ async function bootstrap(): Promise<void> {
   // CORS — explicit allow-list from env; credentials enabled for secure cookies.
   const origins = (process.env.CORS_ORIGINS ?? '').split(',').map((s) => s.trim()).filter(Boolean);
   app.enableCors({ origin: origins.length ? origins : false, credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization'] });
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization', 'X-Company-Id', 'Idempotency-Key'] });
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: false }));
   app.set('trust proxy', 1); // behind ALB / Netlify / Vercel proxy → correct client IP for rate limiting

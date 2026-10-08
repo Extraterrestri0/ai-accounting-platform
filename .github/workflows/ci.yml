@@ -2,6 +2,7 @@ name: CI
 on:
   push: { branches: [main] }
   pull_request:
+
 jobs:
   api:
     runs-on: ubuntu-latest
@@ -15,27 +16,95 @@ jobs:
       redis:
         image: redis:7-alpine
         ports: ['6379:6379']
-    defaults: { run: { working-directory: apps/api } }
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      NODE_ENV: test
+      PORT: '3000'
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGDATABASE: acct_ci
+      PGUSER: app_user
+      PGPASSWORD: app_pw
+      MIGRATION_USER: postgres
+      MIGRATION_PASSWORD: postgres
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: ci-jwt-secret-thirty-two-characters-minimum
+      STORAGE_DRIVER: local
+      DOC_STORAGE_DIR: /tmp/saft-storage
+      STORAGE_ENDPOINT: http://localhost:9000
+      STORAGE_BUCKET: documents
+      STORAGE_REGION: eu-central-1
+      CORS_ORIGINS: http://localhost:3001
+      CI_REQUIRE_DB: '1'                 # release-blocking DB suites must RUN, never silently skip
+      PGPASSWORD_SUPER: postgres
+      TS_NODE_COMPILER_OPTIONS: '{"module":"commonjs","moduleResolution":"node10","ignoreDeprecations":"6.0","experimentalDecorators":true,"emitDecoratorMetadata":true,"esModuleInterop":true,"skipLibCheck":true}'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: npm, cache-dependency-path: apps/api/package-lock.json }
+        with: { node-version: 20, cache: npm, cache-dependency-path: package-lock.json }
       - run: npm ci || npm install
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm run build
-      - run: npm test
+
+      - name: Static checks + build (api)
+        run: |
+          npm run typecheck --workspace apps/api
+          npm run lint --workspace apps/api
+          npm run build --workspace apps/api
+
+      - name: Apply migrations + set app_user password + seed
+        run: |
+          npm run migrate --workspace apps/api
+          PGPASSWORD=postgres psql -h localhost -U postgres -d acct_ci -c "ALTER ROLE app_user LOGIN PASSWORD 'app_pw';"
+          PGPASSWORD=postgres psql -h localhost -U postgres -d acct_ci -f apps/api/scripts/seed-e2e.sql
+
+      - name: Migration validation (apply-completeness + RLS coverage + rollback smoke)
+        run: npm run migrate:validate --workspace apps/api
+
+      - name: Unit + integration tests (e2e-specs execute; CI_REQUIRE_DB enforces no skipping)
+        run: npm run test --workspace apps/api
+
+      - name: RLS isolation + ledger integrity + registration suites (release-blocking)
+        working-directory: apps/api
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d acct_ci -f test/ledger-audit/seed.sql || true
+          npx cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.cjs --runTestsByPath \
+            test/rls-isolation/rls-isolation.e2e-spec.ts \
+            test/ledger-audit/ledger-audit.e2e-spec.ts \
+            test/registration/registration.e2e-spec.ts
+
+      - name: Core accounting workflow e2e (upload→extract→review→post→VAT→report)
+        working-directory: apps/api
+        run: npx ts-node --compiler-options "$TS_NODE_COMPILER_OPTIONS" test/e2e/e2e-workflow.ts
+
+      - name: SAF-T v2 pipeline e2e (flag-gated; build→render→XSD→storage→download→audit)
+        working-directory: apps/api
+        run: SAFT_XML_ENABLED=true npx ts-node --compiler-options "$TS_NODE_COMPILER_OPTIONS" test/e2e/saft-v2-e2e.ts
+
   web:
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: apps/web } }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: npm, cache-dependency-path: apps/web/package-lock.json }
-      - run: npm ci || npm install
+        with: { node-version: 20, cache: npm, cache-dependency-path: package-lock.json }
+      - run: cd .. && (npm ci || npm install)
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run build
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env: { GITLEAKS_CONFIG: .gitleaks.toml }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Dependency audit (report-only)
+        run: npm audit --audit-level=high || true
+
   docker:
     runs-on: ubuntu-latest
     steps:

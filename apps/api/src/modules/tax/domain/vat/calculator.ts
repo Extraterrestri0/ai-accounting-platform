@@ -4,24 +4,41 @@ export const VAT_INPUT_ACCOUNT = '4531';   // deductible input VAT (purchases)
 export const VAT_OUTPUT_ACCOUNT = '4532';  // output VAT (sales)
 const RECEIVABLE_PAYABLE = ['401', '411'];
 const round2 = (n: number): number => Math.round(n * 100) / 100;
-const sum = (xs: { amount: string }[]): number => xs.reduce((s, l) => s + Number(l.amount), 0);
+/**
+ * SIGNED sum: amounts posted on the `positive` side add, the opposite side subtracts.
+ * This makes the register sign-aware:
+ *   - a normal sales invoice posts output VAT on CREDIT      → positive (adds to sales)
+ *   - a CREDIT NOTE posts revenue + output VAT on DEBIT      → negative (reduces sales)
+ *   - a DEBIT NOTE posts like an invoice (credit/debit normal)→ positive (increases sales)
+ *   - a purchase posts input VAT on DEBIT                    → positive (adds to purchases)
+ * Proformas never post to the ledger, so they never reach this classifier.
+ */
+const signed = (lines: { direction: 'debit' | 'credit'; amount: string }[], positive: 'debit' | 'credit'): number =>
+  lines.reduce((s, l) => s + (l.direction === positive ? Number(l.amount) : -Number(l.amount)), 0);
 
-/** Classify a posted entry into a register row, computing base/VAT/deductible from its lines. */
+/** Classify a posted entry into a (signed) register row, computing base/VAT/deductible from its lines. */
 export function classifyEntry(entry: PostedEntry): Omit<RegisterRow, 'treatment' | 'rate' | 'vatCodeId'> {
-  const vin = sum(entry.lines.filter((l) => l.code === VAT_INPUT_ACCOUNT));
-  const vout = sum(entry.lines.filter((l) => l.code === VAT_OUTPUT_ACCOUNT));
-  const looksPurchase = vin > 0 || (vout === 0 && entry.lines.some((l) => l.direction === 'debit' && !RECEIVABLE_PAYABLE.includes(l.code) && l.code !== VAT_INPUT_ACCOUNT));
+  const inLines = entry.lines.filter((l) => l.code === VAT_INPUT_ACCOUNT);
+  const outLines = entry.lines.filter((l) => l.code === VAT_OUTPUT_ACCOUNT);
+  const looksPurchase = inLines.length > 0
+    || (outLines.length === 0 && entry.lines.some((l) => l.direction === 'debit' && !RECEIVABLE_PAYABLE.includes(l.code) && l.code !== VAT_INPUT_ACCOUNT));
   if (looksPurchase) {
-    const base = sum(entry.lines.filter((l) => l.direction === 'debit' && l.code !== VAT_INPUT_ACCOUNT));
-    return { journalEntryId: entry.journalEntryId, kind: 'purchase', base: round2(base), vat: round2(vin), deductible: round2(vin), documentRef: entry.sourceRef };
+    // purchase: input VAT positive on debit; expense base positive on debit (negative on a supplier credit note)
+    const vat = signed(inLines, 'debit');
+    const base = signed(entry.lines.filter((l) => l.code !== VAT_INPUT_ACCOUNT && !RECEIVABLE_PAYABLE.includes(l.code)), 'debit');
+    return { journalEntryId: entry.journalEntryId, kind: 'purchase', base: round2(base), vat: round2(vat), deductible: round2(vat), documentRef: entry.sourceRef };
   }
-  const base = sum(entry.lines.filter((l) => l.direction === 'credit' && l.code !== VAT_OUTPUT_ACCOUNT));
-  return { journalEntryId: entry.journalEntryId, kind: 'sales', base: round2(base), vat: round2(vout), deductible: 0, documentRef: entry.sourceRef };
+  // sales: output VAT positive on credit; revenue base positive on credit (negative on a credit note)
+  const vat = signed(outLines, 'credit');
+  const base = signed(entry.lines.filter((l) => l.code !== VAT_OUTPUT_ACCOUNT && !RECEIVABLE_PAYABLE.includes(l.code)), 'credit');
+  return { journalEntryId: entry.journalEntryId, kind: 'sales', base: round2(base), vat: round2(vat), deductible: 0, documentRef: entry.sourceRef };
 }
 
 export function treatmentFromRate(base: number, vat: number): { rate: number; treatment: VatTreatment } {
-  if (base <= 0) return { rate: 0, treatment: vat > 0 ? 'standard' : 'none' };
-  const rate = Math.round((vat / base) * 100);
+  // rate is computed from magnitudes so a credit note (negative base/VAT) still maps to 20% standard.
+  const b = Math.abs(base); const v = Math.abs(vat);
+  if (b <= 0) return { rate: 0, treatment: v > 0 ? 'standard' : 'none' };
+  const rate = Math.round((v / b) * 100);
   const treatment: VatTreatment = rate >= 20 ? 'standard' : rate >= 9 ? 'reduced' : rate > 0 ? 'reduced' : 'zero';
   return { rate, treatment };
 }

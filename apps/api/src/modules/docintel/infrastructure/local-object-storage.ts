@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import * as crypto from 'node:crypto';
 import type { StorageService, UploadTarget } from '../application/storage.port';
+import { buildSignedLocalUrl } from './signed-url';
 
 /**
  * DEV storage adapter — local filesystem simulating object storage with WORM.
@@ -14,7 +14,20 @@ export class LocalObjectStorage implements StorageService {
   private readonly root = process.env.DOC_STORAGE_DIR ?? '/tmp/doc-storage';
   private locked = new Set<string>();
 
-  private full(key: string): string { return path.join(this.root, key); }
+  /** Resolve a storage key under the root, refusing any path that escapes it (traversal-safe).
+   *  Rejects NUL and backslashes (Windows-style separators) and absolute/`..` keys that resolve
+   *  outside the root. Legit keys are `tenant/company/doc/name` (forward slashes only). */
+  private full(key: string): string {
+    if (typeof key !== 'string' || key === '' || key.includes('\0') || key.includes('\\')) {
+      throw new Error('Invalid storage key.');
+    }
+    const rootAbs = path.resolve(this.root);
+    const resolved = path.resolve(rootAbs, key);
+    if (resolved !== rootAbs && !resolved.startsWith(rootAbs + path.sep)) {
+      throw new Error('Invalid storage key (path traversal denied).');
+    }
+    return resolved;
+  }
 
   async createUploadTarget(storageKey: string, contentType: string): Promise<UploadTarget> {
     await fs.mkdir(path.dirname(this.full(storageKey)), { recursive: true });
@@ -27,6 +40,18 @@ export class LocalObjectStorage implements StorageService {
     await fs.mkdir(path.dirname(this.full(storageKey)), { recursive: true });
     await fs.writeFile(this.full(storageKey), data);
   }
+  /** Server-side write (optionally WORM-locked). Prod = S3 PutObject (+ Object-Lock). */
+  async putObject(storageKey: string, body: Buffer, _contentType: string, opts?: { worm?: boolean; retainDays?: number }): Promise<{ sizeBytes: number; retainUntil?: string }> {
+    if (this.locked.has(storageKey)) throw new Error('Object is immutable (WORM) — overwrite denied.');
+    await fs.mkdir(path.dirname(this.full(storageKey)), { recursive: true });
+    await fs.writeFile(this.full(storageKey), body);
+    let retainUntil: string | undefined;
+    if (opts?.worm) {
+      this.locked.add(storageKey);
+      retainUntil = new Date(Date.now() + (opts.retainDays ?? 3650) * 86_400_000).toISOString();
+    }
+    return { sizeBytes: body.length, retainUntil };
+  }
   async headObject(storageKey: string): Promise<{ exists: boolean; sizeBytes: number }> {
     try { const s = await fs.stat(this.full(storageKey)); return { exists: true, sizeBytes: s.size }; }
     catch { return { exists: false, sizeBytes: 0 }; }
@@ -38,9 +63,14 @@ export class LocalObjectStorage implements StorageService {
   }
   async readObject(storageKey: string): Promise<Buffer> { return fs.readFile(this.full(storageKey)); }
   async finalizeObject(storageKey: string): Promise<void> { this.locked.add(storageKey); } // WORM lock
+  /** Permanent delete (purge): clear the WORM lock and remove the file bytes. */
+  async deleteObject(storageKey: string): Promise<void> {
+    this.locked.delete(storageKey);
+    try { await fs.unlink(this.full(storageKey)); } catch { /* already gone */ }
+  }
   async getDownloadUrl(storageKey: string, ttlSeconds: number): Promise<string> {
-    const exp = Date.now() + ttlSeconds * 1000;
-    const sig = crypto.createHash('sha256').update(storageKey + exp).digest('hex').slice(0, 16);
-    return `/dev-storage/${encodeURIComponent(storageKey)}?exp=${exp}&sig=${sig}`;
+    // Keyed, time-limited HMAC — the GET route has no auth middleware, so the signature
+    // is the access control and must be unforgeable (see signed-url.ts).
+    return buildSignedLocalUrl(storageKey, ttlSeconds);
   }
 }

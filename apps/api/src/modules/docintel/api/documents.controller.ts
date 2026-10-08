@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Param, Post, Query } from '@nestjs/common';
 import { DOCUMENT_SERVICE, type IDocumentService } from '../application/document.service.interface';
 import { RequirePermission, PERMISSIONS } from '../../identity';
 import type { InitiateUploadDto, FinalizeUploadDto, ScanResultDto } from './dto/documents.dto';
@@ -25,6 +25,10 @@ export class DocumentsController {
     return this.docs.recordScanResult(id, dto.result, dto.engine);
   }
 
+  // Recovery: re-enqueue the scan for a document stuck in 'scanning'/'failed' (e.g. queue was down).
+  @Post(':id/rescan') @RequirePermission(PERMISSIONS.DOCUMENT_UPLOAD)
+  rescan(@Param('id') id: string) { return this.docs.requeueScan(id); }
+
   @Get() @RequirePermission(PERMISSIONS.COMPANY_READ)
   list(@Query('status') status?: DocumentStatus, @Query('type') type?: DetectedType,
        @Query('search') search?: string, @Query('page') page?: string, @Query('pageSize') pageSize?: string) {
@@ -36,4 +40,13 @@ export class DocumentsController {
 
   @Get(':id/download-url') @RequirePermission(PERMISSIONS.COMPANY_READ)
   downloadUrl(@Param('id') id: string) { return this.docs.getDownloadUrl(id).then((url) => ({ url })); }
+
+  @Post(':id/trash') @RequirePermission(PERMISSIONS.DOCUMENT_UPLOAD)
+  trash(@Param('id') id: string) { return this.docs.trashDocument(id); }
+
+  @Post(':id/restore') @RequirePermission(PERMISSIONS.DOCUMENT_UPLOAD)
+  restore(@Param('id') id: string) { return this.docs.restoreDocument(id); }
+
+  @Delete(':id') @RequirePermission(PERMISSIONS.DOCUMENT_UPLOAD)
+  purge(@Param('id') id: string) { return this.docs.purgeDocument(id).then(() => ({ ok: true })); }
 }

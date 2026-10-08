@@ -10,9 +10,19 @@ export interface VatSuggestion { treatment: VatTreatment; rate: number; codeId: 
 export interface PostingLine { accountCode: string; side: 'debit' | 'credit'; amount: string; }
 
 export interface ActiveRule { ruleType: RuleType; matchKey?: string; isActive: boolean; name: string; action: { accountCode?: string; vatCode?: string; confidence?: number }; }
+export type ClassificationSource = 'rule' | 'memory' | 'ai' | 'manual';
+/** Result of the expense-classification engine (Task 1.2). */
+export interface ClassificationResult {
+  categoryId: string | null; categoryCode: string; nameBg?: string; nameEn?: string;
+  defaultAccountId?: string; defaultAccountCode?: string; defaultVatTreatment?: VatTreatment;
+  saftCode?: string; confidence: number; reason: string; source: ClassificationSource;
+}
+
 export interface AccountingSuggestion {
   id: string; documentId: string; counterpartyId?: string; suggestedAccountCode?: string;
   suggestedPosting: PostingLine[]; confidence: number; explanation: string;
   status: SuggestionStatus; isDuplicate: boolean; duplicateOfDocumentId?: string;
   vat?: { treatment: VatTreatment; rate: number; vatCodeId?: string; confidence: number; explanation: string };
+  expenseCategory?: { id: string; code: string; nameBg: string; nameEn: string; saftCode?: string };
+  classification?: { confidence: number; reason: string; source: ClassificationSource };
 }

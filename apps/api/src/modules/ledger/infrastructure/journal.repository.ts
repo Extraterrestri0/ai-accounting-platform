@@ -61,6 +61,21 @@ export class JournalRepository {
     }
   }
 
+  /**
+   * Serialize writers on ONE journal entry (e.g. two reversals of it) for the rest of the caller's
+   * transaction. The ledger is immutable by GRANT (app_user has no UPDATE on journal_entries), and
+   * PostgreSQL requires UPDATE privilege for SELECT ... FOR UPDATE/SHARE, so a row lock is not
+   * available; a transaction-scoped EXCLUSIVE advisory lock on the entry id gives the same mutual
+   * exclusion and is released at COMMIT/ROLLBACK. Key 'acco.je:<id>' is shared with the payments
+   * module's payable-document lock so settlement and reversal of the same entry also serialize.
+   * Returns false if the entry does not exist.
+   */
+  async lockEntry(db: ScopedClient, entryId: string): Promise<boolean> {
+    await db.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`acco.je:${entryId}`]);
+    const r = await db.query(`SELECT 1 FROM journal_entries WHERE id = $1`, [entryId]);
+    return (r.rowCount ?? 0) > 0;
+  }
+
   async isReversed(db: ScopedClient, entryId: string): Promise<boolean> {
     const r = await db.query<{ ok: boolean }>(
       `SELECT EXISTS(SELECT 1 FROM journal_entries WHERE reverses_entry_id = $1) AS ok`, [entryId]);
